@@ -1,0 +1,17 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: windup.jboss.org
+  labels:
+    app: windup
+spec:
+  group: windup.jboss.org
+  scope: Namespaced
+  version: v1beta2
+  names:
+    kind: Windup
+    listKind: WindupList
+    plural: windups
+    singular: windup
+    shortNames:
+    - w
