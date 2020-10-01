@@ -7,6 +7,7 @@ rules:
     - ""
   resources:
     - pods
+    - deployments
   verbs:
     - get
     - list

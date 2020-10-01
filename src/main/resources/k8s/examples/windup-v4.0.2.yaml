@@ -1,0 +1,19 @@
+apiVersion: windup.jboss.org/v1
+kind: Windup
+metadata:
+  name: windups
+spec:
+  application_name: WindupJON
+  web_cpu_request: "2"
+  web_mem_request: 4Gi
+  executor_cpu_request: "2"
+  executor_mem_request: 4Gi
+  messaging_serializer: http.post.serializer
+  mta_Volume_Capacity: 20G
+  db_database: mta
+  volumeCapacity: 20G
+  sso_url: /auth
+  sso_realm: mta
+  docker_images_user: windup3
+  docker_images_tag: latest
+  max_post_size: "4294967296"

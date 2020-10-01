@@ -8,7 +8,6 @@ public class WindupResource extends CustomResource {
 
     private WindupResourceSpec spec;
     private WindupResourceStatus status;
-    // getters/setters
 
     public WindupResourceSpec getSpec() {
         return spec;

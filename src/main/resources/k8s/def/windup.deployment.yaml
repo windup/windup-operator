@@ -14,6 +14,6 @@ spec:
     spec:
       serviceAccountName: windup-operator
       containers:
-        - image: quarkus/windup-operator-native
+        - image: quay.io/jonathanvila/windup-operator-native:latest
           name: windup-operator
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
