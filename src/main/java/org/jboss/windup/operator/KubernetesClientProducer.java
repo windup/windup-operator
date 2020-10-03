@@ -3,6 +3,7 @@ package org.jboss.windup.operator;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.RequestConfig;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
@@ -26,15 +27,15 @@ public class KubernetesClientProducer {
     @Singleton
     @Named("namespace")
     String findMyCurrentNamespace() throws IOException {
-        return new
-            String(Files.readAllBytes(Paths.get("/var/run/secrets/kubernetes.io/serviceaccount/namespace")));
+        return new String(Files.readAllBytes(Paths.get("/var/run/secrets/kubernetes.io/serviceaccount/namespace")));
     }
 
     @Produces
     @Singleton
     KubernetesClient makeDefaultClient() {
         log.info("Creating K8s Client instance");
-        return new DefaultKubernetesClient().inNamespace("default");
+        KubernetesClient k8sclient = new DefaultKubernetesClient().inNamespace("default");
+        return k8sclient;
     }
 
     @Produces

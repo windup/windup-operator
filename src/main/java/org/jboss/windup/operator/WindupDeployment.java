@@ -7,6 +7,7 @@ import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.QuantityBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
@@ -34,8 +35,14 @@ public class WindupDeployment {
     @Inject
     KubernetesClient k8sClient;
 
-    public void deployWindup(WindupResource windupResource) {
-        List<Deployment> deployments = createDeployment(windupResource);
+    public void deployWindup(WindupResource windupResource) throws InterruptedException {
+      List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
+      k8sClient.persistentVolumeClaims().createOrReplace(volumes.get(0));
+      k8sClient.persistentVolumeClaims().createOrReplace(volumes.get(1));
+
+      Thread.sleep(10000);
+
+      List<Deployment> deployments = createDeployment(windupResource);
         k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(0));
         k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(1));
         k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(2));
@@ -49,9 +56,6 @@ public class WindupDeployment {
         k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
         k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
 
-        List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
-        k8sClient.persistentVolumeClaims().createOrReplace(volumes.get(0));
-        k8sClient.persistentVolumeClaims().createOrReplace(volumes.get(1));
 
         // ContainerBuilder , PodSpecBuilder , PodBuilder
     }
@@ -68,6 +72,7 @@ public class WindupDeployment {
           .withPorts(Collections.singletonList(new ServicePort("a", "name", 0, 8080, "", new IntOrString(8080) )))
           .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name()))
         .endSpec().done();
+        LOG.info("Created Service for windup");
 
         Service postgreSvc = k8sClient.services().createNew()
         .withApiVersion("v1")
@@ -80,6 +85,8 @@ public class WindupDeployment {
           .withPorts(new ServicePort("a", "name", 0, 5432, "", new IntOrString(5432) ))
           .withSelector(Collections.singletonMap("deploymentConfig",windupResource.getSpec().getApplication_name() + "-postgresql"))
         .endSpec().done();
+        LOG.info("Created Service for postgresql");
+
 
         Service amqSvc = k8sClient.services().createNew()
         .withApiVersion("v1")
@@ -92,6 +99,8 @@ public class WindupDeployment {
           .withPorts(new ServicePort("a", "name", 0, 61616, "", new IntOrString(61616) ))
           .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name()))
         .and().done();
+        LOG.info("Created Service for AMQ");
+
 
         return List.of(mtaWebConsoleSvc, postgreSvc, postgreSvc);
     }
@@ -116,6 +125,8 @@ public class WindupDeployment {
             .endRule()
           .endSpec()
         .build();
+        LOG.info("Created Ingress for windup");
+
 
         return List.of(ingressWebConsole);
     }
@@ -123,22 +134,26 @@ public class WindupDeployment {
     private List<PersistentVolumeClaim> createVolumes(WindupResource windupResource) {
         PersistentVolumeClaim postgrPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-postgresql-claim")
+            .withName(windupResource.getSpec().getApplication_name() + "-postgresql-pvol")
           .addToLabels("application", windupResource.getSpec().getApplication_name())
         .endMetadata()
         .withNewSpec()
-            .withAccessModes("ReadWriteOne")
+            .withAccessModes("ReadWriteOnce")
             .withNewResources().addToRequests("storage", new Quantity(windupResource.getSpec().getVolumeCapacity())).endResources()
         .endSpec()
         .build();
+        LOG.info("Created PVC for postgre");
 
         PersistentVolumeClaim mtaPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
-        .withNewMetadata().withName(windupResource.getSpec().getApplication_name() + "-mta-web-claim").addToLabels("application", windupResource.getSpec().getApplication_name()).endMetadata()
+            .withNewMetadata().withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol")
+            .addToLabels("application", windupResource.getSpec().getApplication_name()).endMetadata()
         .withNewSpec()
             .withAccessModes("ReadWriteMany")
             .withNewResources().addToRequests("storage", new Quantity(windupResource.getSpec().getMta_Volume_Capacity())).endResources()
         .endSpec()
         .build();
+        LOG.info("Created PVC for mta");
+
         return List.of(postgrPersistentVolumeClaim, mtaPersistentVolumeClaim);
     }
 
@@ -219,7 +234,9 @@ public class WindupDeployment {
                         .addNewEnv().withName("DB_MAX_POOL_SIZE").withValue(windupResource.getSpec().getDb_max_pool_size()).endEnv()
                         .addNewEnv().withName("DB_TX_ISOLATION").withValue(windupResource.getSpec().getDb_tx_isolation()).endEnv()
                         .addNewEnv().withName("OPENSHIFT_KUBE_PING_LABELS").withValue("application=" + windupResource.getSpec().getApplication_name()).endEnv()
-                        .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withNewValueFrom().withNewFieldRef("apiVersion", "metadata.namespace").endValueFrom().endEnv()
+
+            .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withValue("windup").endEnv()
+
                         .addNewEnv().withName("HTTPS_KEYSTORE_DIR").withValue("/etc/eap-secret-volume").endEnv()
                         .addNewEnv().withName("MQ_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(), RandomStringUtils.randomAlphanumeric(8))).endEnv()
                         .addNewEnv().withName("MQ_QUEUES").withValue(windupResource.getSpec().getMq_queues()).endEnv()
@@ -261,11 +278,12 @@ public class WindupDeployment {
                .endTemplate()
             .endSpec()
             .build();
+        LOG.info("Created Deployment windup-web");
 
         Deployment deploymentExecutor = new DeploymentBuilder()
             .withNewMetadata()
                .withName(windupResource.getSpec().getApplication_name() + "-executor")
-               .addToLabels("application",windupResource.getSpec().getApplication_name() + "-executor")
+            .addToLabels("application", windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
                .withReplicas(1)
@@ -309,11 +327,12 @@ public class WindupDeployment {
                  .endTemplate()
               .endSpec()
               .build();
+        LOG.info("Created Deployment for executor");
 
         Deployment deploymentPostgre = new DeploymentBuilder()
             .withNewMetadata()
                .withName(windupResource.getSpec().getApplication_name() + "-postgresql")
-               .addToLabels("application",windupResource.getSpec().getApplication_name() + "-postgresql")
+            .addToLabels("application", windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
                .withReplicas(1)
@@ -331,6 +350,10 @@ public class WindupDeployment {
                    .endMetadata()
                    .withNewSpec()
                       .withTerminationGracePeriodSeconds(60L)
+            .withVolumes(List.of(
+                new VolumeBuilder().withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol").build(),
+                new VolumeBuilder()
+                    .withName(windupResource.getSpec().getApplication_name() + "-mta-web-executor-volume").build()))
                       .addNewContainer()
                           .withName(windupResource.getSpec().getApplication_name() + "-postgresql")
                           .withImage("postgresql")
@@ -383,6 +406,8 @@ public class WindupDeployment {
                  .endTemplate()
               .endSpec()
               .build();
+        LOG.info("Created Deployment for PostgreSQL");
+
         return List.of(deploymentMTAweb, deploymentExecutor, deploymentPostgre);
     }
 }

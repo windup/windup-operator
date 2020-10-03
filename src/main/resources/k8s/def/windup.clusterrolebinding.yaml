@@ -2,6 +2,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: windup-operator
+  namespace: default
+  labels:
+      application: windup
 subjects:
   - kind: ServiceAccount
     name: windup-operator

@@ -23,7 +23,7 @@ public class WindupOperator {
     @Inject
     NonNamespaceOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
-    @Inject 
+    @Inject
     WindupDeployment windupDeployment;
 
     public void onStart(@Observes StartupEvent event) {
@@ -35,7 +35,12 @@ public class WindupOperator {
 
                 if (action == Action.ADDED) {
                     logger.info(" .... deploying Windup infrastructure ....");
-                    windupDeployment.deployWindup(resource);
+                    try {
+                        windupDeployment.deployWindup(resource);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
             }
 
