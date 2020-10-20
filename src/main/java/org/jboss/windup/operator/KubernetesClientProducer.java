@@ -1,9 +1,16 @@
 package org.jboss.windup.operator;
 
+import io.fabric8.kubernetes.api.model.ListOptions;
+import io.fabric8.kubernetes.api.model.ListOptionsBuilder;
+import io.fabric8.kubernetes.api.model.ListOptionsFluent;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinitionBuilder;
+import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinitionVersionBuilder;
+import io.fabric8.kubernetes.api.model.apiextensions.JSONSchemaPropsBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.RequestConfig;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
@@ -19,6 +26,8 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 public class KubernetesClientProducer {
     private Logger log = Logger.getLogger(KubernetesClientProducer.class);
@@ -34,8 +43,7 @@ public class KubernetesClientProducer {
     @Singleton
     KubernetesClient makeDefaultClient() {
         log.info("Creating K8s Client instance");
-        KubernetesClient k8sclient = new DefaultKubernetesClient().inNamespace("default");
-        return k8sclient;
+        return new DefaultKubernetesClient().inNamespace(WindupDeploymentJava.NAMESPACE);
     }
 
     @Produces
@@ -45,15 +53,9 @@ public class KubernetesClientProducer {
 
         KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1beta2", "Windup", WindupResource.class);
 
-        CustomResourceDefinition crd = defaultClient.customResourceDefinitions()
-        .list()
-        .getItems()
-        .stream()
-            .filter(d -> "windups.windup.jboss.org".equals(d.getMetadata().getName()))
-            .findAny()
-                .orElseThrow(() -> new RuntimeException("Deployment error: Custom resource definition windup.jboss.org/v1beta2 not found."));
+        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load("windup.crd.yaml").get();
 
-        return defaultClient.customResources(crd, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class).inNamespace("default");
+        return defaultClient.customResources(windupCRD, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class).inNamespace(WindupDeploymentJava.NAMESPACE);
 
     }
 

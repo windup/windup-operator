@@ -1,6 +1,7 @@
 package org.jboss.windup.operator.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @RegisterForReflection
 @Getter
 @Setter
-public class WindupResourceSpec {
+public class WindupResourceSpec implements KubernetesResource {
     private String version;
     private String application_name;
     private String hostname_http;
@@ -17,6 +18,8 @@ public class WindupResourceSpec {
     private String mta_Volume_Capacity;
     private String docker_images_user;
     private String docker_images_tag;
+    private String docker_image_web;
+    private String docker_image_executor;
     private String messaging_serializer;
     private String db_jndi;
     private String db_username;
@@ -60,14 +63,19 @@ public class WindupResourceSpec {
     private String postgresql_mem_request;
     private String postgresql_cpu_limit;
     private String postgresql_mem_limit;
+    private String postgresql_image;
     private String webLivenessInitialDelaySeconds;
     private String webLivenessTimeoutSeconds;
+    private String webLivenessFailureThreshold;
     private String webReadinessInitialDelaySeconds;
     private String webReadinessTimeoutSeconds;
+    private String webReadinessFailureThreshold;
     private String web_cpu_request;
     private String web_mem_request;
     private String executor_cpu_request;
     private String executor_mem_request;
+    private String executor_cpu_limit;
+    private String executor_mem_limit;
     private String web_cpu_limit;
     private String web_mem_limit;
     private String container_repository;

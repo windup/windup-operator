@@ -1,7 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: windup-operator-cluster-role-binding
+  name: windup-operator-role-binding
+  namespace: windup
   labels:
       application: windup
 subjects:
@@ -9,6 +10,6 @@ subjects:
     name: windup-operator
     namespace: windup
 roleRef:
-  kind: ClusterRole
-  name: windup-operator-cluster-role
+  kind: Role
+  name: windup-operator-role
   apiGroup: rbac.authorization.k8s.io

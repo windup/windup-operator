@@ -1,6 +1,5 @@
 package org.jboss.windup.operator;
 
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
@@ -24,7 +23,7 @@ public class WindupOperator {
     NonNamespaceOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
     @Inject
-    WindupDeployment windupDeployment;
+    WindupDeploymentJava windupDeployment;
 
     public void onStart(@Observes StartupEvent event) {
         logger.info("Startup");
@@ -33,14 +32,33 @@ public class WindupOperator {
             public void eventReceived(Action action, WindupResource resource) {
                 logger.info("Event " + action.name());
 
-                if (action == Action.ADDED) {
-                    logger.info(" .... deploying Windup infrastructure ....");
-                    try {
-                        windupDeployment.deployWindup(resource);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
+                switch (action) {
+                    case ADDED:
+                        logger.info(" .... deploying Windup infrastructure ....");
+                        try {
+                            windupDeployment.deployWindup(resource);
+                        } catch (InterruptedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        break;
+                    case DELETED:
+                        logger.info(" .... deleting Windup infrastructure ....");
+
+                        try {
+                            windupDeployment.deployWindup(resource);
+                        } catch (InterruptedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        break;
+                    case MODIFIED:
+                        logger.info(" .... updating Windup infrastructure ....");
+
+                        break;
+                    default:
+                        break;
+
                 }
             }
 
