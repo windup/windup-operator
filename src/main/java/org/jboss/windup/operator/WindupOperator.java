@@ -27,6 +27,8 @@ public class WindupOperator {
 
     public void onStart(@Observes StartupEvent event) {
         logger.info("Startup");
+
+        // Creating the Windup Controller
         crClient.watch(new Watcher<WindupResource>() {
             @Override
             public void eventReceived(Action action, WindupResource resource) {
@@ -35,30 +37,12 @@ public class WindupOperator {
                 switch (action) {
                     case ADDED:
                         logger.info(" .... deploying Windup infrastructure ....");
-                        try {
-                            windupDeployment.deployWindup(resource);
-                        } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
+                        windupDeployment.deployWindup(resource);
                         break;
-                    case DELETED:
-                        logger.info(" .... deleting Windup infrastructure ....");
 
-                        try {
-                            windupDeployment.deployWindup(resource);
-                        } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                        break;
-                    case MODIFIED:
-                        logger.info(" .... updating Windup infrastructure ....");
 
-                        break;
                     default:
                         break;
-
                 }
             }
 

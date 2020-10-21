@@ -13,11 +13,11 @@ import java.util.List;
 @Getter
 @Setter
 public class WindupResourceStatus implements KubernetesResource {
-    String name;
+	String name;
 	String group;
 	String kind;
 	String uid;
-	List<Object> causes; 
+	List<Object> causes;
 	Integer retryAfterSeconds;
 }
 
