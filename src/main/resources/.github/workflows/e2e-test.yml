@@ -1,10 +1,6 @@
 name: MTA Operator E2E Tests
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+on: [push,pull_request]
 
 env:
   MTA_OPERATOR_REPOSITORY: https://github.com/windup/windup-operator.git
