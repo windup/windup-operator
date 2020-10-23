@@ -1,0 +1,42 @@
+apiVersion: windup.jboss.org/v1
+kind: Windup
+metadata:
+  namespace: windup
+  name: windups
+  labels:
+    application: windup
+spec:
+  application_name: windup-jon
+  webLivenessInitialDelaySeconds: "240"
+  webReadinessInitialDelaySeconds: "240"
+  webLivenessTimeoutSeconds: "100"
+  webReadinessTimeoutSeconds: "100"
+  webReadinessFailureThreshold: "20"
+  webLivenessFailureThreshold: "20"
+  web_cpu_request: "0.5"
+  web_mem_request: 0.5Gi
+  web_cpu_limit: "4"
+  web_mem_limit: 4Gi
+  executor_cpu_request: "0.5"
+  executor_mem_request: 0.5Gi
+  executor_cpu_limit: "4"
+  executor_mem_limit: 4Gi
+  messaging_serializer: http.post.serializer
+  mta_Volume_Capacity: 5G
+  db_database: mta
+  volumeCapacity: 5G
+  sso_url: /auth
+  sso_realm: mta
+  max_post_size: "4294967296"
+  db_password: pas345678
+  db_username: userXYZ
+  postgresql_cpu_request: "0.5"
+  postgresql_mem_request: "0.5Gi"
+  postgresql_cpu_limit: "2"
+  postgresql_mem_limit: "2Gi"
+  docker_images_user: jonathanvila
+  docker_images_tag: latest
+  container_repository: docker.io
+  docker_image_web: tutum/hello-world
+  docker_image_executor: tutum/hello-world
+  postgresql_image: tutum/hello-world:latest
