@@ -25,7 +25,7 @@ jobs:
 
       - name: Build operator image
         run: cd ${{github.workspace}} &&
-             docker login -u ${{DOCKERIO_LOGIN}} -p ${{DOCKERIO_PASS}} &&
+             docker login -u ${{secrets.DOCKERIO_LOGIN}} -p ${{secrets.DOCKERIO_PASS}} &&
              mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -DskipTests
 
       - name: Deploy operator
