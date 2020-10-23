@@ -47,8 +47,8 @@ jobs:
         id: getobjects
         run: kubectl get pods -n windup -o name | wc -l
 
-      - name: Assert operator
-        uses: therussiankid92/gat
+      - name: Operator Test
+        uses: therussiankid92/gat@v1.3
         with:
           assertion: should.equal
           expected: 3
