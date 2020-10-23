@@ -43,4 +43,4 @@ jobs:
         with:
           assertion: should.equal
           expected: 3
-          actual: ${{steps.getobjects.outputs}}
+          actual: ${{steps.getobjects.outputs.value}}
