@@ -14,7 +14,7 @@ jobs:
         uses: manusa/actions-setup-minikube@v2.0.1
         with:
           minikube version: v1.13.1
-          kubernetes version: ${{ matrix.kubernetes }}
+          kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
           start args: --force
 
