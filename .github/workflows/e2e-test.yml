@@ -24,12 +24,12 @@ jobs:
           java-version: '11'
 
       - name: Build operator image
-        run: cd ${{github.workspace}} && /
+        run: cd ${{github.workspace}} &&
              mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -DskipTests
 
       - name: Deploy operator
-        run: cd ${{github.workspace}} && /
-             cd src/main/resources/k8s/def && /
+        run: cd ${{github.workspace}} &&
+             cd src/main/resources/k8s/def &&
              ./script.create.all.sh &&
              kubectl apply -f ../../../../test/resources/windup-test.yaml
 
