@@ -36,11 +36,12 @@ jobs:
 
       - name: Get k8s objects
         id: getobjects
-        run: kubectl get pods -n windup -o name | wc -l
+        run: echo "::set-output name=value::$(kubectl get pods -n windup -o name | wc -l)"
+        shell: bash
 
       - name: Operator Test
         uses: therussiankid92/gat@v1.3
         with:
           assertion: should.equal
           expected: 3
-          actual: ${{steps.getobjects.outputs.value}}
+          actual: ${{jobs.minikube.steps.getobjects.outputs.value}}
