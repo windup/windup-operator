@@ -44,4 +44,4 @@ jobs:
         with:
           assertion: should.equal
           expected: 3
-          actual: ${{jobs.minikube.steps.getobjects.outputs.value}}
+          actual: ${{steps.getobjects.outputs.value}}
