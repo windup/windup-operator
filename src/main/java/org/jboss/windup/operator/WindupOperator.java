@@ -21,11 +21,14 @@ public class WindupOperator {
     @Inject
     NonNamespaceOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
+    @Inject 
+    WindupController windupController;
+
     public void onStart(@Observes StartupEvent event) {
         log.info("Startup");
 
         // Creating the Windup Controller
-        crClient.watch(new WindupController());
+        crClient.watch(windupController);
     }
 
 }

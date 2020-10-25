@@ -5,20 +5,22 @@ import io.fabric8.kubernetes.client.Watcher;
 import lombok.extern.java.Log;
 import org.jboss.windup.operator.model.WindupResource;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @Log
+@ApplicationScoped
 final class WindupController implements Watcher<WindupResource> {
     @Inject
     WindupDeploymentJava windupDeployment;
-    
+
     @Override
 	public void eventReceived(Action action, WindupResource resource) {
-	    log.info("Event " + action.name());
+	    log.info("Event " + action.name() + " [" + resource + "]");
 
 	    switch (action) {
 	        case ADDED:
-	            log.info(" .... deploying Windup infrastructure ....");
+	            log.info(" .... deploying Windup infrastructure ....(" + windupDeployment + ")");
 	            windupDeployment.deployWindup(resource);
 	            break;
 	        default:
