@@ -34,6 +34,11 @@ jobs:
              ./script.create.all.sh &&
              kubectl apply -f ../../../../test/resources/windup-test.yaml
 
+      - name: Sleep for 30 seconds
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '30s'
+
       - name: Get k8s objects
         id: getobjects
         run: echo "::set-output name=value::$(kubectl get all -n windup -o name | wc -l)"
