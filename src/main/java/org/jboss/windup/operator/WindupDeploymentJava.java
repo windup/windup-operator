@@ -17,6 +17,7 @@ import io.fabric8.kubernetes.api.model.networking.v1beta1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
@@ -54,7 +55,7 @@ public class WindupDeploymentJava {
 
     List<Ingress> ingresses = createIngresses(windupResource);
     k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
-    k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
+    //k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
 
   }
 
@@ -130,20 +131,26 @@ public class WindupDeploymentJava {
 
 private Map<String, String> getLabels(WindupResource windupResource) {
     return Map.of(
-        "application", windupResource.getSpec().getApplication_name(), 
+        "application", windupResource.getSpec().getApplication_name(),
         "app", windupResource.getSpec().getApplication_name(),
         "created-by", "mta-operator");
   }
 
   // Checking the cluster domain on Openshift
   private String getClusterDomainOnOpenshift(WindupResource windupResource) {
-    ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public").get();
     String clusterDomain = "";
-
-    if (configMap != null) {
-      clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
-      clusterDomain = clusterDomain.replace("https://console-openshift-console", windupResource.getSpec().getApplication_name());
+    try {
+      ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public")
+          .get();
+  
+      if (configMap != null) {
+        clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
+        clusterDomain = clusterDomain.replace("https://console-openshift-console", windupResource.getSpec().getApplication_name());
+      }
+    } catch (KubernetesClientException exception) {
+      LOG.info("You are probably not on Openshift");
     }
+
     return clusterDomain;
   }
 
@@ -157,11 +164,11 @@ private Map<String, String> getLabels(WindupResource windupResource) {
       LOG.info("Cluster Domain : " + hostnameHttp);
     }
 
-    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
+    //Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
 
     Ingress ingressWebConsole = createWebConsoleHttpIngress(windupResource, hostnameHttp);
 
-    return List.of(ingressWebConsole, ingressWebConsoleHttps);
+    return List.of(ingressWebConsole); //, ingressWebConsoleHttps);
   }
 
   private Ingress createWebConsoleHttpIngress(WindupResource windupResource, String hostnameHttp) {
@@ -299,7 +306,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLifecycle()
                 .withNewLivenessProbe()
                   .withNewExec()
-                    .withCommand("/bin/bash", "-c", "/opt/eap/bin/livenessProbe.sh")
+        .withCommand(windupResource.getSpec().getWeb_liveness_probe().split(",")) //"/bin/bash", "-c", "/opt/eap/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebLivenessInitialDelaySeconds()))
                   .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebLivenessFailureThreshold()))
@@ -308,7 +315,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLivenessProbe()
                 .withNewReadinessProbe()
                   .withNewExec()
-                    .withCommand("/bin/bash", "-c", "/opt/eap/bin/readinessProbe.sh")
+        .withCommand(windupResource.getSpec().getWeb_readiness_probe().split(",")) //"/bin/bash", "-c", "/opt/eap/bin/readinessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebReadinessInitialDelaySeconds()))
                   .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebReadinessFailureThreshold()))
@@ -426,7 +433,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLifecycle()
                 .withNewLivenessProbe()
                   .withNewExec()
-                    .withCommand("/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+        .withCommand(windupResource.getSpec().getExecutor_liveness_probe().split(",")) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
@@ -435,7 +442,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLivenessProbe()
                 .withNewReadinessProbe()
                   .withNewExec()
-                    .withCommand("/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+        .withCommand(windupResource.getSpec().getExecutor_readiness_probe().split(",")) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
@@ -516,15 +523,17 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   //@format:on
 
   private String getExecutorContainerImageName(WindupResource windupResource) {
-    return windupResource.getSpec().getContainer_repository() + "/" + windupResource.getSpec().getDocker_images_user()
-        + "/" + windupResource.getSpec().getDocker_image_executor() + ":"
-        + windupResource.getSpec().getDocker_images_tag();
+    return windupResource.getSpec().getContainer_repository() + "/" +
+           ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
+           windupResource.getSpec().getDocker_image_executor() + ":" +
+           windupResource.getSpec().getDocker_images_tag();
   }
 
   private String getWebContainerImageName(WindupResource windupResource) {
-    return windupResource.getSpec().getContainer_repository() + "/"
-      + windupResource.getSpec().getDocker_images_user() + "/" + windupResource.getSpec().getDocker_image_web()
-      + ":" + windupResource.getSpec().getDocker_images_tag();
+    return windupResource.getSpec().getContainer_repository() + "/" +
+           ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
+           windupResource.getSpec().getDocker_image_web() + ":" +
+           windupResource.getSpec().getDocker_images_tag();
   }
 
 

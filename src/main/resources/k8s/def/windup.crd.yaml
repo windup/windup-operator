@@ -179,7 +179,7 @@ spec:
                   default: "120"
                 webLivenessTimeoutSeconds:
                   type: string
-                  default: "10"                
+                  default: "10"
                 webLivenessFailureThreshold:
                   type: string
                   default: "3"
@@ -188,7 +188,7 @@ spec:
                   default: "120"
                 webReadinessTimeoutSeconds:
                   type: string
-                  default: "10"                
+                  default: "10"
                 webReadinessFailureThreshold:
                   type: string
                   default: "3"
@@ -209,7 +209,7 @@ spec:
                   default: "2"
                 executor_mem_request:
                   type: string
-                  default: "4Gi"                
+                  default: "4Gi"
                 executor_cpu_limit:
                   type: string
                   default: "2"
@@ -222,6 +222,18 @@ spec:
                 postgresql_image:
                   type: string
                   default: "postgresql"
+                web_readiness_probe:
+                  type: string
+                  default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
+                web_liveness_probe:
+                  type: string
+                  default: "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh"
+                executor_readiness_probe:
+                  type: string
+                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                executor_liveness_probe:
+                  type: string
+                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
               required:
                   - application_name
                   - web_cpu_request
