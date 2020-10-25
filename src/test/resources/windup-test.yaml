@@ -34,9 +34,13 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
-  docker_images_user: jonathanvila
+  docker_images_user: jboss
   docker_images_tag: latest
   container_repository: docker.io
-  docker_image_web: tutum/hello-world
-  docker_image_executor: tutum/hello-world
-  postgresql_image: tutum/hello-world:latest
+  docker_image_web: wildfly
+  docker_image_executor: wildfly
+  postgresql_image: widlfly:latest
+  web_liveness_probe: ""
+  web_readiness_probe: ""
+  executor_liveness_probe: ""
+  executor_readiness_probe: ""
