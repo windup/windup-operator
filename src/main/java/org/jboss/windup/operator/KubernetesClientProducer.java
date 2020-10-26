@@ -16,6 +16,8 @@ import org.jboss.windup.operator.model.WindupResourceList;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
+import java.io.InputStream;
+
 @Log
 public class KubernetesClientProducer {
     @ConfigProperty(name = "namespace", defaultValue = "rhamt")
@@ -35,7 +37,9 @@ public class KubernetesClientProducer {
 
         KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1beta2", "Windup", WindupResource.class);
 
-        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load(KubernetesClientProducer.class.getResourceAsStream("k8s/def/windup.crd.yaml")).get();
+        InputStream fileStream = KubernetesClientProducer.class.getResourceAsStream("/k8s/def/windup.crd.yaml");
+
+        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load(fileStream).get();
 
         return defaultClient.customResources(windupCRD, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class).inNamespace(NAMESPACE);
 
