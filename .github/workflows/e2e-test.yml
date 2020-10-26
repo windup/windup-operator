@@ -16,17 +16,19 @@ jobs:
           minikube version: v1.13.1
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
-          start args: --force
+          start args: '--addons=registry --addons=ingress --force'
 
-      - name: Setup Java 11
-        uses: actions/setup-java@v1
+      - name: setup-graalvm-ce
+        uses: rinx/setup-graalvm-ce@v0.0.5
         with:
-          java-version: '11'
+          graalvm-version: "20.1.0"
+          java-version: "java11"
+          native-image: "true"
 
       - name: Build operator image and push it to the dockerhub registry
         run: cd ${{github.workspace}} &&
-             docker login -u ${{secrets.DOCKERIO_LOGIN}} -p ${{secrets.DOCKERIO_PASS}} &&
-             mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -DskipTests
+             eval $(minikube -p minikube docker-env) &&
+             mvn clean package -Pnative -Dquarkus.container-image.build=true -DskipTests
 
       - name: Deploy operator
         run: cd ${{github.workspace}} &&
