@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: windup-operator
-  namespace: windup
+  namespace: rhamt
   labels:
       application: windup
 spec:
