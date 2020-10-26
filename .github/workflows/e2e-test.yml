@@ -16,7 +16,7 @@ jobs:
           minikube version: v1.13.1
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
-          start args: '--addons=registry --addons=ingress --force'
+          start args: '--addons=registry --force'
 
       - name: setup-graalvm-ce
         uses: rinx/setup-graalvm-ce@v0.0.5
