@@ -23,7 +23,7 @@ jobs:
         with:
           java-version: '11'
 
-      - name: Build operator image
+      - name: Build operator image and push it to the dockerhub registry
         run: cd ${{github.workspace}} &&
              docker login -u ${{secrets.DOCKERIO_LOGIN}} -p ${{secrets.DOCKERIO_PASS}} &&
              mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -DskipTests
@@ -34,14 +34,14 @@ jobs:
              ./script.create.all.sh &&
              kubectl apply -f ../../../../test/resources/windup-test.yaml
 
-      - name: Sleep for 30 seconds
+      - name: Sleep for 30 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
         with:
           time: '30s'
 
-      - name: Get k8s objects
+      - name: Get k8s objects on rhamt namespace
         id: getobjects
-        run: echo "::set-output name=value::$(kubectl get all -n windup -o name | wc -l)"
+        run: echo "::set-output name=value::$(kubectl get all -n rhamt -o name | wc -l)"
         shell: bash
 
       - name: Operator Test
