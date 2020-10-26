@@ -1,76 +1,46 @@
 # windup-operator project
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework to create a Kubernetes Operator following 
-[@Alex Soto](https://twitter.com/alexsotob) cheat sheet [Writing a Kubernetes Operator in Java](https://t.co/4m7kSKUPj9?amp=1)
+This project creates an Operator to deploy Windup/MTA on an Openshift cluster ( Kubernetes one in future releases)
 
+It consists on a series of yaml files to deploy the operator (CRD, role, rolebinding, serviceaccount) and the native artifact compiled using Quarkus and GraalVM
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+At this moment the operator reacts to creation of the Windup Custom Resource and will deploy all needed objects ( deployments, ingress, services, persistent volumes)
 
-## Running the application in dev mode
-
-You can run your application in dev mode that enables live coding using:
+## Building and pushing the Java code manually in native mode
+1. The following command will use the configuration in the `application.properties` file :  
 ```
-./mvnw quarkus:dev
+quarkus.container-image.registry=docker.io
+quarkus.container-image.group=windup3
+quarkus.container-image.name=${quarkus.application.name}-native
+quarkus.container-image.tag=latest
+quarkus.kubernetes.service-type=load-balancer
+quarkus.kubernetes.image-pull-policy=never
+quarkus.container-image.builder=docker
+namespace=rhamt 
 ```
+2. Execute the maven command:  
+`mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
 
-## Packaging and running the application
+## Installation
 
-The application can be packaged using `./mvnw package`.
-It produces the `windup-operator-1.0-SNAPSHOT-runner.jar` file in the `/target` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/lib` directory.
-
-The application is now runnable using `java -jar target/windup-operator-1.0-SNAPSHOT-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: `./mvnw package -Pnative`.
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: `./mvnw package -Pnative -Dquarkus.native.container-build=true`.
-
-You can then execute your native executable with: `./target/windup-operator-1.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/building-native-image.
-
-## Testing
-
-By default, Pods in Kubernetes do not have the permission to list other pods. Therefore, we need to create a cluster role, a service account, and a cluster role binding.
-
-    kubectl apply -f k8s_files/windup.clusterrole.yaml
-    kubectl apply -f k8s_files/windup.serviceaccount.yaml
-    kubectl apply -f k8s_files/windup.clusterrolebinding.yaml
-
-Now you can run the `kubectl apply -f k8s_files/windup.crd.yaml` command to register the CRD in the cluster. 
-
-Run the `kubectl apply -f k8s_files/windup.deployment.yaml` command to register the operator.
+1. We can log in the Openshift cluster using `oc login .....`
+2. Move to the `src/main/resources` folder
+3. If you are installing the Operator on a cluster without the `rhamt` namespace , you first should create the namespace with  
+  `oc apply -f windup.namespace.yaml`
+3. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
+  `windup.serviceaccount.yaml`  
+  `windup.role.yaml`  
+  `windup.rolebinding.yaml`  
+  `windup.deployment.yaml`  
+  `windup.crd.yaml`
+3. Now you need to create the CR, with your configuration, to tell the Operator to create the infrastructure.  
+`oc apply -f ../examples/windup.yaml`
 
 
-### Running the example
-Apply the custom resource by running: `kubectl apply -f windup-v4.0.2.yaml` and check the output of 
-`kubectl get pods` command.
+## Github pipeline
 
-```
-> k get pods
-NAME                                        READY   STATUS      RESTARTS   AGE
-meats-pod                               0/1     Completed   0          7m10s
-quarkus-operator-example-554b8f45fc-mcgqn   1/1     Running     0          7m25s
-```
+This project also includes a Github Action that will be executed in every push and pullrequest in order to check that the Operator will deploy the expected objects.
 
-If you check the log in the `meats-pod` you can see how the Operator created and delivered our windup ;-)
-```
-│ __  ____  __  _____   ___  __ ____  ______                                                                                        │
-│  --/ __ \/ / / / _ | / _ \/ //_/ / / / __/                                                                                        │
-│  -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \                                                                                          │
-│ --\___\_\____/_/ |_/_/|_/_/|_|\____/___/                                                                                          │
-│ 2020-05-21 14:17:32,324 INFO  [io.quarkus] (main) windup-maker 1.0-SNAPSHOT (powered by Quarkus 1.4.0.CR1) started in 0.027s.      │
-│ 2020-05-21 14:17:32,324 INFO  [io.quarkus] (main) Profile prod activated.                                                         │
-│ 2020-05-21 14:17:32,324 INFO  [io.quarkus] (main) Installed features: [cdi]                                                       │
-│ Doing The Base                                                                                                                    │
-│ Adding Sauce bbq                                                                                                                  │
-│ Adding Toppings [mozzarella,pepperoni,tuna,mushrooms]                                                                             │
-│ Baking                                                                                                                            │
-│ Baked                                                                                                                             │
-│ Ready For Delivery                                                                                                                │
-│ 2020-05-21 14:17:32,825 INFO  [io.quarkus] (main) windup-maker stopped in 0.001s                                                   │
-│
-```
+This pipeline uses a local Minikube , and overrides the images used for the deployments in order to be able to deploy and run without having the resources constraints, as the operator is mainly concerned about the deployment of the objects.
+
 
