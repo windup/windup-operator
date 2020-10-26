@@ -20,7 +20,7 @@ final class WindupController implements Watcher<WindupResource> {
 
 	    switch (action) {
 	        case ADDED:
-	            log.info(" .... deploying Windup infrastructure ....(" + windupDeployment + ")");
+	            log.info(" .... deploying Windup infrastructure ....");
 	            windupDeployment.deployWindup(resource);
 	            break;
 	        default:

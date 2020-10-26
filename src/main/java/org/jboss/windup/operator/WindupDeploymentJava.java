@@ -18,9 +18,10 @@ import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jboss.logging.Logger;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -31,9 +32,12 @@ import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
+@Log
 public class WindupDeploymentJava {
-  private static final Logger LOG = Logger.getLogger(WindupDeploymentJava.class);
-  public static final String NAMESPACE = "windup";
+
+  @ConfigProperty(name = "namespace", defaultValue = "rhamt")
+  String NAMESPACE;
+
 
   @Inject
   KubernetesClient k8sClient;
@@ -78,7 +82,7 @@ public class WindupDeploymentJava {
           .endPort()
           .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name()))
         .endSpec().build();
-    LOG.info("Created Service for windup");
+    log.info("Created Service for windup");
 
     Service postgreSvc = new ServiceBuilder()
         .withApiVersion("v1")
@@ -96,7 +100,7 @@ public class WindupDeploymentJava {
           .endPort()
           .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name() + "-postgresql"))
         .endSpec().build();
-    LOG.info("Created Service for postgresql");
+    log.info("Created Service for postgresql");
 
     Service amqSvc = new ServiceBuilder()
         .withApiVersion("v1")
@@ -114,7 +118,7 @@ public class WindupDeploymentJava {
           .endPort()
           .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name() + "-amq"))
         .endSpec().build();
-    LOG.info("Created Service for AMQ");
+    log.info("Created Service for AMQ");
 
     return List.of(mtaWebConsoleSvc, postgreSvc, postgreSvc, amqSvc);
   }
@@ -148,7 +152,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
         clusterDomain = clusterDomain.replace("https://console-openshift-console", windupResource.getSpec().getApplication_name());
       }
     } catch (KubernetesClientException exception) {
-      LOG.info("You are probably not on Openshift");
+      log.info("You are probably not on Openshift");
     }
 
     return clusterDomain;
@@ -161,7 +165,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
     // if we are in K8s then cluster domain will be blank
     if (StringUtils.isBlank(hostnameHttp)) {
       hostnameHttp = getClusterDomainOnOpenshift(windupResource);
-      LOG.info("Cluster Domain : " + hostnameHttp);
+      log.info("Cluster Domain : " + hostnameHttp);
     }
 
     //Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
@@ -235,7 +239,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
             .addToRequests("storage", new Quantity(windupResource.getSpec().getVolumeCapacity()))
           .endResources()
         .endSpec().build();
-    LOG.info("Created PVC for postgre");
+    log.info("Created PVC for postgre");
 
     PersistentVolumeClaim mtaPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
@@ -249,7 +253,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
             .addToRequests("storage", new Quantity(windupResource.getSpec().getMta_Volume_Capacity()))
           .endResources()
         .endSpec().build();
-    LOG.info("Created PVC for mta");
+    log.info("Created PVC for mta");
 
     return List.of(postgrPersistentVolumeClaim, mtaPersistentVolumeClaim);
   }
@@ -364,7 +368,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .addNewEnv().withName("SSO_SAML_KEYSTORE_PASSWORD").withValue(windupResource.getSpec().getSso_saml_keystore_password()).endEnv()
                 .addNewEnv().withName("SSO_SECRET").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
                 .addNewEnv().withName("SSO_ENABLE_CORS").withValue(windupResource.getSpec().getSso_enable_cors()).endEnv()
-                .addNewEnv().withName("SSO_SAML_LOGOUT_PAGE").withValue(windupResource.getSpec().getSso_saml_logout_page()).endEnv()
+                .addNewEnv().withName("SSO_SAML_logOUT_PAGE").withValue(windupResource.getSpec().getSso_saml_logout_page()).endEnv()
                 .addNewEnv().withName("SSO_DISABLE_SSL_CERTIFICATE_VALIDATION").withValue(windupResource.getSpec().getSso_disable_ssl_certificate_validation()).endEnv()
                 .addNewEnv().withName("SSO_TRUSTSTORE").withValue(windupResource.getSpec().getSso_truststore()).endEnv()
                 .addNewEnv().withName("SSO_TRUSTSTORE_DIR").withValue("/etc/sso-secret-volume").endEnv()
@@ -385,7 +389,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
             .endSpec()
           .endTemplate()
         .endSpec().build();
-    LOG.info("Created Deployment windup-web");
+    log.info("Created Deployment windup-web");
 
     Deployment deploymentExecutor = new DeploymentBuilder()
         .withNewMetadata()
@@ -462,7 +466,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
             .endSpec()
           .endTemplate()
         .endSpec().build();
-    LOG.info("Created Deployment for executor");
+    log.info("Created Deployment for executor");
 
     Deployment deploymentPostgre = new DeploymentBuilder()
         .withNewMetadata()
@@ -516,7 +520,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
             .endSpec()
           .endTemplate()
         .endSpec().build();
-    LOG.info("Created Deployment for PostgreSQL");
+    log.info("Created Deployment for PostgreSQL");
 
     return List.of(deploymentMTAweb, deploymentExecutor, deploymentPostgre);
   }

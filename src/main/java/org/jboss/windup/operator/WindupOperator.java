@@ -16,8 +16,6 @@ import javax.inject.Inject;
 @ApplicationScoped
 @Log
 public class WindupOperator {
-    Logger logger = Logger.getLogger(WindupOperator.class);
-
     @Inject
     NonNamespaceOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
