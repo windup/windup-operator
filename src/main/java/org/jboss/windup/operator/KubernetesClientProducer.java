@@ -35,7 +35,7 @@ public class KubernetesClientProducer {
 
         KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1beta2", "Windup", WindupResource.class);
 
-        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load("windup.crd.yaml").get();
+        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load(KubernetesClientProducer.class.getResourceAsStream("k8s/def/windup.crd.yaml")).get();
 
         return defaultClient.customResources(windupCRD, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class).inNamespace(NAMESPACE);
 
