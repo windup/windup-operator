@@ -16,7 +16,7 @@ quarkus.container-image.tag=latest
 quarkus.kubernetes.service-type=load-balancer
 quarkus.kubernetes.image-pull-policy=never
 quarkus.container-image.builder=docker
-namespace=rhamt 
+namespace=mta
 ```
 2. Execute the maven command:  
 `mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
@@ -25,7 +25,7 @@ namespace=rhamt
 
 1. We can log in the Openshift cluster using `oc login .....`
 2. Move to the `src/main/resources` folder
-3. If you are installing the Operator on a cluster without the `rhamt` namespace , you first should create the namespace with  
+3. If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
   `oc apply -f windup.namespace.yaml`
 3. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
   `windup.serviceaccount.yaml`  
