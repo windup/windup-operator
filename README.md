@@ -25,7 +25,7 @@ You can use different ways , but SDKMan is very easy
 
 ## Installation
 
-1. We can log in the Openshift cluster using `oc login .....`
+1. We can log in the Openshift cluster using `oc login .....` . You will need a user with cluster-wide permissions to deploy the CRD.
 1. Move to the `src/main/resources` folder
 1. If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
   `oc apply -f windup.namespace.yaml`
@@ -40,6 +40,7 @@ You can use different ways , but SDKMan is very easy
 1. In order to delete the MTA application (web,executor,postgre,volumes, ...) but not the Operator  
 `oc delete -f ../examples/windup.yaml`
 1. In order to totally delete everything except the namespace, execute `script.delete.all.sh`  
+2. NOTE : Do not DELETE a namespace with intentions of creating it again. There are several issues on OCP on deleting a namespace and staying `frozen`
 
 
 ## Github pipeline
@@ -47,5 +48,16 @@ You can use different ways , but SDKMan is very easy
 This project also includes a Github Action (`.github/workflows/e2e-test.yml`) that will be executed in every pullrequest in order to check that the Operator will deploy the expected objects.
 
 This pipeline uses a local Minikube , and overrides the images used for the deployments in order to be able to deploy and run without having the resources constraints, as the operator is mainly concerned about the deployment of the objects.
+
+## Testing
+Project is pushing images to windup3 group on Docker Hub, and the windup.deployment.yaml to deploy the Operator is also considering this image.  
+So, in order to test the operator on your PR review process , or to deploy locally on your cluster, these are the steps you should follow :
+1. Log in your Docker Hub account  
+`docker login -u {user} -p {passwork}`
+1. Build and push the image to your docker hub account  
+`mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.group={your docker id}`
+1. Modify the `windup.deployment.yaml` file to point to your image  
+`- image: docker.io/windup3/windup-operator-native:latest` --> `- image: docker.io/{your docker id}/windup-operator-native:latest`
+
 
 
