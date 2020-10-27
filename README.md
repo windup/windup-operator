@@ -18,6 +18,8 @@ quarkus.kubernetes.image-pull-policy=never
 quarkus.container-image.builder=docker
 namespace=mta
 ```
+1. Install JDK 11  
+You can use different ways , but SDKMan is very easy
 2. Execute the maven command:  
 `mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
 
