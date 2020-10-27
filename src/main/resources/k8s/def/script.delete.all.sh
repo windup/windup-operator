@@ -21,5 +21,3 @@ kubectl delete services -l application=windup-jon -A
 echo "Deleting ingresses application=windup"
 kubectl delete ingresses -l application=windup-jon -A
 
-#echo "Deleting namespaces application=windup"
-#kubectl delete namespaces -l application=windup -A
