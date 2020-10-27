@@ -37,6 +37,9 @@ spec:
                 mta_Volume_Capacity:
                   type: string
                   default: "20G"
+                docker_images_repository:
+                  type: string
+                  default: "docker.io"
                 docker_images_user:
                   type: string
                   default: "windup3"
@@ -216,9 +219,6 @@ spec:
                 executor_mem_limit:
                   type: string
                   default: "4Gi"
-                container_repository:
-                  type: string
-                  default: "docker.io"
                 postgresql_image:
                   type: string
                   default: "postgresql"

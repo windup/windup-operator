@@ -35,8 +35,8 @@ spec:
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
   postgresql_image: centos/postgresql-96-centos7:latest
-  docker_images_user: jonathanvila
-  docker_images_tag: 7.0.0
-  docker_image_web: windup-web-k8s
-  docker_image_executor: windup-web-k8s-messaging-executor
-  container_repository: quay.io
+  docker_images_user: windup3
+  docker_images_tag: latest
+  docker_images_repository: docker.io
+  docker_image_web: windup-web-opensift
+  docker_image_executor: windup-web-openshift-messaging-executor

@@ -27,9 +27,11 @@ import org.jboss.windup.operator.model.WindupResource;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Log
@@ -59,7 +61,7 @@ public class WindupDeploymentJava {
 
     List<Ingress> ingresses = createIngresses(windupResource);
     k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
-    //k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
+    k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
 
   }
 
@@ -168,11 +170,11 @@ private Map<String, String> getLabels(WindupResource windupResource) {
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    //Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
+    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
 
     Ingress ingressWebConsole = createWebConsoleHttpIngress(windupResource, hostnameHttp);
 
-    return List.of(ingressWebConsole); //, ingressWebConsoleHttps);
+    return List.of(ingressWebConsole, ingressWebConsoleHttps);
   }
 
   private Ingress createWebConsoleHttpIngress(WindupResource windupResource, String hostnameHttp) {
@@ -203,7 +205,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   private Ingress createWebConsoleHttpsIngress(WindupResource windupResource, String hostnameHttp) {
     return new IngressBuilder()
                 .withNewMetadata()
-                    .withName(windupResource.getSpec().getApplication_name() + "-https")
+                    .withName("secure-" + windupResource.getSpec().getApplication_name())
                     .withLabels(getLabels(windupResource))
                     .addToAnnotations("description", "Route for application's https service.")
                     .withOwnerReferences(getOwnerReference(windupResource))
@@ -310,7 +312,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLifecycle()
                 .withNewLivenessProbe()
                   .withNewExec()
-        .withCommand(windupResource.getSpec().getWeb_liveness_probe().split(",")) //"/bin/bash", "-c", "/opt/eap/bin/livenessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getWeb_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/eap/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebLivenessInitialDelaySeconds()))
                   .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebLivenessFailureThreshold()))
@@ -319,7 +321,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLivenessProbe()
                 .withNewReadinessProbe()
                   .withNewExec()
-        .withCommand(windupResource.getSpec().getWeb_readiness_probe().split(",")) //"/bin/bash", "-c", "/opt/eap/bin/readinessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getWeb_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/eap/bin/readinessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebReadinessInitialDelaySeconds()))
                   .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebReadinessFailureThreshold()))
@@ -437,7 +439,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLifecycle()
                 .withNewLivenessProbe()
                   .withNewExec()
-        .withCommand(windupResource.getSpec().getExecutor_liveness_probe().split(",")) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
@@ -446,7 +448,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endLivenessProbe()
                 .withNewReadinessProbe()
                   .withNewExec()
-        .withCommand(windupResource.getSpec().getExecutor_readiness_probe().split(",")) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
@@ -527,14 +529,14 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   //@format:on
 
   private String getExecutorContainerImageName(WindupResource windupResource) {
-    return windupResource.getSpec().getContainer_repository() + "/" +
+    return windupResource.getSpec().getDocker_images_repository() + "/" +
            ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
            windupResource.getSpec().getDocker_image_executor() + ":" +
            windupResource.getSpec().getDocker_images_tag();
   }
 
   private String getWebContainerImageName(WindupResource windupResource) {
-    return windupResource.getSpec().getContainer_repository() + "/" +
+    return windupResource.getSpec().getDocker_images_repository() + "/" +
            ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
            windupResource.getSpec().getDocker_image_web() + ":" +
            windupResource.getSpec().getDocker_images_tag();

@@ -9,8 +9,8 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
 ## Building and pushing the Java code manually in native mode
 1. The following command will use the configuration in the `application.properties` file :  
 ```
-quarkus.container-image.registry=docker.io
-quarkus.container-image.group=windup3
+quarkus.container-image.registry=quay.io
+quarkus.container-image.group=windup
 quarkus.container-image.name=${quarkus.application.name}-native
 quarkus.container-image.tag=latest
 quarkus.kubernetes.service-type=load-balancer
@@ -50,14 +50,14 @@ This project also includes a Github Action (`.github/workflows/e2e-test.yml`) th
 This pipeline uses a local Minikube , and overrides the images used for the deployments in order to be able to deploy and run without having the resources constraints, as the operator is mainly concerned about the deployment of the objects.
 
 ## Testing
-Project is pushing images to windup3 group on Docker Hub, and the windup.deployment.yaml to deploy the Operator is also considering this image.  
+Project is pushing images to `windup` group on Quay.io, and the windup.deployment.yaml to deploy the Operator is also considering this image.  
 So, in order to test the operator on your PR review process , or to deploy locally on your cluster, these are the steps you should follow :
 1. Log in your Docker Hub account  
-`docker login -u {user} -p {passwork}`
+`docker login quay.io`
 1. Build and push the image to your docker hub account  
 `mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.group={your docker id}`
 1. Modify the `windup.deployment.yaml` file to point to your image  
-`- image: docker.io/windup3/windup-operator-native:latest` --> `- image: docker.io/{your docker id}/windup-operator-native:latest`
+`- image: quay.io/windup/windup-operator-native:latest` --> `- image: quay.io/{your docker id}/windup-operator-native:latest`
 
 
 

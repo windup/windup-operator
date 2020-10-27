@@ -16,6 +16,7 @@ public class WindupResourceSpec implements KubernetesResource {
     private String hostname_http;
     private String volumeCapacity;
     private String mta_Volume_Capacity;
+    private String docker_images_repository;
     private String docker_images_user;
     private String docker_images_tag;
     private String docker_image_web;
@@ -78,7 +79,6 @@ public class WindupResourceSpec implements KubernetesResource {
     private String executor_mem_limit;
     private String web_cpu_limit;
     private String web_mem_limit;
-    private String container_repository;
     private String web_readiness_probe;
     private String web_liveness_probe;
     private String executor_readiness_probe;
