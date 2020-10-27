@@ -48,17 +48,17 @@ jobs:
 
       - name: List k8s objects on mta namespace
         id: listobjects
-        run: kubectl get all -n mta -o name
+        run: kubectl get all,ing,pvc -n mta -o name
         shell: bash
 
       - name: Get and store number of k8s objects on mta namespace
         id: getobjects
-        run: echo "::set-output name=value::$(kubectl get all -n mta -o name | wc -l)"
+        run: echo "::set-output name=value::$(kubectl get all,ing,pvc -n mta -o name | wc -l)"
         shell: bash
 
       - name: Operator Test
         uses: therussiankid92/gat@v1.3
         with:
           assertion: should.equal
-          expected: 14
+          expected: 17
           actual: ${{steps.getobjects.outputs.value}}
