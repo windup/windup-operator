@@ -35,7 +35,7 @@ import java.util.Map;
 @Log
 public class WindupDeploymentJava {
 
-  @ConfigProperty(name = "namespace", defaultValue = "rhamt")
+  @ConfigProperty(name = "namespace", defaultValue = "mta")
   String NAMESPACE;
 
 

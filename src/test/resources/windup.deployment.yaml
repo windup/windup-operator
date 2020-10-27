@@ -17,9 +17,9 @@ spec:
     spec:
       serviceAccountName: windup-operator
       containers:
-        - image: docker.io/windup3/windup-operator-native:latest
+        - image: windup3/windup-operator-native:latest
           name: windup-operator
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
           - name: WATCH_NAMESPACE
             valueFrom:

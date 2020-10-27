@@ -20,7 +20,7 @@ import java.io.InputStream;
 
 @Log
 public class KubernetesClientProducer {
-    @ConfigProperty(name = "namespace", defaultValue = "rhamt")
+    @ConfigProperty(name = "namespace", defaultValue = "mta")
     String NAMESPACE;
 
     @Produces
@@ -35,9 +35,12 @@ public class KubernetesClientProducer {
     NonNamespaceOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>>
     makeWindupCustomResource(KubernetesClient defaultClient) {
 
+        log.info("Registering custom kind");
         KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1beta2", "Windup", WindupResource.class);
 
+        log.info("Creating windup.crd.yaml stream");
         InputStream fileStream = KubernetesClientProducer.class.getResourceAsStream("/k8s/def/windup.crd.yaml");
+
         log.info("Loading windup.crd.yaml");
         CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load(fileStream).get();
         log.info("Loaded windup.crd.yaml");

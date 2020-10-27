@@ -1,7 +1,7 @@
 apiVersion: windup.jboss.org/v1
 kind: Windup
 metadata:
-  namespace: rhamt
+  namespace: mta
   name: windups
   labels:
     application: windup
@@ -34,12 +34,12 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
-  docker_images_user: jboss
+  docker_images_user: ""
   docker_images_tag: latest
   container_repository: docker.io
-  docker_image_web: wildfly
-  docker_image_executor: wildfly
-  postgresql_image: widlfly:latest
+  docker_image_web: httpd
+  docker_image_executor: httpd
+  postgresql_image: httpd
   web_liveness_probe: ""
   web_readiness_probe: ""
   executor_liveness_probe: ""
