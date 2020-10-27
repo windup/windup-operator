@@ -24,22 +24,25 @@ namespace=mta
 ## Installation
 
 1. We can log in the Openshift cluster using `oc login .....`
-2. Move to the `src/main/resources` folder
-3. If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
+1. Move to the `src/main/resources` folder
+1. If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
   `oc apply -f windup.namespace.yaml`
-3. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
+1. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
   `windup.serviceaccount.yaml`  
   `windup.role.yaml`  
   `windup.rolebinding.yaml`  
   `windup.deployment.yaml`  
   `windup.crd.yaml`
-3. Now you need to create the CR, with your configuration, to tell the Operator to create the infrastructure.  
+1. Now you need to create the CR, with your configuration, to tell the Operator to create the infrastructure.  
 `oc apply -f ../examples/windup.yaml`
+1. In order to delete the MTA application (web,executor,postgre,volumes, ...) but not the Operator  
+`oc delete -f ../examples/windup.yaml`
+1. In order to totally delete everything except the namespace, execute `script.delete.all.sh`  
 
 
 ## Github pipeline
 
-This project also includes a Github Action that will be executed in every push and pullrequest in order to check that the Operator will deploy the expected objects.
+This project also includes a Github Action (`.github/workflows/e2e-test.yml`) that will be executed in every pullrequest in order to check that the Operator will deploy the expected objects.
 
 This pipeline uses a local Minikube , and overrides the images used for the deployments in order to be able to deploy and run without having the resources constraints, as the operator is mainly concerned about the deployment of the objects.
 
