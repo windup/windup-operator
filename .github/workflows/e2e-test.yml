@@ -47,7 +47,7 @@ jobs:
           time: '30s'
 
       - name: List k8s objects on mta namespace
-        id: getobjects
+        id: listobjects
         run: kubectl get all -n mta -o name
         shell: bash
 
