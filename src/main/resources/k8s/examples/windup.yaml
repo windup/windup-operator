@@ -38,5 +38,5 @@ spec:
   docker_images_user: windup3
   docker_images_tag: latest
   docker_images_repository: docker.io
-  docker_image_web: windup-web-opensift
+  docker_image_web: windup-web-openshift
   docker_image_executor: windup-web-openshift-messaging-executor

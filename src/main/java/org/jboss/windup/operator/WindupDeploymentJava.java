@@ -45,6 +45,8 @@ public class WindupDeploymentJava {
   KubernetesClient k8sClient;
 
   public void deployWindup(WindupResource windupResource) {
+    // We are adding one by one instead of of createOrReplace(volumes.toArray(new Volume[2])) 
+    // because in that case we receive an error : Too Many Items to Create
     List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
     k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(0));
     k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(1));
@@ -151,7 +153,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   
       if (configMap != null) {
         clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
-        clusterDomain = clusterDomain.replace("https://console-openshift-console", windupResource.getSpec().getApplication_name());
+        clusterDomain = clusterDomain.replace("https://console-openshift-console", "");
       }
     } catch (KubernetesClientException exception) {
       log.info("You are probably not on Openshift");
@@ -174,7 +176,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
 
     Ingress ingressWebConsole = createWebConsoleHttpIngress(windupResource, hostnameHttp);
 
-    return List.of(ingressWebConsole, ingressWebConsoleHttps);
+    return List.of(ingressWebConsoleHttps);
   }
 
   private Ingress createWebConsoleHttpIngress(WindupResource windupResource, String hostnameHttp) {
@@ -188,7 +190,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
-                    .withHost(hostnameHttp)
+                    .withHost(windupResource.getSpec().getApplication_name() + hostnameHttp)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
@@ -203,17 +205,20 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   }
 
   private Ingress createWebConsoleHttpsIngress(WindupResource windupResource, String hostnameHttp) {
+    String ingressName = "secure-" + windupResource.getSpec().getApplication_name();
+    String hostHTTPS = ingressName + hostnameHttp;
     return new IngressBuilder()
                 .withNewMetadata()
-                    .withName("secure-" + windupResource.getSpec().getApplication_name())
+                    .withName(ingressName)
                     .withLabels(getLabels(windupResource))
                     .addToAnnotations("description", "Route for application's https service.")
                     .withOwnerReferences(getOwnerReference(windupResource))
                 .endMetadata()
                 .withNewSpec()
-                  .addToTls(new IngressTLSBuilder().withHosts(hostnameHttp).build())
+                  .addToTls(new IngressTLSBuilder()
+                    .withHosts(hostHTTPS).build())
                   .addNewRule()
-                      .withHost(hostnameHttp)
+                      .withHost(hostHTTPS)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
