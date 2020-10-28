@@ -17,7 +17,7 @@ spec:
     spec:
       serviceAccountName: windup-operator
       containers:
-        - image: quary.io/windup/windup-operator-native:latest
+        - image: quay.io/windup/windup-operator-native:latest
           name: windup-operator
           imagePullPolicy: IfNotPresent
           env:
