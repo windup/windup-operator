@@ -176,7 +176,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
 
     Ingress ingressWebConsole = createWebConsoleHttpIngress(windupResource, hostnameHttp);
 
-    return List.of(ingressWebConsoleHttps);
+    return List.of(ingressWebConsoleHttps, ingressWebConsole);
   }
 
   private Ingress createWebConsoleHttpIngress(WindupResource windupResource, String hostnameHttp) {
