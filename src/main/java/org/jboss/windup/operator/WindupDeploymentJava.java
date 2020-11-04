@@ -18,11 +18,15 @@ import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
+import org.jboss.windup.operator.model.WindupResourceDoneable;
+import org.jboss.windup.operator.model.WindupResourceList;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -40,32 +44,44 @@ public class WindupDeploymentJava {
   @ConfigProperty(name = "namespace", defaultValue = "mta")
   String NAMESPACE;
 
-
+  @Inject
+  MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+  
   @Inject
   KubernetesClient k8sClient;
 
-  public void deployWindup(WindupResource windupResource) {
+  public void deploy(WindupResource windupResource) {
     // We are adding one by one instead of of createOrReplace(volumes.toArray(new Volume[2])) 
     // because in that case we receive an error : Too Many Items to Create
-    List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
-    k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(0));
-    k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(1));
+    if (windupResource.getStatus().getConditions() == null) {
+      windupResource.getStatus().getConditions().clear();
+      windupResource.getStatus().getOrAddConditionByType("Deploy").setStatus(Boolean.TRUE.toString());
+      windupResource.getStatus().getOrAddConditionByType("Ready").setStatus(Boolean.FALSE.toString());
+      crClient.inNamespace(NAMESPACE).updateStatus(windupResource);
 
-    List<Deployment> deployments = createDeployment(windupResource);
-    k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(0));
-    k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(1));
-    k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(2));
+      List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
+      k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(0));
+      k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(1));
 
-    List<Service> services = createServices(windupResource);
-    k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(0));
-    k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(1));
-    k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(2));
+      List<Deployment> deployments = createDeployment(windupResource);
+      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(0));
+      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(1));
+      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(2));
 
-    List<Ingress> ingresses = createIngresses(windupResource);
-    k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
-    k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
+      List<Service> services = createServices(windupResource);
+      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(0));
+      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(1));
+      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(2));
 
+      List<Ingress> ingresses = createIngresses(windupResource);
+      k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
+      k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
+    } else {
+      log.info("Trying to add an already existing Windup CR");
+    }
   }
+
+
 
   // @format:off
   private List<Service> createServices(WindupResource windupResource) {
