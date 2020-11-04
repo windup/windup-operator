@@ -45,7 +45,7 @@ spec:
                   default: "windup3"
                 docker_images_tag:
                   type: string
-                  default: "latest"
+                  default: "stable"
                 docker_image_web:
                   type: string
                   default: "windup-web-openshift"
