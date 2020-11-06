@@ -6,6 +6,8 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.windup.operator.controller.WindupDeploymentController;
+import org.jboss.windup.operator.controller.WindupController;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
@@ -37,7 +39,7 @@ public class WindupOperator {
 
         log.info("Adding Windup watcher ....");
         crClient.watch(windupController);
-        
+
         log.info("Adding Windup Deployments watcher ....");
         k8Client.apps().deployments().inNamespace(namespace).watch(windupDeploymentController);
     }

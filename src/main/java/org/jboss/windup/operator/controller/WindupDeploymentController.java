@@ -1,4 +1,4 @@
-package org.jboss.windup.operator;
+package org.jboss.windup.operator.controller;
 
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.apps.Deployment;

@@ -1,4 +1,4 @@
-package org.jboss.windup.operator;
+package org.jboss.windup.operator.controller;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -10,13 +10,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
+import org.jboss.windup.operator.util.WindupDeployment;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @Log
 @ApplicationScoped
-final class WindupController implements Watcher<WindupResource> {
+public class WindupController implements Watcher<WindupResource> {
 	@Inject
 	MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 

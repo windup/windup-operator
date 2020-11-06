@@ -1,4 +1,4 @@
-package org.jboss.windup.operator;
+package org.jboss.windup.operator.util;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -28,8 +28,6 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
-import javax.inject.Inject;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +35,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Log
-
 public class WindupDeployment {
 
   private static final String SERVICE_ACCOUNT = "windup-operator";
@@ -62,7 +59,7 @@ public class WindupDeployment {
   }
 
   public void deploy() {
-    // We are adding one by one instead of of createOrReplace(volumes.toArray(new Volume[2])) 
+    // We are adding one by one instead of createOrReplace(volumes.toArray(new Volume[2])) 
     // because in that case we receive an error : Too Many Items to Create
     initCRStatusOnDeployment();
 
@@ -90,7 +87,7 @@ public class WindupDeployment {
 
   private void initCRStatusOnDeployment() {
     windupResource.initStatus();
-    windupResource.setStatusDeploy(true); 
+    windupResource.setStatusDeploy(true);
     windupResource.setReady(false);
 
     log.info("updating status : " + windupResource.getMetadata().getName() + " crc " + crClient);
