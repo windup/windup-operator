@@ -34,7 +34,7 @@ rules:
   - update
   - watch
 - apiGroups:
-    - networking.k8s.io
+  - networking.k8s.io
   resources:
   - ingresses
   verbs:
@@ -46,7 +46,7 @@ rules:
   - update
   - watch
 - apiGroups:
-    - route.openshift.io
+  - route.openshift.io
   resources:
   - routes
   verbs:
@@ -58,12 +58,15 @@ rules:
   - update
   - watch
 - apiGroups:
-    - windup.jboss.org
+  - windup.jboss.org
   resources:
-    - windups
+  - windups
+  - windups/status
   verbs:
-    - list
-    - watch
-    - get
-
+  - list
+  - watch
+  - get
+  - update 
+  - delete 
+  - patch
 

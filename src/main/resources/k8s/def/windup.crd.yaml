@@ -18,6 +18,8 @@ spec:
     - name: v1
       served: true
       storage: true
+      subresources:
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -249,6 +251,27 @@ spec:
                   - docker_images_user
                   - docker_images_tag
                   - max_post_size
+            status:
+              type: object
+              properties:
+                conditions:
+                  items:
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - status
+                    - type
+                    type: object
+                  type: array
           required:
           - spec
           - apiVersion

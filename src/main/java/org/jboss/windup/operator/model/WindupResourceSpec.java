@@ -11,6 +11,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WindupResourceSpec implements KubernetesResource {
+    private static final long serialVersionUID = 1L;
+
     private String version;
     private String application_name;
     private String hostname_http;

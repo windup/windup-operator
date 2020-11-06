@@ -21,13 +21,13 @@ import java.io.InputStream;
 @Log
 public class KubernetesClientProducer {
     @ConfigProperty(name = "namespace", defaultValue = "mta")
-    String NAMESPACE;
+    String namespace;
 
     @Produces
     @Singleton
     KubernetesClient makeDefaultClient() {
         log.info("Creating K8s Client instance");
-        return new DefaultKubernetesClient().inNamespace(NAMESPACE);
+        return new DefaultKubernetesClient().inNamespace(namespace);
     }
 
     @Produces
@@ -35,7 +35,7 @@ public class KubernetesClientProducer {
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>>
     makeWindupCustomResource(KubernetesClient defaultClient, CustomResourceDefinitionContext crdContext) {
         log.info("Registering custom kind");
-        KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1beta2", "Windup", WindupResource.class);
+        KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1", "Windup", WindupResource.class);
 
         return defaultClient.customResources(crdContext, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class);
     }

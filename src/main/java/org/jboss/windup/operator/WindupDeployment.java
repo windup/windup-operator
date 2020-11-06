@@ -28,7 +28,6 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import java.util.Arrays;
@@ -37,62 +36,77 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@ApplicationScoped
 @Log
-public class WindupDeploymentJava {
+
+public class WindupDeployment {
+
+  private static final String SERVICE_ACCOUNT = "windup-operator";
 
   @ConfigProperty(name = "namespace", defaultValue = "mta")
-  String NAMESPACE;
+  String namespace;
 
-  @Inject
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
-  
-  @Inject
+
   KubernetesClient k8sClient;
 
-  public void deploy(WindupResource windupResource) {
-    // We are adding one by one instead of of createOrReplace(volumes.toArray(new Volume[2])) 
-    // because in that case we receive an error : Too Many Items to Create
-    if (windupResource.getStatus().getConditions() == null) {
-      windupResource.getStatus().getConditions().clear();
-      windupResource.getStatus().getOrAddConditionByType("Deploy").setStatus(Boolean.TRUE.toString());
-      windupResource.getStatus().getOrAddConditionByType("Ready").setStatus(Boolean.FALSE.toString());
-      crClient.inNamespace(NAMESPACE).updateStatus(windupResource);
+  private WindupResource windupResource;
 
-      List<PersistentVolumeClaim> volumes = createVolumes(windupResource);
-      k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(0));
-      k8sClient.persistentVolumeClaims().inNamespace(NAMESPACE).createOrReplace(volumes.get(1));
+  private String executorDeployName;
 
-      List<Deployment> deployments = createDeployment(windupResource);
-      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(0));
-      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(1));
-      k8sClient.apps().deployments().inNamespace(NAMESPACE).createOrReplace(deployments.get(2));
+  private String postgreDeployName;
 
-      List<Service> services = createServices(windupResource);
-      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(0));
-      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(1));
-      k8sClient.services().inNamespace(NAMESPACE).createOrReplace(services.get(2));
-
-      List<Ingress> ingresses = createIngresses(windupResource);
-      k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(0));
-      k8sClient.network().ingress().inNamespace(NAMESPACE).createOrReplace(ingresses.get(1));
-    } else {
-      log.info("Trying to add an already existing Windup CR");
-    }
+  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, KubernetesClient k8sClient) {
+    this.windupResource = windupResource;
+    this.crClient = crClient;
+    this.k8sClient = k8sClient;
   }
 
+  public void deploy() {
+    // We are adding one by one instead of of createOrReplace(volumes.toArray(new Volume[2])) 
+    // because in that case we receive an error : Too Many Items to Create
+    initCRStatusOnDeployment();
 
+    postgreDeployName = windupResource.getSpec().getApplication_name() + "-postgresql";
+    executorDeployName = windupResource.getSpec().getApplication_name() + "-executor";
+
+    List<PersistentVolumeClaim> volumes = createVolumes();
+    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
+    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(1));
+
+    List<Deployment> deployments = createDeployment();
+    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(0));
+    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(1));
+    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(2));
+
+    List<Service> services = createServices();
+    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(0));
+    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(1));
+    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(2));
+
+    List<Ingress> ingresses = createIngresses();
+    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(0));
+    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(1));
+  }
+
+  private void initCRStatusOnDeployment() {
+    windupResource.initStatus();
+    windupResource.setStatusDeploy(true); 
+    windupResource.setReady(false);
+
+    log.info("updating status : " + windupResource.getMetadata().getName() + " crc " + crClient);
+    crClient.inNamespace(namespace).updateStatus(windupResource);
+  }
 
   // @format:off
-  private List<Service> createServices(WindupResource windupResource) {
+  private List<Service> createServices() {
     Service mtaWebConsoleSvc = new ServiceBuilder()
         .withApiVersion("v1")
         .withNewMetadata()
           .withName(windupResource.getSpec().getApplication_name())
-          .withLabels(getLabels(windupResource))
+          .withLabels(getLabels())
           .addToAnnotations("description", "The web server's http port")
           .addToAnnotations("service.alpha.openshift.io/dependencies","[{\"name\": \"" + windupResource.getSpec().getApplication_name()+ "-postgresql\", \"kind\": \"Service\"}]")
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .addNewPort()
@@ -107,10 +121,10 @@ public class WindupDeploymentJava {
     Service postgreSvc = new ServiceBuilder()
         .withApiVersion("v1")
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-postgresql")
-          .withLabels(getLabels(windupResource))
+          .withName(postgreDeployName)
+          .withLabels(getLabels())
           .addToAnnotations("description", "The database server's port.")
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .addNewPort()
@@ -118,7 +132,7 @@ public class WindupDeploymentJava {
             .withPort(5432)
             .withTargetPort(new IntOrString(5432))
           .endPort()
-          .withSelector(Collections.singletonMap("deploymentConfig", windupResource.getSpec().getApplication_name() + "-postgresql"))
+          .withSelector(Collections.singletonMap("deploymentConfig", postgreDeployName))
         .endSpec().build();
     log.info("Created Service for postgresql");
 
@@ -126,9 +140,9 @@ public class WindupDeploymentJava {
         .withApiVersion("v1")
         .withNewMetadata()
           .withName(windupResource.getSpec().getApplication_name() + "-amq")
-          .withLabels(getLabels(windupResource))
+          .withLabels(getLabels())
           .addToAnnotations("description", "MTA Master AMQ port.")
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .addNewPort()
@@ -143,7 +157,7 @@ public class WindupDeploymentJava {
     return List.of(mtaWebConsoleSvc, postgreSvc, postgreSvc, amqSvc);
   }
 
-  private OwnerReference getOwnerReference(WindupResource windupResource) {
+  private OwnerReference getOwnerReference() {
     return new OwnerReferenceBuilder()
           .withController(true)
           .withKind(windupResource.getKind())
@@ -153,7 +167,7 @@ public class WindupDeploymentJava {
         .build();
 }
 
-private Map<String, String> getLabels(WindupResource windupResource) {
+private Map<String, String> getLabels() {
     return Map.of(
         "application", windupResource.getSpec().getApplication_name(),
         "app", windupResource.getSpec().getApplication_name(),
@@ -161,12 +175,11 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   }
 
   // Checking the cluster domain on Openshift
-  private String getClusterDomainOnOpenshift(WindupResource windupResource) {
+  private String getClusterDomainOnOpenshift() {
     String clusterDomain = "";
     try {
-      ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public")
-          .get();
-  
+      ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public").get();
+
       if (configMap != null) {
         clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
         clusterDomain = clusterDomain.replace("https://console-openshift-console", "");
@@ -178,31 +191,31 @@ private Map<String, String> getLabels(WindupResource windupResource) {
     return clusterDomain;
   }
 
-  private List<Ingress> createIngresses(WindupResource windupResource) {
+  private List<Ingress> createIngresses() {
     String hostnameHttp = windupResource.getSpec().getHostname_http();
 
     // if the user doesn't provide hostname we'll try to discover it on Openshift
     // if we are in K8s then cluster domain will be blank
     if (StringUtils.isBlank(hostnameHttp)) {
-      hostnameHttp = getClusterDomainOnOpenshift(windupResource);
+      hostnameHttp = getClusterDomainOnOpenshift();
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(windupResource, hostnameHttp);
+    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(hostnameHttp);
 
-    Ingress ingressWebConsole = createWebConsoleHttpIngress(windupResource, hostnameHttp);
+    Ingress ingressWebConsole = createWebConsoleHttpIngress(hostnameHttp);
 
     return List.of(ingressWebConsoleHttps, ingressWebConsole);
   }
 
-  private Ingress createWebConsoleHttpIngress(WindupResource windupResource, String hostnameHttp) {
+  private Ingress createWebConsoleHttpIngress(String hostnameHttp) {
     return new IngressBuilder()
                 .withNewMetadata()
                   .withName(windupResource.getSpec().getApplication_name())
-                  .withLabels(getLabels(windupResource))
+                  .withLabels(getLabels())
                   .addToAnnotations("description", "Route for application's http service.")
                   .addToAnnotations("console.alpha.openshift.io/overview-app-route", "true")
-                  .withOwnerReferences(getOwnerReference(windupResource))
+                  .withOwnerReferences(getOwnerReference())
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
@@ -220,41 +233,26 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .endSpec().build();
   }
 
-  private Ingress createWebConsoleHttpsIngress(WindupResource windupResource, String hostnameHttp) {
+  private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
     String ingressName = "secure-" + windupResource.getSpec().getApplication_name();
     String hostHTTPS = ingressName + hostnameHttp;
-    return new IngressBuilder()
-                .withNewMetadata()
-                    .withName(ingressName)
-                    .withLabels(getLabels(windupResource))
-                    .addToAnnotations("description", "Route for application's https service.")
-                    .withOwnerReferences(getOwnerReference(windupResource))
-                .endMetadata()
-                .withNewSpec()
-                  .addToTls(new IngressTLSBuilder()
-                    .withHosts(hostHTTPS).build())
-                  .addNewRule()
-                      .withHost(hostHTTPS)
-                    .withNewHttp()
-                      .addNewPath()
-                        .withPath("/")
-                        .withNewBackend()
-                          .withServiceName(windupResource.getSpec().getApplication_name())
-                          .withServicePort(new IntOrString(8080))
-                        .endBackend()
-                      .endPath()
-                    .endHttp()
-                  .endRule()
-                .endSpec()
-              .build();
+
+    // We will use the same HTTP ingress but we'll add what's needed for HTTPS
+    Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
+    ingress.getMetadata().setName(ingressName);
+    ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
+    ingress.getSpec().setTls(Collections.singletonList(new IngressTLSBuilder().withHosts(hostHTTPS).build()));
+    ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
+
+    return ingress;
   }
 
-  private List<PersistentVolumeClaim> createVolumes(WindupResource windupResource) {
+  private List<PersistentVolumeClaim> createVolumes() {
     PersistentVolumeClaim postgrPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
           .withName(windupResource.getSpec().getApplication_name() + "-postgresql-claim")
-          .withLabels(getLabels(windupResource))
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withLabels(getLabels())
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withAccessModes("ReadWriteOnce")
@@ -267,8 +265,8 @@ private Map<String, String> getLabels(WindupResource windupResource) {
     PersistentVolumeClaim mtaPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
           .withName(windupResource.getSpec().getApplication_name() + "-mta-web-claim")
-          .withLabels(getLabels(windupResource))
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withLabels(getLabels())
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withAccessModes("ReadWriteOnce")
@@ -281,12 +279,12 @@ private Map<String, String> getLabels(WindupResource windupResource) {
     return List.of(postgrPersistentVolumeClaim, mtaPersistentVolumeClaim);
   }
 
-  private List<Deployment> createDeployment(WindupResource windupResource) {
+  private List<Deployment> createDeployment() {
     Deployment deploymentMTAweb = new DeploymentBuilder()
         .withNewMetadata()
           .withName(windupResource.getSpec().getApplication_name())
-          .withLabels(getLabels(windupResource))
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withLabels(getLabels())
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withReplicas(1)
@@ -298,15 +296,15 @@ private Map<String, String> getLabels(WindupResource windupResource) {
           .endStrategy()
           .withNewTemplate()
             .withNewMetadata()
-              .withLabels(getLabels(windupResource))
+              .withLabels(getLabels())
               .addToLabels("deploymentConfig", windupResource.getSpec().getApplication_name())
               .withName(windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount("windup-operator").withTerminationGracePeriodSeconds(75L)
+              .withServiceAccount(SERVICE_ACCOUNT).withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
                 .withName(windupResource.getSpec().getApplication_name())
-                .withImage(getWebContainerImageName(windupResource))
+                .withImage(getContainerImageName( windupResource.getSpec().getDocker_image_web()))
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getWeb_cpu_request())))
@@ -364,7 +362,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .addNewEnv().withName("DB_MAX_POOL_SIZE").withValue(windupResource.getSpec().getDb_max_pool_size()).endEnv()
                 .addNewEnv().withName("DB_TX_ISOLATION").withValue(windupResource.getSpec().getDb_tx_isolation()).endEnv()
                 .addNewEnv().withName("OPENSHIFT_KUBE_PING_LABELS").withValue("application=" + windupResource.getSpec().getApplication_name()).endEnv()
-                .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withValue(NAMESPACE).endEnv()
+                .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withValue(namespace).endEnv()
                 .addNewEnv().withName("HTTPS_KEYSTORE_DIR").withValue("/etc/eap-secret-volume").endEnv()
                 .addNewEnv().withName("MQ_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv().addNewEnv().withName("MQ_QUEUES").withValue(windupResource.getSpec().getMq_queues()).endEnv()
                 .addNewEnv().withName("MQ_TOPICS").withValue(windupResource.getSpec().getMq_topics()).endEnv()
@@ -375,8 +373,8 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                 .addNewEnv().withName("JGROUPS_ENCRYPT_PASSWORD").withValue(windupResource.getSpec().getJgroups_encrypt_password()).endEnv()
                 .addNewEnv().withName("JGROUPS_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
                 .addNewEnv().withName("AUTO_DEPLOY_EXPLODED").withValue(windupResource.getSpec().getAuto_deploy_exploded()).endEnv()
-                .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(windupResource.getSpec().getApplication_name() + "-postgresql").endEnv()
-                .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(windupResource.getSpec().getApplication_name() + "-postgresql").endEnv()
+                .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(postgreDeployName).endEnv()
+                .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(postgreDeployName).endEnv()
                 .addNewEnv().withName("SSO_URL").withValue(windupResource.getSpec().getSso_url()).endEnv()
                 .addNewEnv().withName("SSO_SERVICE_URL").withValue(windupResource.getSpec().getSso_service_url()).endEnv()
                 .addNewEnv().withName("SSO_REALM").withValue(windupResource.getSpec().getSso_realm()).endEnv()
@@ -416,30 +414,30 @@ private Map<String, String> getLabels(WindupResource windupResource) {
 
     Deployment deploymentExecutor = new DeploymentBuilder()
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-executor")
-          .withLabels(getLabels(windupResource))
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withName(executorDeployName)
+          .withLabels(getLabels())
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withReplicas(1)
           .withNewSelector()
-            .addToMatchLabels("deploymentConfig", windupResource.getSpec().getApplication_name() + "-executor")
+            .addToMatchLabels("deploymentConfig", executorDeployName)
           .endSelector()
           .withNewStrategy()
             .withType("Recreate")
           .endStrategy()
           .withNewTemplate()
             .withNewMetadata()
-              .addToLabels("deploymentConfig", windupResource.getSpec().getApplication_name() + "-executor")
-              .addToLabels("application", windupResource.getSpec().getApplication_name() + "-executor")
-              .withName(windupResource.getSpec().getApplication_name() + "-executor")
+              .addToLabels("deploymentConfig", executorDeployName)
+              .addToLabels("application", executorDeployName)
+              .withName(executorDeployName)
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount("windup-operator")
+              .withServiceAccount(SERVICE_ACCOUNT)
               .withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
-                .withName(windupResource.getSpec().getApplication_name() + "-executor")
-                .withImage(getExecutorContainerImageName(windupResource))
+                .withName(executorDeployName)
+                .withImage(getContainerImageName(windupResource.getSpec().getDocker_image_executor()))
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getExecutor_cpu_request())))
@@ -493,26 +491,26 @@ private Map<String, String> getLabels(WindupResource windupResource) {
 
     Deployment deploymentPostgre = new DeploymentBuilder()
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-postgresql")
+          .withName(postgreDeployName)
           .addToLabels("application", windupResource.getSpec().getApplication_name())
-          .withOwnerReferences(getOwnerReference(windupResource))
+          .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withReplicas(1)
           .withNewSelector()
-            .addToMatchLabels("deploymentConfig", windupResource.getSpec().getApplication_name() + "-postgresql")
+            .addToMatchLabels("deploymentConfig", postgreDeployName)
           .endSelector()
           .withNewStrategy()
             .withType("Recreate")
           .endStrategy()
           .withNewTemplate()
             .withNewMetadata()
-              .addToLabels("deploymentConfig", windupResource.getSpec().getApplication_name() + "-postgresql")
-              .addToLabels("application", windupResource.getSpec().getApplication_name() + "-postgresql")
+              .addToLabels("deploymentConfig", postgreDeployName)
+              .addToLabels("application", postgreDeployName)
               .withName(windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount("windup-operator")
+              .withServiceAccount(SERVICE_ACCOUNT)
               .withTerminationGracePeriodSeconds(60L)
               .addToVolumes(new VolumeBuilder()
                   .withName(windupResource.getSpec().getApplication_name() + "-postgresql-pvol")
@@ -520,7 +518,7 @@ private Map<String, String> getLabels(WindupResource windupResource) {
                     .withClaimName(windupResource.getSpec().getApplication_name() + "-postgresql-claim")
                   .endPersistentVolumeClaim().build())
               .addNewContainer()
-                .withName(windupResource.getSpec().getApplication_name() + "-postgresql")
+                .withName(postgreDeployName)
                 .withImage(windupResource.getSpec().getPostgresql_image())
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
@@ -549,19 +547,14 @@ private Map<String, String> getLabels(WindupResource windupResource) {
   }
   //@format:on
 
-  private String getExecutorContainerImageName(WindupResource windupResource) {
+  private String getContainerImageName(String containerImage) {
     return windupResource.getSpec().getDocker_images_repository() + "/" +
            ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
-           windupResource.getSpec().getDocker_image_executor() + ":" +
+           containerImage + ":" +
            windupResource.getSpec().getDocker_images_tag();
   }
 
-  private String getWebContainerImageName(WindupResource windupResource) {
-    return windupResource.getSpec().getDocker_images_repository() + "/" +
-           ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
-           windupResource.getSpec().getDocker_image_web() + ":" +
-           windupResource.getSpec().getDocker_images_tag();
-  }
+
 
 
 }
