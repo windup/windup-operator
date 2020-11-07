@@ -59,5 +59,11 @@ So, in order to test the operator on your PR review process , or to deploy local
 1. Modify the `windup.deployment.yaml` file to point to your image  
 `- image: quay.io/windup/windup-operator-native:latest` --> `- image: quay.io/{your docker id}/windup-operator-native:latest`
 
+## Local testing
+In order to test the operator with a local cluster ( minikube / Kind ) there's a bash script on test/resources/local-test.sh  
+It will use the current local cluster running and the current context  
+It's configured to use Kind, but it also includes instructions in order to use minikube  
+
+
 
 
