@@ -37,9 +37,10 @@ import java.util.stream.Collectors;
 @Log
 public class WindupDeployment {
 
-  private static final String SERVICE_ACCOUNT = "windup-operator";
+  @ConfigProperty(name = "operator.serviceaccount", defaultValue = "windup-operator")
+  String serviceAccount;
 
-  @ConfigProperty(name = "namespace", defaultValue = "mta")
+  @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
   String namespace;
 
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
@@ -48,23 +49,35 @@ public class WindupDeployment {
 
   private WindupResource windupResource;
 
-  private String executorDeployName;
-
-  private String postgreDeployName;
+  private String deployment_executor;
+  private String deployment_postgre;
+  private String volume_postgresql_claim;
+  private String volume_mtaweb_claim;
+  private String volume_postgresql;
+  private String volume_executor;
+  private String volume_mtaweb;
+  private String volume_mtaweb_data;
 
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, KubernetesClient k8sClient) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
+
+    // Init names of objects
+    volume_postgresql_claim = windupResource.getSpec().getApplication_name() + "-postgresql-claim";
+    deployment_postgre = windupResource.getSpec().getApplication_name() + "-postgresql";
+    deployment_executor = windupResource.getSpec().getApplication_name() + "-executor";
+    volume_mtaweb_claim = windupResource.getSpec().getApplication_name() + "-mta-web-claim";
+    volume_postgresql = windupResource.getSpec().getApplication_name() + "-postgresql-pvol";
+    volume_executor = windupResource.getSpec().getApplication_name() + "-mta-web-executor-volume";
+    volume_mtaweb = windupResource.getSpec().getApplication_name() + "-mta-web-pvol";
+    volume_mtaweb_data = windupResource.getSpec().getApplication_name() + "-mta-web-pvol-data";
   }
 
   public void deploy() {
     // We are adding one by one instead of createOrReplace(volumes.toArray(new Volume[2])) 
     // because in that case we receive an error : Too Many Items to Create
     initCRStatusOnDeployment();
-
-    postgreDeployName = windupResource.getSpec().getApplication_name() + "-postgresql";
-    executorDeployName = windupResource.getSpec().getApplication_name() + "-executor";
 
     List<PersistentVolumeClaim> volumes = createVolumes();
     k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
@@ -118,7 +131,7 @@ public class WindupDeployment {
     Service postgreSvc = new ServiceBuilder()
         .withApiVersion("v1")
         .withNewMetadata()
-          .withName(postgreDeployName)
+          .withName(deployment_postgre)
           .withLabels(getLabels())
           .addToAnnotations("description", "The database server's port.")
           .withOwnerReferences(getOwnerReference())
@@ -129,7 +142,7 @@ public class WindupDeployment {
             .withPort(5432)
             .withTargetPort(new IntOrString(5432))
           .endPort()
-          .withSelector(Collections.singletonMap("deploymentConfig", postgreDeployName))
+          .withSelector(Collections.singletonMap("deploymentConfig", deployment_postgre))
         .endSpec().build();
     log.info("Created Service for postgresql");
 
@@ -247,7 +260,7 @@ private Map<String, String> getLabels() {
   private List<PersistentVolumeClaim> createVolumes() {
     PersistentVolumeClaim postgrPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-postgresql-claim")
+          .withName(volume_postgresql_claim)
           .withLabels(getLabels())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
@@ -261,7 +274,7 @@ private Map<String, String> getLabels() {
 
     PersistentVolumeClaim mtaPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
-          .withName(windupResource.getSpec().getApplication_name() + "-mta-web-claim")
+          .withName(volume_mtaweb_claim)
           .withLabels(getLabels())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
@@ -298,7 +311,7 @@ private Map<String, String> getLabels() {
               .withName(windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount(SERVICE_ACCOUNT).withTerminationGracePeriodSeconds(75L)
+              .withServiceAccount(serviceAccount).withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
                 .withName(windupResource.getSpec().getApplication_name())
                 .withImage(getContainerImageName( windupResource.getSpec().getDocker_image_web()))
@@ -310,12 +323,12 @@ private Map<String, String> getLabels() {
                   .addToLimits(Map.of("memory", new Quantity(windupResource.getSpec().getWeb_mem_limit())))
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
-                                    .withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol")
+                                    .withName(volume_mtaweb)
                                     .withMountPath("/opt/eap/standalone/data/windup")
                                     .withReadOnly(false)
                                     .build())
                 .addToVolumeMounts(new VolumeMountBuilder()
-                                    .withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol-data")
+                                    .withName(volume_mtaweb_data)
                                     .withMountPath("/opt/eap/standalone/data")
                                     .withReadOnly(false)
                                     .build())
@@ -370,8 +383,8 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("JGROUPS_ENCRYPT_PASSWORD").withValue(windupResource.getSpec().getJgroups_encrypt_password()).endEnv()
                 .addNewEnv().withName("JGROUPS_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
                 .addNewEnv().withName("AUTO_DEPLOY_EXPLODED").withValue(windupResource.getSpec().getAuto_deploy_exploded()).endEnv()
-                .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(postgreDeployName).endEnv()
-                .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(postgreDeployName).endEnv()
+                .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(deployment_postgre).endEnv()
+                .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(deployment_postgre).endEnv()
                 .addNewEnv().withName("SSO_URL").withValue(windupResource.getSpec().getSso_url()).endEnv()
                 .addNewEnv().withName("SSO_SERVICE_URL").withValue(windupResource.getSpec().getSso_service_url()).endEnv()
                 .addNewEnv().withName("SSO_REALM").withValue(windupResource.getSpec().getSso_realm()).endEnv()
@@ -395,13 +408,13 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("MAX_POST_SIZE").withValue(windupResource.getSpec().getMax_post_size()).endEnv()
               .endContainer()
               .addNewVolume()
-                .withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol")
+                .withName(volume_mtaweb)
                 .withNewPersistentVolumeClaim()
-                  .withClaimName(windupResource.getSpec().getApplication_name() + "-mta-web-claim")
+                  .withClaimName(volume_mtaweb_claim)
                 .endPersistentVolumeClaim()
               .endVolume()
               .addNewVolume()
-                .withName(windupResource.getSpec().getApplication_name() + "-mta-web-pvol-data")
+                .withName(volume_mtaweb_data)
                 .withNewEmptyDir().endEmptyDir()
               .endVolume()
             .endSpec()
@@ -411,29 +424,29 @@ private Map<String, String> getLabels() {
 
     Deployment deploymentExecutor = new DeploymentBuilder()
         .withNewMetadata()
-          .withName(executorDeployName)
+          .withName(deployment_executor)
           .withLabels(getLabels())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withReplicas(1)
           .withNewSelector()
-            .addToMatchLabels("deploymentConfig", executorDeployName)
+            .addToMatchLabels("deploymentConfig", deployment_executor)
           .endSelector()
           .withNewStrategy()
             .withType("Recreate")
           .endStrategy()
           .withNewTemplate()
             .withNewMetadata()
-              .addToLabels("deploymentConfig", executorDeployName)
-              .addToLabels("application", executorDeployName)
-              .withName(executorDeployName)
+              .addToLabels("deploymentConfig", deployment_executor)
+              .addToLabels("application", deployment_executor)
+              .withName(deployment_executor)
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount(SERVICE_ACCOUNT)
+              .withServiceAccount(serviceAccount)
               .withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
-                .withName(executorDeployName)
+                .withName(deployment_executor)
                 .withImage(getContainerImageName(windupResource.getSpec().getDocker_image_executor()))
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
@@ -478,7 +491,7 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("MESSAGING_USER").withValue("jms-user").endEnv()
               .endContainer()
               .addNewVolume()
-                .withName(windupResource.getSpec().getApplication_name() + "-mta-web-executor-volume")
+                .withName(volume_executor)
                 .withNewEmptyDir().endEmptyDir()
               .endVolume()
             .endSpec()
@@ -488,34 +501,34 @@ private Map<String, String> getLabels() {
 
     Deployment deploymentPostgre = new DeploymentBuilder()
         .withNewMetadata()
-          .withName(postgreDeployName)
+          .withName(deployment_postgre)
           .addToLabels("application", windupResource.getSpec().getApplication_name())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withReplicas(1)
           .withNewSelector()
-            .addToMatchLabels("deploymentConfig", postgreDeployName)
+            .addToMatchLabels("deploymentConfig", deployment_postgre)
           .endSelector()
           .withNewStrategy()
             .withType("Recreate")
           .endStrategy()
           .withNewTemplate()
             .withNewMetadata()
-              .addToLabels("deploymentConfig", postgreDeployName)
-              .addToLabels("application", postgreDeployName)
+              .addToLabels("deploymentConfig", deployment_postgre)
+              .addToLabels("application", deployment_postgre)
               .withName(windupResource.getSpec().getApplication_name())
             .endMetadata()
             .withNewSpec()
-              .withServiceAccount(SERVICE_ACCOUNT)
+              .withServiceAccount(serviceAccount)
               .withTerminationGracePeriodSeconds(60L)
               .addToVolumes(new VolumeBuilder()
-                  .withName(windupResource.getSpec().getApplication_name() + "-postgresql-pvol")
+                  .withName(volume_postgresql)
                   .withNewPersistentVolumeClaim()
-                    .withClaimName(windupResource.getSpec().getApplication_name() + "-postgresql-claim")
+                    .withClaimName(volume_postgresql_claim)
                   .endPersistentVolumeClaim().build())
               .addNewContainer()
-                .withName(postgreDeployName)
+                .withName(deployment_postgre)
                 .withImage(windupResource.getSpec().getPostgresql_image())
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
@@ -525,7 +538,7 @@ private Map<String, String> getLabels() {
                   .addToLimits(Map.of("memory", new Quantity(windupResource.getSpec().getPostgresql_mem_limit())))
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
-                    .withName(windupResource.getSpec().getApplication_name() + "-postgresql-pvol")
+                    .withName(volume_postgresql)
                     .withMountPath("/var/lib/pgsql/data")
                     .withReadOnly(false).build())
                 .addNewEnv().withName("POSTGRESQL_USER").withValue(windupResource.getSpec().getDb_username()).endEnv()

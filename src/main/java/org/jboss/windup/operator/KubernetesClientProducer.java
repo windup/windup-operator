@@ -20,7 +20,7 @@ import java.io.InputStream;
 
 @Log
 public class KubernetesClientProducer {
-    @ConfigProperty(name = "namespace", defaultValue = "mta")
+    @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
     String namespace;
 
     @Produces
