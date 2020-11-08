@@ -58,7 +58,7 @@ public class WindupDeploymentController implements Watcher<Deployment> {
 
             // We want 1 replica per deployment, so checking if there is 1 replica Ready
             String deploymentStatus = (obj.getStatus() != null && obj.getStatus().getReadyReplicas() != null) ? Boolean.toString(obj.getStatus().getReadyReplicas() == 1) : "False";
-            cr.getStatus().getOrAddConditionByType(obj.getMetadata().getName())
+            cr.getOrAddConditionByType(obj.getMetadata().getName())
                 .setStatus(deploymentStatus)
                 .setReason(WindupResource.DEPLOYMENT);
             // Sending the new status to K8s

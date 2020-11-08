@@ -23,25 +23,6 @@ public class WindupResourceStatus implements KubernetesResource {
 
 	private List<WindupResourceStatusCondition> conditions = new ArrayList<>();
 
-	public Optional<WindupResourceStatusCondition> getConditionByType(String type) {
-		return conditions.stream()
-			.filter(e -> e != null && type.equalsIgnoreCase(e.getType()))
-			.findFirst();
-	}
 
-	public WindupResourceStatusCondition getOrAddConditionByType(String type) {
-		Optional<WindupResourceStatusCondition> condition = getConditionByType(type);
-		if (!condition.isPresent() ) {
-			log.info(" Condition " + condition + " is NOT present ");
-			condition = Optional.of(WindupResourceStatusCondition.builder()
-				.type(type)
-				.reason("").message("")
-				.lastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-				.build());
-			log.info(" Adding condition :" + condition);
-		  	conditions.add(condition.get());
-		}
-		return condition.get();
-	}
 }
 

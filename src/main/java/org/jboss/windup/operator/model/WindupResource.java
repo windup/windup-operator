@@ -5,13 +5,18 @@ import io.fabric8.kubernetes.client.CustomResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @JsonDeserialize
 @RegisterForReflection
 @Getter
 @Setter
+@Log
 public class WindupResource extends CustomResource {
   public static final String READY = "Ready";
   public static final String DEPLOYMENT = "Deployment";
@@ -50,11 +55,32 @@ public class WindupResource extends CustomResource {
   }
   
   public void setReady(boolean statusArg) {
-		status.getOrAddConditionByType(READY).setStatus(Boolean.toString(statusArg));
+		getOrAddConditionByType(READY).setStatus(Boolean.toString(statusArg));
 	}
 
   public void setStatusDeploy(boolean statusArg) {
-    status.getOrAddConditionByType(DEPLOYMENT).setStatus(Boolean.toString(statusArg));
+    getOrAddConditionByType(DEPLOYMENT).setStatus(Boolean.toString(statusArg));
   }
+
+  public Optional<WindupResourceStatusCondition> getConditionByType(String type) {
+		return status.getConditions().stream()
+			.filter(e -> e != null && type.equalsIgnoreCase(e.getType()))
+			.findFirst();
+	}
+
+	public WindupResourceStatusCondition getOrAddConditionByType(String type) {
+		Optional<WindupResourceStatusCondition> condition = getConditionByType(type);
+		if (!condition.isPresent() ) {
+			log.info(" Condition " + condition + " is NOT present ");
+			condition = Optional.of(WindupResourceStatusCondition.builder()
+				.type(type)
+				.reason("").message("")
+				.lastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+				.build());
+			log.info(" Adding condition :" + condition);
+		  	status.getConditions().add(condition.get());
+		}
+		return condition.get();
+	}
 }
 

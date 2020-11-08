@@ -27,28 +27,28 @@ public class WindupController implements Watcher<WindupResource> {
 	@Inject
 	KubernetesClient k8sClient;
 
-	public void onAdd(WindupResource resource) {
+	private void onAdd(WindupResource resource) {
 		log.info("Event ADD " + resource.getMetadata().getName());
 		if (!resource.isDeploying() && !resource.isReady()) {
 			new WindupDeployment(resource, crClient, k8sClient).deploy();
 		}
 	}
 
-	public void onUpdate(WindupResource newResource) {
+	private void onUpdate(WindupResource newResource) {
 		log.info("Event UPDATE " + newResource.getMetadata().getName() + " - DR "
 				+ newResource.deploymentsReady() + " RD " + newResource.isReady());
 
 		// Consolidate status of the CR
 		if (newResource.deploymentsReady() == 3 && !newResource.isReady()) {
 			newResource.setReady(true);
-			newResource.getStatus().getOrAddConditionByType("Deploy").setStatus(Boolean.FALSE.toString());
+			newResource.getOrAddConditionByType("Deploy").setStatus(Boolean.FALSE.toString());
 
 			log.info("Setting this CR as Ready");
 			crClient.inNamespace(namespace).updateStatus(newResource);
 		}
 	}
 
-	public void onDelete(WindupResource resource) {
+	private void onDelete(WindupResource resource) {
 		log.info("Event DELETE [" + resource + "]");
 	}
 
