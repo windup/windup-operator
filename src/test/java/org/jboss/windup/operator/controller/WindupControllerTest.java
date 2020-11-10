@@ -34,20 +34,21 @@ public class WindupControllerTest {
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
     @Test
-    public void onAddTest() {
+    public void onAddTest() throws InterruptedException {
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
-
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
         crClient.inNamespace("test").create(windupResource);
 
         dispatcher.getRequests().clear();
 
-        windupController.eventReceived(Action.ADDED, windupResource);
-
-        assertEquals(11, server.getRequestCount());
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("deployments") >= 0).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("ingress") >= 0).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("service") >= 0).count());
+        Thread.sleep(2000);
+        
         assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
+        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("deployments") >= 0).count());
+        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("ingress") >= 0).count());
+        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("service") >= 0).count());
+        
+        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());
+
     }
 }

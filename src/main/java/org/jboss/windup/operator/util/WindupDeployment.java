@@ -77,12 +77,12 @@ public class WindupDeployment {
   public void deploy() {
     // We are adding one by one instead of createOrReplace(volumes.toArray(new Volume[2])) 
     // because in that case we receive an error : Too Many Items to Create
-    //initCRStatusOnDeployment();
+    initCRStatusOnDeployment();
 
     List<PersistentVolumeClaim> volumes = createVolumes();
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
+    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));    
     k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(1));
-/*
+
     List<Deployment> deployments = createDeployment();
     k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(0));
     k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(1));
@@ -96,7 +96,6 @@ public class WindupDeployment {
     List<Ingress> ingresses = createIngresses();
     k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(0));
     k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(1));
-    */
   }
 
   private void initCRStatusOnDeployment() {
