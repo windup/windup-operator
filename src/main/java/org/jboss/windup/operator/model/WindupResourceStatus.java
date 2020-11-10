@@ -23,6 +23,5 @@ public class WindupResourceStatus implements KubernetesResource {
 
 	private List<WindupResourceStatusCondition> conditions = new ArrayList<>();
 
-
 }
 

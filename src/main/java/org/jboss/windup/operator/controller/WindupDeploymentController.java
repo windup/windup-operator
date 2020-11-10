@@ -22,7 +22,7 @@ public class WindupDeploymentController implements Watcher<Deployment> {
     @Inject
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
-    @ConfigProperty(name = "namespace", defaultValue = "mta")
+    @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
     String namespace;
 
     @Override

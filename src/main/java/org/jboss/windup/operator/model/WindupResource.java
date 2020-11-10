@@ -1,5 +1,6 @@
 package org.jboss.windup.operator.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -26,19 +27,14 @@ public class WindupResource extends CustomResource {
   private WindupResourceSpec spec;
   private WindupResourceStatus status;
 
+  @JsonIgnore
   public boolean isDeploying() {
-    return status != null && status.getConditions() != null &&
-      status.getConditions().stream()
-        .anyMatch(e -> DEPLOYMENT.equalsIgnoreCase(e.getReason()) && Boolean.parseBoolean(e.getStatus()));
+    return Boolean.parseBoolean(getOrAddConditionByType(DEPLOYMENT).getStatus());
 	}
 
+  @JsonIgnore
 	public boolean isReady() {
-    return status != null &&
-           status.getConditions() != null &&
-           status.getConditions().stream()
-              .anyMatch(e -> e != null &&
-                      READY.equalsIgnoreCase(e.getType()) &&
-                      Boolean.parseBoolean(e.getStatus()));
+    return  Boolean.parseBoolean(getOrAddConditionByType(READY).getStatus());
   }
 
 	public long deploymentsReady() {
@@ -82,5 +78,10 @@ public class WindupResource extends CustomResource {
 		}
 		return condition.get();
 	}
+
+    public WindupResource() {
+      spec = new WindupResourceSpec();
+      status = new WindupResourceStatus();
+    }
 }
 

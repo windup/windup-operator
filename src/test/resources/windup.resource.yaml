@@ -1,0 +1,161 @@
+apiVersion: windup.jboss.org/v1
+kind: Windup
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"windup.jboss.org/v1","kind":"Windup","metadata":{"annotations":{},"labels":{"application":"windup"},"name":"windups","namespace":"mta"},"spec":{"application_name":"windup-jon","container_repository":"docker.io","db_database":"mta","db_password":"pas345678","db_username":"userXYZ","docker_image_executor":"httpd","docker_image_web":"httpd","docker_images_tag":"latest","docker_images_user":"","executor_cpu_limit":"4","executor_cpu_request":"0.5","executor_liveness_probe":"","executor_mem_limit":"4Gi","executor_mem_request":"0.5Gi","executor_readiness_probe":"","max_post_size":"4294967296","messaging_serializer":"http.post.serializer","mta_Volume_Capacity":"5G","postgresql_cpu_limit":"2","postgresql_cpu_request":"0.5","postgresql_image":"httpd","postgresql_mem_limit":"2Gi","postgresql_mem_request":"0.5Gi","sso_realm":"mta","sso_url":"/auth","volumeCapacity":"5G","webLivenessFailureThreshold":"20","webLivenessInitialDelaySeconds":"240","webLivenessTimeoutSeconds":"100","webReadinessFailureThreshold":"20","webReadinessInitialDelaySeconds":"240","webReadinessTimeoutSeconds":"100","web_cpu_limit":"4","web_cpu_request":"0.5","web_liveness_probe":"","web_mem_limit":"4Gi","web_mem_request":"0.5Gi","web_readiness_probe":""}}
+  creationTimestamp: "2020-10-27T07:15:30Z"
+  generation: 1
+  labels:
+    application: windup
+  managedFields:
+  - apiVersion: windup.jboss.org/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:labels:
+          .: {}
+          f:application: {}
+      f:spec:
+        .: {}
+        f:application_name: {}
+        f:auto_deploy_exploded: {}
+        f:container_repository: {}
+        f:db_database: {}
+        f:db_jndi: {}
+        f:db_password: {}
+        f:db_username: {}
+        f:docker_image_executor: {}
+        f:docker_image_web: {}
+        f:docker_images_tag: {}
+        f:docker_images_user: {}
+        f:executor_cpu_limit: {}
+        f:executor_cpu_request: {}
+        f:executor_liveness_probe: {}
+        f:executor_mem_limit: {}
+        f:executor_mem_request: {}
+        f:executor_readiness_probe: {}
+        f:gc_max_metaspace_size: {}
+        f:hostname_http: {}
+        f:jgroups_encrypt_keystore: {}
+        f:jgroups_encrypt_name: {}
+        f:jgroups_encrypt_password: {}
+        f:jgroups_encrypt_secret: {}
+        f:max_post_size: {}
+        f:messaging_serializer: {}
+        f:mq_queues: {}
+        f:mq_topics: {}
+        f:mta_Volume_Capacity: {}
+        f:postgresql_cpu_limit: {}
+        f:postgresql_cpu_request: {}
+        f:postgresql_image: {}
+        f:postgresql_max_connections: {}
+        f:postgresql_mem_limit: {}
+        f:postgresql_mem_request: {}
+        f:sso_bearer_only: {}
+        f:sso_disable_ssl_certificate_validation: {}
+        f:sso_enable_cors: {}
+        f:sso_password: {}
+        f:sso_public_key: {}
+        f:sso_realm: {}
+        f:sso_saml_certificate_name: {}
+        f:sso_saml_keystore: {}
+        f:sso_saml_keystore_password: {}
+        f:sso_saml_keystore_secret: {}
+        f:sso_saml_logout_page: {}
+        f:sso_service_url: {}
+        f:sso_truststore: {}
+        f:sso_truststore_password: {}
+        f:sso_truststore_secret: {}
+        f:sso_url: {}
+        f:sso_username: {}
+        f:volumeCapacity: {}
+        f:web_cpu_limit: {}
+        f:web_cpu_request: {}
+        f:web_liveness_probe: {}
+        f:web_mem_limit: {}
+        f:web_mem_request: {}
+        f:web_readiness_probe: {}
+        f:webLivenessFailureThreshold: {}
+        f:webLivenessInitialDelaySeconds: {}
+        f:webLivenessTimeoutSeconds: {}
+        f:webReadinessFailureThreshold: {}
+        f:webReadinessInitialDelaySeconds: {}
+        f:webReadinessTimeoutSeconds: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2020-10-27T07:15:30Z"
+  name: windupapp
+  namespace: test
+  resourceVersion: "553474"
+  selfLink: /apis/windup.jboss.org/v1/namespaces/mta/windups/windupapp
+  uid: 4e4d714c-6d27-41e1-86df-4a58900ca5d0
+spec:
+  application_name: windup-jon
+  auto_deploy_exploded: "false"
+  docker_images_repository: docker.io
+  db_database: mta
+  db_jndi: java:jboss/datasources/WindupServicesDS
+  db_password: pas345678
+  db_username: userXYZ
+  docker_image_executor: httpd
+  docker_image_web: httpd
+  docker_images_tag: latest
+  docker_images_user: ""
+  executor_cpu_limit: "4"
+  executor_cpu_request: "0.5"
+  executor_liveness_probe: ""
+  executor_mem_limit: 4Gi
+  executor_mem_request: 0.5Gi
+  executor_readiness_probe: ""
+  gc_max_metaspace_size: 512
+  hostname_http: ""
+  jgroups_encrypt_keystore: jgroups.jceks
+  jgroups_encrypt_name: ""
+  jgroups_encrypt_password: ""
+  jgroups_encrypt_secret: eap-app-secret
+  max_post_size: "4294967296"
+  messaging_serializer: http.post.serializer
+  mq_queues: ""
+  mq_topics: ""
+  mta_Volume_Capacity: 5G
+  postgresql_cpu_limit: "2"
+  postgresql_cpu_request: "0.5"
+  postgresql_image: httpd
+  postgresql_max_connections: "200"
+  postgresql_mem_limit: 2Gi
+  postgresql_mem_request: 0.5Gi
+  sso_bearer_only: ""
+  sso_disable_ssl_certificate_validation: "true"
+  sso_enable_cors: "false"
+  sso_password: ""
+  sso_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhlI4WQ3tbIFE71M0HAO3TfvJFxH0P16wdOSzc/Fr9l8/tOn8cN5sgkGpnyEWcawgv2z4nouUkpV92/vo9fadKr3KVUMVaE3EaR3BmsC0Ct6TY7mYD+sz/yGoSWqwmGYocEJRIXAuMCX3jCu6CKMSV+1qjpcyYqzRaVWTB/EV76Sx+CSh9rEMLl8mE6owxNWQck03KgvWCA70l/LAu1M1bWy1aozoUKiTryX0nTxbHbj4qg3vvHC6igYndJ4zLr30QlCVn1iQ1jXC1MQUJ+Mwc8yZlkhaoAfDS1iM9I8NUcpcQAIn2baD8/aBrS1F9woYYRvo0vFH5N0+Rw4xjgSDlQIDAQAB
+  sso_realm: mta
+  sso_saml_certificate_name: jboss
+  sso_saml_keystore: keystore.jks
+  sso_saml_keystore_password: mykeystorepass
+  sso_saml_keystore_secret: eap7-app-secret
+  sso_saml_logout_page: /
+  sso_service_url: /auth
+  sso_truststore: ""
+  sso_truststore_password: ""
+  sso_truststore_secret: eap7-app-secret
+  sso_url: /auth
+  sso_username: ""
+  volumeCapacity: 5G
+  web_cpu_limit: "4"
+  web_cpu_request: "0.5"
+  web_liveness_probe: ""
+  web_mem_limit: 4Gi
+  web_mem_request: 0.5Gi
+  web_readiness_probe: ""
+  webLivenessFailureThreshold: "20"
+  webLivenessInitialDelaySeconds: "240"
+  webLivenessTimeoutSeconds: "100"
+  webReadinessFailureThreshold: "20"
+  webReadinessInitialDelaySeconds: "240"
+  webReadinessTimeoutSeconds: "100"
+

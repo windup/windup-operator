@@ -1,18 +1,21 @@
 package org.jboss.windup.operator;
 
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.DoneableCustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+import io.quarkus.arc.profile.IfBuildProfile;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
@@ -25,6 +28,7 @@ public class KubernetesClientProducer {
 
     @Produces
     @Singleton
+    @IfBuildProfile("prod")
     KubernetesClient makeDefaultClient() {
         log.info("Creating K8s Client instance");
         return new DefaultKubernetesClient().inNamespace(namespace);
@@ -47,7 +51,11 @@ public class KubernetesClientProducer {
         InputStream fileStream = KubernetesClientProducer.class.getResourceAsStream("/k8s/def/windup.crd.yaml");
 
         log.info("Loading windup.crd.yaml");
-        CustomResourceDefinition windupCRD = defaultClient.customResourceDefinitions().load(fileStream).get();
+        log.info("client : " + defaultClient);
+        log.info("crds : " + defaultClient.customResourceDefinitions());
+        Resource<CustomResourceDefinition, DoneableCustomResourceDefinition> resource = defaultClient.customResourceDefinitions().load(fileStream);
+        log.info("resource : " + resource);
+        CustomResourceDefinition windupCRD = resource.get();
         log.info("Loaded windup.crd.yaml");
 
         return CustomResourceDefinitionContext.fromCrd(windupCRD);
