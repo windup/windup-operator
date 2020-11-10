@@ -1,10 +1,6 @@
 package org.jboss.windup.operator.model;
 
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectMock;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,6 +65,4 @@ public class WindupResourceTest {
         assertEquals(2, windupResource.deploymentsReady());
     }
 
-
-    
 }
