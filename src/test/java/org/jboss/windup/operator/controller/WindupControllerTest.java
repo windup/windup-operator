@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import io.quarkus.test.junit.QuarkusTest;
+import org.awaitility.Awaitility;
 import org.jboss.windup.operator.KubernetesCrudRecorderDispatcher;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -39,14 +41,15 @@ public class WindupControllerTest {
 
         dispatcher.getRequests().clear();
 
-        Thread.sleep(2000);
+        Awaitility
+            .await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("ingress") >= 0).count()));
 
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
+        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("deployments") >= 0).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("ingress") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("service") >= 0).count());
 
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());
 
     }
 }
