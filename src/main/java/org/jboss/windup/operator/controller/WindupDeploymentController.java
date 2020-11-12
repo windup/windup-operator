@@ -8,13 +8,13 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 @Log
 @ApplicationScoped
@@ -22,7 +22,7 @@ public class WindupDeploymentController implements Watcher<Deployment> {
     @Inject
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
-    @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
+    @Named("namespace")
     String namespace;
 
     @Override

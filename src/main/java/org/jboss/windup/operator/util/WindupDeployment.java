@@ -28,6 +28,8 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
+import javax.inject.Named;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +42,7 @@ public class WindupDeployment {
   @ConfigProperty(name = "operator.serviceaccount", defaultValue = "windup-operator")
   String serviceAccount;
 
-  @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
+  @Named("namespace")
   String namespace;
 
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;

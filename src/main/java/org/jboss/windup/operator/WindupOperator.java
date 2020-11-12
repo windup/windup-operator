@@ -5,9 +5,8 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.quarkus.runtime.StartupEvent;
 import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.windup.operator.controller.WindupDeploymentController;
 import org.jboss.windup.operator.controller.WindupController;
+import org.jboss.windup.operator.controller.WindupDeploymentController;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
@@ -15,6 +14,7 @@ import org.jboss.windup.operator.model.WindupResourceList;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 @ApplicationScoped
 @Log
@@ -31,7 +31,7 @@ public class WindupOperator {
     @Inject
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
-    @ConfigProperty(name = "operator.namespace", defaultValue = "mta")
+    @Named("namespace")
     String namespace;
 
     public void onStart(@Observes StartupEvent event) {

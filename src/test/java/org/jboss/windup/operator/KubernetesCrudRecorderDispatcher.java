@@ -18,7 +18,6 @@ import java.util.List;
 
 @Getter
 @Setter
-@Log
 /*
 This class will allow to check the requests made to the Kubernetes API
 in order to do the asserts
