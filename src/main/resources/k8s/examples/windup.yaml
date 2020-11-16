@@ -6,35 +6,13 @@ metadata:
   labels:
     application: windup
 spec:
-  application_name: windup-test
   webLivenessInitialDelaySeconds: "240"
   webReadinessInitialDelaySeconds: "240"
   webLivenessTimeoutSeconds: "100"
   webReadinessTimeoutSeconds: "100"
   webReadinessFailureThreshold: "20"
   webLivenessFailureThreshold: "20"
-  web_cpu_request: "0.5"
-  web_mem_request: 0.5Gi
-  web_cpu_limit: "4"
-  web_mem_limit: 4Gi
-  executor_cpu_request: "0.5"
-  executor_mem_request: 0.5Gi
-  executor_cpu_limit: "4"
-  executor_mem_limit: 4Gi
-  messaging_serializer: http.post.serializer
   mta_Volume_Capacity: 5G
-  db_database: mta
+  db_database: mtadb
   volumeCapacity: 5G
-  sso_url: /auth
-  sso_realm: mta
-  max_post_size: "4294967296"
-  postgresql_cpu_request: "0.5"
-  postgresql_mem_request: "0.5Gi"
-  postgresql_cpu_limit: "2"
-  postgresql_mem_limit: "2Gi"
-  postgresql_image: centos/postgresql-96-centos7:latest
-  docker_images_user: windupeng
-  docker_images_tag: stable
-  docker_images_repository: quay.io
-  docker_image_web: windup-web-openshift
-  docker_image_executor: windup-web-openshift-messaging-executor
+
