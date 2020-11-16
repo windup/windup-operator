@@ -60,11 +60,20 @@ public class WindupDeployment {
   private String volume_mtaweb;
   private String volume_mtaweb_data;
 
+  private String mq_cluster_password;
+  private String db_username;
+  private String db_password;
+  private String sso_secret;
+  private String jgroups_cluster_password;
+
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, KubernetesClient k8sClient) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
+    initParams();
+  }
 
+  private void initParams() {
     // Init names of objects
     volume_postgresql_claim = windupResource.getSpec().getApplication_name() + "-postgresql-claim";
     deployment_postgre = windupResource.getSpec().getApplication_name() + "-postgresql";
@@ -74,6 +83,12 @@ public class WindupDeployment {
     volume_executor = windupResource.getSpec().getApplication_name() + "-mta-web-executor-volume";
     volume_mtaweb = windupResource.getSpec().getApplication_name() + "-mta-web-pvol";
     volume_mtaweb_data = windupResource.getSpec().getApplication_name() + "-mta-web-pvol-data";
+
+    mq_cluster_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
+    db_username =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_username(),"user" + RandomStringUtils.randomAlphanumeric(3));
+    db_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_password(),RandomStringUtils.randomAlphanumeric(8));
+    sso_secret = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8));
+    jgroups_cluster_password  = StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
   }
 
   public void deploy() {
@@ -82,7 +97,7 @@ public class WindupDeployment {
     initCRStatusOnDeployment();
 
     List<PersistentVolumeClaim> volumes = createVolumes();
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));    
+    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
     k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(1));
 
     List<Deployment> deployments = createDeployment();
@@ -366,8 +381,8 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("MESSAGING_SERIALIZER").withValue(windupResource.getSpec().getMessaging_serializer()).endEnv()
                 .addNewEnv().withName("DB_SERVICE_PREFIX_MAPPING").withValue(windupResource.getSpec().getApplication_name() + "-postgresql=DB").endEnv()
                 .addNewEnv().withName("DB_JNDI").withValue(windupResource.getSpec().getDb_jndi()).endEnv()
-                .addNewEnv().withName("DB_USERNAME").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getDb_username(),"user" + RandomStringUtils.randomAlphanumeric(3))).endEnv()
-                .addNewEnv().withName("DB_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getDb_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
+                .addNewEnv().withName("DB_USERNAME").withValue(db_username).endEnv()
+                .addNewEnv().withName("DB_PASSWORD").withValue(db_password).endEnv()
                 .addNewEnv().withName("DB_DATABASE").withValue(windupResource.getSpec().getDb_database()).endEnv()
                 .addNewEnv().withName("TX_DATABASE_PREFIX_MAPPING").withValue(windupResource.getSpec().getApplication_name() + "-postgresql=DB").endEnv()
                 .addNewEnv().withName("DB_MIN_POOL_SIZE").withValue(windupResource.getSpec().getDb_min_pool_size()).endEnv()
@@ -376,14 +391,15 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("OPENSHIFT_KUBE_PING_LABELS").withValue("application=" + windupResource.getSpec().getApplication_name()).endEnv()
                 .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withValue(namespace).endEnv()
                 .addNewEnv().withName("HTTPS_KEYSTORE_DIR").withValue("/etc/eap-secret-volume").endEnv()
-                .addNewEnv().withName("MQ_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv().addNewEnv().withName("MQ_QUEUES").withValue(windupResource.getSpec().getMq_queues()).endEnv()
+                .addNewEnv().withName("MQ_CLUSTER_PASSWORD").withValue(mq_cluster_password).endEnv()
+                .addNewEnv().withName("MQ_QUEUES").withValue(windupResource.getSpec().getMq_queues()).endEnv()
                 .addNewEnv().withName("MQ_TOPICS").withValue(windupResource.getSpec().getMq_topics()).endEnv()
                 .addNewEnv().withName("JGROUPS_ENCRYPT_SECRET").withValue(windupResource.getSpec().getJgroups_encrypt_secret()).endEnv()
                 .addNewEnv().withName("JGROUPS_ENCRYPT_KEYSTORE_DIR").withValue("/etc/jgroups-encrypt-secret-volume").endEnv()
                 .addNewEnv().withName("JGROUPS_ENCRYPT_KEYSTORE").withValue(windupResource.getSpec().getJgroups_encrypt_keystore()).endEnv()
                 .addNewEnv().withName("JGROUPS_ENCRYPT_NAME").withValue(windupResource.getSpec().getJgroups_encrypt_name()).endEnv()
                 .addNewEnv().withName("JGROUPS_ENCRYPT_PASSWORD").withValue(windupResource.getSpec().getJgroups_encrypt_password()).endEnv()
-                .addNewEnv().withName("JGROUPS_CLUSTER_PASSWORD").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
+                .addNewEnv().withName("JGROUPS_CLUSTER_PASSWORD").withValue(jgroups_cluster_password).endEnv()
                 .addNewEnv().withName("AUTO_DEPLOY_EXPLODED").withValue(windupResource.getSpec().getAuto_deploy_exploded()).endEnv()
                 .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(deployment_postgre).endEnv()
                 .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(deployment_postgre).endEnv()
@@ -399,7 +415,7 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("SSO_SAML_KEYSTORE_DIR").withValue("/etc/sso-saml-secret-volume").endEnv()
                 .addNewEnv().withName("SSO_SAML_CERTIFICATE_NAME").withValue(windupResource.getSpec().getSso_saml_certificate_name()).endEnv()
                 .addNewEnv().withName("SSO_SAML_KEYSTORE_PASSWORD").withValue(windupResource.getSpec().getSso_saml_keystore_password()).endEnv()
-                .addNewEnv().withName("SSO_SECRET").withValue(StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8))).endEnv()
+                .addNewEnv().withName("SSO_SECRET").withValue(sso_secret).endEnv()
                 .addNewEnv().withName("SSO_ENABLE_CORS").withValue(windupResource.getSpec().getSso_enable_cors()).endEnv()
                 .addNewEnv().withName("SSO_SAML_logOUT_PAGE").withValue(windupResource.getSpec().getSso_saml_logout_page()).endEnv()
                 .addNewEnv().withName("SSO_DISABLE_SSL_CERTIFICATE_VALIDATION").withValue(windupResource.getSpec().getSso_disable_ssl_certificate_validation()).endEnv()
@@ -543,8 +559,8 @@ private Map<String, String> getLabels() {
                     .withName(volume_postgresql)
                     .withMountPath("/var/lib/pgsql/data")
                     .withReadOnly(false).build())
-                .addNewEnv().withName("POSTGRESQL_USER").withValue(windupResource.getSpec().getDb_username()).endEnv()
-                .addNewEnv().withName("POSTGRESQL_PASSWORD").withValue(windupResource.getSpec().getDb_password()).endEnv()
+                .addNewEnv().withName("POSTGRESQL_USER").withValue(db_username).endEnv()
+                .addNewEnv().withName("POSTGRESQL_PASSWORD").withValue(db_password).endEnv()
                 .addNewEnv().withName("POSTGRESQL_DATABASE").withValue(windupResource.getSpec().getDb_database()).endEnv()
                 .addNewEnv().withName("POSTGRESQL_MAX_CONNECTIONS").withValue(windupResource.getSpec().getPostgresql_max_connections()).endEnv()
                 .addNewEnv().withName("POSTGRESQL_MAX_PREPARED_TRANSACTIONS").withValue(windupResource.getSpec().getPostgresql_max_connections()).endEnv()
