@@ -169,13 +169,13 @@ spec:
                   type: string
                 postgresql_cpu_request:
                   type: string
-                  default: "1"
+                  default: "0.5"
                 postgresql_mem_request:
                   type: string
-                  default: "3Gi"
+                  default: "0.5Gi"
                 postgresql_cpu_limit:
                   type: string
-                  default: "1"
+                  default: "2"
                 postgresql_mem_limit:
                   type: string
                   default: "2Gi"
@@ -199,31 +199,31 @@ spec:
                   default: "3"
                 web_cpu_request:
                   type: string
-                  default: "2"
+                  default: "0.5"
                 web_mem_request:
                   type: string
-                  default: "4Gi"
+                  default: "0.5Gi"
                 web_cpu_limit:
                   type: string
-                  default: "2"
+                  default: "4"
                 web_mem_limit:
                   type: string
                   default: "4Gi"
                 executor_cpu_request:
                   type: string
-                  default: "2"
+                  default: "0.5"
                 executor_mem_request:
                   type: string
-                  default: "4Gi"
+                  default: "0.5Gi"
                 executor_cpu_limit:
                   type: string
-                  default: "2"
+                  default: "4"
                 executor_mem_limit:
                   type: string
                   default: "4Gi"
                 postgresql_image:
                   type: string
-                  default: "postgresql"
+                  default: "centos/postgresql-96-centos7:latest"
                 web_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"

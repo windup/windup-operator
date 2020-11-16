@@ -28,15 +28,13 @@ spec:
   sso_url: /auth
   sso_realm: mta
   max_post_size: "4294967296"
-  db_password: pas345678
-  db_username: userXYZ
   postgresql_cpu_request: "0.5"
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
   postgresql_image: centos/postgresql-96-centos7:latest
-  docker_images_user: windup3
-  docker_images_tag: latest
-  docker_images_repository: docker.io
+  docker_images_user: windupeng
+  docker_images_tag: stable
+  docker_images_repository: quay.io
   docker_image_web: windup-web-openshift
   docker_image_executor: windup-web-openshift-messaging-executor

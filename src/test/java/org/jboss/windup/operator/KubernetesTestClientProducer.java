@@ -8,7 +8,6 @@ import lombok.extern.java.Log;
 import okhttp3.mockwebserver.MockWebServer;
 
 import javax.enterprise.inject.Produces;
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import java.util.Collections;
@@ -18,19 +17,10 @@ import java.util.HashMap;
 public class KubernetesTestClientProducer {
     @Produces
     @Singleton
-    @Named("namespace")
-    @IfBuildProfile("test")
-    String findMyCurrentNamespace(NamespacedKubernetesClient client)  {
-        return client.getConfiguration().getNamespace();
-    }
-
-    @Produces
-    @Singleton
     @IfBuildProfile("test")
     NamespacedKubernetesClient makeDefaultClient(KubernetesMockServer server) {
-        NamespacedKubernetesClient client = server.createClient();
-        log.info("Creating K8s Test Client instance : " + client);
-        return client;
+        log.info("Creating K8s Test Client instance ");
+        return server.createClient();
     }
 
     @Produces
