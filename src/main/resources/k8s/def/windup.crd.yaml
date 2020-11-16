@@ -27,9 +27,6 @@ spec:
             spec:
               type: object
               properties:
-                application_name:
-                  type: string
-                  default: "mta-web-console"
                 hostname_http:
                   type: string
                   default: ""
