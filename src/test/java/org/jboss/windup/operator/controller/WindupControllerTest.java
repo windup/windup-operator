@@ -34,7 +34,7 @@ public class WindupControllerTest {
     MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
     @Test
-    public void onAddTest() throws InterruptedException {
+    public void onAddCR_shouldServerReceiveExactCalls() throws InterruptedException {
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
         crClient.inNamespace("test").create(windupResource);
@@ -49,7 +49,6 @@ public class WindupControllerTest {
         assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("deployments") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("service") >= 0).count());
-
-
     }
+
 }

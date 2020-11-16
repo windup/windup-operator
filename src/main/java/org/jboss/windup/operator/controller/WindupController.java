@@ -63,7 +63,9 @@ public class WindupController implements Watcher<WindupResource> {
 
 	@Override
 	public void onClose(KubernetesClientException cause) {
-		// TODO Auto-generated method stub
-
-	}
+		if (cause != null) {
+			log.info("on close");
+			cause.printStackTrace();
+			System.exit(-1);
+		}	}
 }
