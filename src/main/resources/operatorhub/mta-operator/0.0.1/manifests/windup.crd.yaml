@@ -41,10 +41,10 @@ spec:
                   default: "20G"
                 docker_images_repository:
                   type: string
-                  default: "docker.io"
+                  default: "quay.io"
                 docker_images_user:
                   type: string
-                  default: "windup3"
+                  default: "windupeng"
                 docker_images_tag:
                   type: string
                   default: "stable"
