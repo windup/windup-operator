@@ -27,9 +27,6 @@ spec:
             spec:
               type: object
               properties:
-                application_name:
-                    type: string
-                    default: "mta-web-console"
                 hostname_http:
                   type: string
                   default: ""
@@ -237,7 +234,6 @@ spec:
                   type: string
                   default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
               required:
-                  - application_name
                   - web_cpu_request
                   - web_mem_request
                   - executor_cpu_request

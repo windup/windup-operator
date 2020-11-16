@@ -4,7 +4,20 @@ metadata:
   name: windup-operator.v0.0.1
   namespace: placeholder
   annotations:
-#    alm-examples: "[{}]"
+    alm-examples: |-
+     [
+      {
+        "apiVersion": "windup.jboss.org/v1",
+        "kind": "Windup",
+        "metadata": {
+          "namespace": "mta",
+          "name": "mta-example",
+          "labels": {
+            "application": "windup"
+          }
+        }
+      }
+     ]
     capabilities: Basic Install
     categories: Monitoring
     certified: 'false'
@@ -15,8 +28,8 @@ metadata:
     repository: https://github.com/windup/windup-operator/
     support: MTA
 spec:
-  apiservicedefinitions: {}
-  description: This is the MTA operator
+  description: >
+    The Migration Toolkit for Applications (MTA) is an assembly of tools that support large-scale Java application modernization and migration projects across a broad range of transformations and use cases. It accelerates application code analysis, supports effort estimation, accelerates code migration, and helps you move applications to the cloud and containers.
   version: 0.0.1
   maintainers:
     - email: windup.eng@gmail.com
@@ -28,6 +41,8 @@ spec:
   links:
   - name: Website
     url: https://developers.redhat.com/products/mta
+  - name: GitHub
+    url: https://github.com/windup/windup-operator
   customresourcedefinitions:
     owned:
     - description: Represents an MTA application
@@ -154,3 +169,4 @@ spec:
   - metric
   - troubleshooting
   - run-time
+  - migration
