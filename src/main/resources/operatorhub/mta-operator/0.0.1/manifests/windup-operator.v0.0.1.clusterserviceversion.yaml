@@ -19,12 +19,12 @@ metadata:
       }
      ]
     capabilities: Basic Install
-    categories: Monitoring
+    categories: Migrations
     certified: 'false'
     containerImage: quay.io/windupeng/windup-operator-native:0.0.1
     imagePullPolicy: Always
     createdAt: 2020-10-30
-    description: Windup operator is a tool to provision MTA, an analysis tool of Java applications considering migration paths
+    description: Windup operator is a tool to provision Migration Toolkit for Applications (MTA), an analysis tool of Java applications considering migration paths
     repository: https://github.com/windup/windup-operator/
     support: MTA
 spec:
@@ -32,7 +32,7 @@ spec:
     The Migration Toolkit for Applications (MTA) is an assembly of tools that support large-scale Java application modernization and migration projects across a broad range of transformations and use cases. It accelerates application code analysis, supports effort estimation, accelerates code migration, and helps you move applications to the cloud and containers.
   version: 0.0.1
   maintainers:
-    - email: windup.eng@gmail.com
+    - email: migrate@redhat.com
       name: MTA
   maturity: alpha
   icon:
@@ -40,7 +40,7 @@ spec:
     mediatype: image/png
   links:
   - name: Website
-    url: https://developers.redhat.com/products/mta
+    url: https://red.ht/mta
   - name: GitHub
     url: https://github.com/windup/windup-operator
   customresourcedefinitions:
