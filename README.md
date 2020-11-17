@@ -9,14 +9,14 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
 ## Building and pushing the Java code manually in native mode
 1. The following command will use the configuration in the `application.properties` file :  
 ```
+quarkus.kubernetes.deployment-target=kubernetes, openshift
+quarkus.native.resources.includes=k8s/def/*.yaml
 quarkus.container-image.registry=quay.io
-quarkus.container-image.group=windup
-quarkus.container-image.name=${quarkus.application.name}-native
+quarkus.container-image.group=windupeng
+quarkus.container-image.name=windup-operator-native
 quarkus.container-image.tag=latest
 quarkus.kubernetes.service-type=load-balancer
-quarkus.kubernetes.image-pull-policy=never
-quarkus.container-image.builder=docker
-namespace=mta
+
 ```
 1. Install JDK 11  
 You can use different ways , but SDKMan is very easy
