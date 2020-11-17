@@ -67,5 +67,6 @@ public class WindupController implements Watcher<WindupResource> {
 			log.info("on close");
 			cause.printStackTrace();
 			System.exit(-1);
-		}	}
+		}
+	}
 }
