@@ -28,19 +28,20 @@ https://podman.io/getting-started/installation
 1. We can log in the Openshift cluster using `oc` or `kubectl`. You will need a user with cluster-wide permissions to deploy the CRD.
    1. Install the client tool ( `oc` or `kubectl` ) https://github.com/openshift/origin/releases/tag/v3.11.0
    2. Given an url like https://console-openshift-console.apps.mta.9a56.sandbox718.opentlc.com/
-   3. With `kubectl`
+   3. Connect to the web console, click on `?` and `command line tools` to get the token
+   4. With `kubectl`
       ```
       kubectl config set-credentials kubeuser/opentlc --token={token} kubeuser/opentlc
       kubectl config set-cluster opentlc --server=https://api.mta.9a56.sandbox718.opentlc.com:6443 --insecure-skip-tls-verify=true
       kubectl config set-context default/opentlc/kubeuser --user=kubeuser/opentlc --namespace=default --cluster=opentlc
       kubectl config use-context default/opentlc/kubeuser
       ```
-   1. With `oc`
+   5. With `oc`
       ```
       oc login --token={token} --server=https://api.mta.9a56.sandbox718.opentlc.com:6443 
       ```
-3. Move to the `src/main/resources/k8s/def` folder
-4. These scripts are considering you are installing the Operator in the `mta` namespace.
+2. Move to the `src/main/resources/k8s/def` folder
+3. These scripts are considering you are installing the Operator in the `mta` namespace.
    If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
   `kubectl apply -f windup.namespace.yaml`
 2. In case you want to install the Operator in any other namespace, you would need to change these scripts pointing to that already existing namespace.
