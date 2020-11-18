@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
@@ -24,13 +25,16 @@ public class WindupController implements Watcher<WindupResource> {
 	@Named("namespace")
 	String namespace;
 
+	@ConfigProperty(name = "operator.serviceaccount", defaultValue = "windup-operator")
+	String serviceAccount;
+
 	@Inject
 	KubernetesClient k8sClient;
 
 	private void onAdd(WindupResource resource) {
 		log.info("Event ADD " + resource.getMetadata().getName());
 		if (!resource.isDeploying() && !resource.isReady()) {
-			new WindupDeployment(resource, crClient, k8sClient).deploy();
+			new WindupDeployment(resource, crClient, k8sClient, namespace, serviceAccount).deploy();
 		}
 	}
 
