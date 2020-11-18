@@ -19,12 +19,10 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
     ```
 1. Install JDK 11  
 You can use different ways , but SDKMan is very easy https://sdkman.io/install
-1. Install MVN  
-You can use different ways , but SDKMan is very easy https://sdkman.io/install
 1. Install Podman  
 https://podman.io/getting-started/installation
 2. Execute the maven command:  
-`mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
+`./mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
 
 ## Installation
 1. We can log in the Openshift cluster using `oc login .....` . You will need a user with cluster-wide permissions to deploy the CRD.
@@ -58,7 +56,7 @@ So, in order to test the operator on your PR review process , or to deploy local
 1. Log in your Quay.io account  
 `podman login quay.io`
 1. Build and push the image to your docker hub account  
-`mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.group={your docker id}`
+`./mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.group={your docker id}`
 1. Modify the `windup.deployment.yaml` file to point to your image  
 `- image: quay.io/windup/windup-operator-native:latest` --> `- image: quay.io/{your docker id}/windup-operator-native:latest`
 
