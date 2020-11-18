@@ -7,26 +7,32 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
 
 ## Building and pushing the Java code manually in native mode
 1. The following command will use the configuration in the `application.properties` file :  
-```
-quarkus.kubernetes.deployment-target=kubernetes, openshift
-quarkus.native.resources.includes=k8s/def/*.yaml
-quarkus.container-image.registry=quay.io
-quarkus.container-image.group=windupeng
-quarkus.container-image.name=windup-operator-native
-quarkus.container-image.tag=latest
-quarkus.kubernetes.service-type=load-balancer
-```
+    ```
+    quarkus.kubernetes.deployment-target=kubernetes, openshift
+    quarkus.native.resources.includes=k8s/def/*.yaml
+    quarkus.container-image.registry=quay.io
+    quarkus.container-image.group=windupeng
+    quarkus.container-image.name=windup-operator-native
+    quarkus.container-image.tag=latest
+    quarkus.kubernetes.service-type=load-balancer
+    ```
 1. Install JDK 11  
-You can use different ways , but SDKMan is very easy
+You can use different ways , but SDKMan is very easy https://sdkman.io/install
+1. Install MVN  
+You can use different ways , but SDKMan is very easy https://sdkman.io/install
+1. Install Podman  
+https://podman.io/getting-started/installation
 2. Execute the maven command:  
 `mvn clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
 
 ## Installation
 1. We can log in the Openshift cluster using `oc login .....` . You will need a user with cluster-wide permissions to deploy the CRD.
-1. Move to the `src/main/resources` folder
-1. If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
+1. Move to the `src/main/resources/k8s/def` folder
+1. These scripts are considering you are installing the Operator in the `mta` namespace.
+   If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
   `oc apply -f windup.namespace.yaml`
-1. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
+2. In case you want to install the Operator in any other namespace, you would need to change these scripts pointing to that already existing namespace.
+3. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
   `windup.serviceaccount.yaml`  
   `windup.role.yaml`  
   `windup.rolebinding.yaml`  
@@ -46,7 +52,7 @@ This project also includes a Github Action (`.github/workflows/e2e-test.yml`) th
 This pipeline uses a local Minikube , and overrides the images used for the deployments in order to be able to deploy and run without having the resources constraints, as the operator is mainly concerned about the deployment of the objects.
 
 ## Testing
-Project is pushing images to `windup` group on Quay.io, and the windup.deployment.yaml to deploy the Operator is also considering this image.  
+Project is pushing images to `windupeng` group on Quay.io, and the windup.deployment.yaml to deploy the Operator is also considering this image.  
 So, in order to test the operator on your PR review process , or to deploy locally on your cluster, these are the steps you should follow :
 1. Log in your Docker Hub account  
 `docker login quay.io`
