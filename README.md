@@ -25,11 +25,24 @@ https://podman.io/getting-started/installation
 `./mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true`
 
 ## Installation
-1. We can log in the Openshift cluster using `oc login .....` . You will need a user with cluster-wide permissions to deploy the CRD.
-1. Move to the `src/main/resources/k8s/def` folder
-1. These scripts are considering you are installing the Operator in the `mta` namespace.
+1. We can log in the Openshift cluster using `oc` or `kubectl`. You will need a user with cluster-wide permissions to deploy the CRD.
+   1. Install the client tool ( `oc` or `kubectl` ) https://github.com/openshift/origin/releases/tag/v3.11.0
+   2. Given an url like https://console-openshift-console.apps.mta.9a56.sandbox718.opentlc.com/
+   3. With `kubectl`
+      ```
+      kubectl config set-credentials kubeuser/opentlc --token={token} kubeuser/opentlc
+      kubectl config set-cluster opentlc --server=https://api.mta.9a56.sandbox718.opentlc.com:6443 --insecure-skip-tls-verify=true
+      kubectl config set-context default/opentlc/kubeuser --user=kubeuser/opentlc --namespace=default --cluster=opentlc
+      kubectl config use-context default/opentlc/kubeuser
+      ```
+   1. With `oc`
+      ```
+      oc login --token={token} --server=https://api.mta.9a56.sandbox718.opentlc.com:6443 
+      ```
+3. Move to the `src/main/resources/k8s/def` folder
+4. These scripts are considering you are installing the Operator in the `mta` namespace.
    If you are installing the Operator on a cluster without the `mta` namespace , you first should create the namespace with  
-  `oc apply -f windup.namespace.yaml`
+  `kubectl apply -f windup.namespace.yaml`
 2. In case you want to install the Operator in any other namespace, you would need to change these scripts pointing to that already existing namespace.
 3. Create all the objects and deployment for the Operator. For convinience there's a file called `script.create.all.sh` that includes the execution of :  
   `windup.serviceaccount.yaml`  
@@ -38,9 +51,9 @@ https://podman.io/getting-started/installation
   `windup.deployment.yaml`  
   `windup.crd.yaml`
 1. Now you need to create the CR, with your configuration, to tell the Operator to create the infrastructure.  
-`oc apply -f ../examples/windup.yaml`
+`kubectl apply -f ../examples/windup.yaml`
 1. In order to delete the MTA application (web,executor,postgre,volumes, ...) but not the Operator  
-`oc delete -f ../examples/windup.yaml`
+`kubectl delete -f ../examples/windup.yaml`
 1. In order to totally delete everything except the namespace, execute `script.delete.all.sh`  
 2. NOTE : Do not DELETE a namespace with intentions of creating it again. There are several issues on OCP on deleting a namespace and staying `frozen`
 
