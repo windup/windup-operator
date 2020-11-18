@@ -98,7 +98,7 @@ spec:
                   default: "false"
                 sso_url:
                   type: string
-                  default: "windup"
+                  default: "/auth"
                 sso_service_url:
                   type: string
                   default: "/auth"
