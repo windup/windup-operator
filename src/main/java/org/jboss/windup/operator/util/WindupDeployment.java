@@ -39,12 +39,6 @@ import java.util.stream.Collectors;
 @Log
 public class WindupDeployment {
 
-  @ConfigProperty(name = "operator.serviceaccount", defaultValue = "windup-operator")
-  String serviceAccount;
-
-  @Named("namespace")
-  String namespace;
-
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
   KubernetesClient k8sClient;
@@ -70,10 +64,17 @@ public class WindupDeployment {
 
   private String deployment_amq;
 
-  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, KubernetesClient k8sClient) {
+  private String namespace;
+
+  private String serviceAccount;
+
+  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, 
+                          KubernetesClient k8sClient, String namespace, String serviceAccount) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
+    this.namespace = namespace;
+    this.serviceAccount = serviceAccount;
     initParams();
   }
 
