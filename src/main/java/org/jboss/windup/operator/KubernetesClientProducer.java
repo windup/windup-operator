@@ -1,7 +1,8 @@
 package org.jboss.windup.operator;
 
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.DoneableCustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinitionVersion;
+import io.fabric8.kubernetes.api.model.apiextensions.v1.DoneableCustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -56,12 +57,20 @@ public class KubernetesClientProducer {
         log.info("Loading windup.crd.yaml");
         log.info("client : " + defaultClient);
         log.info("crds : " + defaultClient.customResourceDefinitions());
-        Resource<CustomResourceDefinition, DoneableCustomResourceDefinition> resource = defaultClient.inNamespace(namespace).customResourceDefinitions().load(fileStream);
+        Resource<CustomResourceDefinition, DoneableCustomResourceDefinition> resource = defaultClient.inNamespace(namespace).apiextensions().v1().customResourceDefinitions().load(fileStream);
         log.info("resource : " + resource);
         CustomResourceDefinition windupCRD = resource.get();
         log.info("Loaded windup.crd.yaml");
 
-        return CustomResourceDefinitionContext.fromCrd(windupCRD);
+        return new CustomResourceDefinitionContext.Builder()
+                .withGroup(windupCRD.getSpec().getGroup())
+                .withVersion(windupCRD.getSpec().getVersions().stream().findFirst()
+                        .map(CustomResourceDefinitionVersion::getName).orElse(""))
+                .withScope(windupCRD.getSpec().getScope())
+                .withName(windupCRD.getMetadata().getName())
+                .withPlural(windupCRD.getSpec().getNames().getPlural())
+                .withKind(windupCRD.getSpec().getNames().getKind())
+            .build();
     }
 
 }
