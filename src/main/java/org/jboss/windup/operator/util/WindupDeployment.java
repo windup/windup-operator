@@ -23,12 +23,9 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
-
-import javax.inject.Named;
 
 import java.util.Arrays;
 import java.util.Collections;
