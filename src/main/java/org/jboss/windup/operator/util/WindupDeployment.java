@@ -101,23 +101,13 @@ public class WindupDeployment {
     // because in that case we receive an error : Too Many Items to Create
     initCRStatusOnDeployment();
 
-    List<PersistentVolumeClaim> volumes = createVolumes();
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(1));
+    createVolumes().stream().forEach(e -> k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(e));
 
-    List<Deployment> deployments = createDeployment();
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(0));
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(1));
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(2));
+    createDeployment().stream().forEach(e -> k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(e));
 
-    List<Service> services = createServices();
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(0));
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(1));
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(2));
+    createServices().stream().forEach(e -> k8sClient.services().inNamespace(namespace).createOrReplace(e));
 
-    List<Ingress> ingresses = createIngresses();
-    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(0));
-    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(1));
+    createIngresses().stream().forEach(e -> k8sClient.network().ingress().inNamespace(namespace).createOrReplace(e));
   }
 
   private void initCRStatusOnDeployment() {
