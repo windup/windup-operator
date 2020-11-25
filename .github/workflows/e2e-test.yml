@@ -28,7 +28,7 @@ jobs:
       - name: Build operator image and push it to the minikube docker host
         run: cd ${{github.workspace}} &&
              eval $(minikube -p minikube docker-env) &&
-             mvn clean package -Pnative -Dquarkus.container-image.build=true -DskipTests
+             mvn clean package -Pnative -Dquarkus.container-image.build=true -DskipTests -Dquarkus.native.container-runtime=docker
 
       - name: Deploy operator
         run: cd ${{github.workspace}} &&
@@ -60,5 +60,5 @@ jobs:
         uses: therussiankid92/gat@v1.3
         with:
           assertion: should.equal
-          expected: 18
+          expected: 19
           actual: ${{steps.getobjects.outputs.value}}
