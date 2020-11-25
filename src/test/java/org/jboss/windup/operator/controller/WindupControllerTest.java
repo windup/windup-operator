@@ -46,7 +46,8 @@ public class WindupControllerTest {
             .atMost(5, TimeUnit.SECONDS)
             .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("ingress") >= 0).count()));
 
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
+        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("status") >= 0).count());
+        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("persistentvolumeclaim") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("deployments") >= 0).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().indexOf("service") >= 0).count());
     }

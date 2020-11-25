@@ -23,12 +23,9 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
-
-import javax.inject.Named;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,13 +65,18 @@ public class WindupDeployment {
 
   private String serviceAccount;
 
+  private String sso_public_key;
+  private String ssoPublicKeyDefault;
+
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, 
-                          KubernetesClient k8sClient, String namespace, String serviceAccount) {
+                          KubernetesClient k8sClient, String namespace, 
+                          String serviceAccount, String ssoPublicKeyDefault) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
+    this.ssoPublicKeyDefault = ssoPublicKeyDefault;
     initParams();
   }
 
@@ -91,12 +93,13 @@ public class WindupDeployment {
     volume_mtaweb_data = application_name + "-mta-web-pvol-data";
     deployment_amq = application_name + "-amq";
 
-
+    // Calculate values if they come blank
     mq_cluster_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
     db_username =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_username(),"user" + RandomStringUtils.randomAlphanumeric(3));
     db_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_password(),RandomStringUtils.randomAlphanumeric(8));
     sso_secret = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8));
     jgroups_cluster_password  = StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
+    sso_public_key = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_public_key(), ssoPublicKeyDefault);
   }
 
   public void deploy() {
@@ -104,23 +107,13 @@ public class WindupDeployment {
     // because in that case we receive an error : Too Many Items to Create
     initCRStatusOnDeployment();
 
-    List<PersistentVolumeClaim> volumes = createVolumes();
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(0));
-    k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(volumes.get(1));
+    createVolumes().stream().forEach(e -> k8sClient.persistentVolumeClaims().inNamespace(namespace).createOrReplace(e));
 
-    List<Deployment> deployments = createDeployment();
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(0));
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(1));
-    k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(deployments.get(2));
+    createDeployment().stream().forEach(e -> k8sClient.apps().deployments().inNamespace(namespace).createOrReplace(e));
 
-    List<Service> services = createServices();
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(0));
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(1));
-    k8sClient.services().inNamespace(namespace).createOrReplace(services.get(2));
+    createServices().stream().forEach(e -> k8sClient.services().inNamespace(namespace).createOrReplace(e));
 
-    List<Ingress> ingresses = createIngresses();
-    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(0));
-    k8sClient.network().ingress().inNamespace(namespace).createOrReplace(ingresses.get(1));
+    createIngresses().stream().forEach(e -> k8sClient.network().ingress().inNamespace(namespace).createOrReplace(e));
   }
 
   private void initCRStatusOnDeployment() {
@@ -189,7 +182,7 @@ public class WindupDeployment {
         .endSpec().build();
     log.info("Created Service for AMQ");
 
-    return List.of(mtaWebConsoleSvc, postgreSvc, postgreSvc, amqSvc);
+    return List.of(mtaWebConsoleSvc, postgreSvc, amqSvc);
   }
 
   private OwnerReference getOwnerReference() {
@@ -416,7 +409,7 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("SSO_REALM").withValue(windupResource.getSpec().getSso_realm()).endEnv()
                 .addNewEnv().withName("SSO_USERNAME").withValue(windupResource.getSpec().getSso_username()).endEnv()
                 .addNewEnv().withName("SSO_PASSWORD").withValue(windupResource.getSpec().getSso_password()).endEnv()
-                .addNewEnv().withName("SSO_PUBLIC_KEY").withValue(windupResource.getSpec().getSso_public_key()).endEnv()
+                .addNewEnv().withName("SSO_PUBLIC_KEY").withValue(sso_public_key).endEnv()
                 .addNewEnv().withName("SSO_BEARER_ONLY").withValue(windupResource.getSpec().getSso_bearer_only()).endEnv()
                 .addNewEnv().withName("SSO_SAML_KEYSTORE_SECRET").withValue(windupResource.getSpec().getSso_saml_keystore_secret()).endEnv()
                 .addNewEnv().withName("SSO_SAML_KEYSTORE").withValue(windupResource.getSpec().getSso_saml_keystore()).endEnv()

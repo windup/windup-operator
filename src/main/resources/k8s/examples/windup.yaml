@@ -1,7 +1,7 @@
 apiVersion: windup.jboss.org/v1
 kind: Windup
 metadata:
-  namespace: user1-mta 
+  namespace: mta
   name: mta-example
   labels:
     application: windup
