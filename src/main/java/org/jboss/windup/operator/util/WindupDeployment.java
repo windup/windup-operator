@@ -65,13 +65,18 @@ public class WindupDeployment {
 
   private String serviceAccount;
 
+  private String sso_public_key;
+  private String ssoPublicKeyDefault;
+
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, 
-                          KubernetesClient k8sClient, String namespace, String serviceAccount) {
+                          KubernetesClient k8sClient, String namespace, 
+                          String serviceAccount, String ssoPublicKeyDefault) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
+    this.ssoPublicKeyDefault = ssoPublicKeyDefault;
     initParams();
   }
 
@@ -88,12 +93,13 @@ public class WindupDeployment {
     volume_mtaweb_data = application_name + "-mta-web-pvol-data";
     deployment_amq = application_name + "-amq";
 
-
+    // Calculate values if they come blank
     mq_cluster_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getMq_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
     db_username =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_username(),"user" + RandomStringUtils.randomAlphanumeric(3));
     db_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_password(),RandomStringUtils.randomAlphanumeric(8));
     sso_secret = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8));
     jgroups_cluster_password  = StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
+    sso_public_key = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_public_key(), ssoPublicKeyDefault);
   }
 
   public void deploy() {
@@ -176,7 +182,7 @@ public class WindupDeployment {
         .endSpec().build();
     log.info("Created Service for AMQ");
 
-    return List.of(mtaWebConsoleSvc, postgreSvc, postgreSvc, amqSvc);
+    return List.of(mtaWebConsoleSvc, postgreSvc, amqSvc);
   }
 
   private OwnerReference getOwnerReference() {
@@ -403,7 +409,7 @@ private Map<String, String> getLabels() {
                 .addNewEnv().withName("SSO_REALM").withValue(windupResource.getSpec().getSso_realm()).endEnv()
                 .addNewEnv().withName("SSO_USERNAME").withValue(windupResource.getSpec().getSso_username()).endEnv()
                 .addNewEnv().withName("SSO_PASSWORD").withValue(windupResource.getSpec().getSso_password()).endEnv()
-                .addNewEnv().withName("SSO_PUBLIC_KEY").withValue(windupResource.getSpec().getSso_public_key()).endEnv()
+                .addNewEnv().withName("SSO_PUBLIC_KEY").withValue(sso_public_key).endEnv()
                 .addNewEnv().withName("SSO_BEARER_ONLY").withValue(windupResource.getSpec().getSso_bearer_only()).endEnv()
                 .addNewEnv().withName("SSO_SAML_KEYSTORE_SECRET").withValue(windupResource.getSpec().getSso_saml_keystore_secret()).endEnv()
                 .addNewEnv().withName("SSO_SAML_KEYSTORE").withValue(windupResource.getSpec().getSso_saml_keystore()).endEnv()
