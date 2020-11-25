@@ -5,4 +5,4 @@ metadata:
   namespace: openshift-marketplace
 spec:
   sourceType: grpc
-  image: quay.io/windupeng/mta-operator-test-catalog:0.0.37
+  image: quay.io/windupeng/mta-operator-test-catalog:0.0.38
