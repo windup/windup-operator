@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: windup-operator.v0.0.1
+  name: windup-operator.0.0.1
   namespace: placeholder
   annotations:
     alm-examples: >-
@@ -11,7 +11,7 @@ metadata:
          "kind": "Windup",
          "metadata": {
            "namespace": "mta",
-           "name": "mta-example",
+           "name": "mta",
            "labels": {
              "application": "windup"
            }
@@ -91,17 +91,23 @@ metadata:
        }
       ]
     capabilities: Basic Install
-    categories: Migrations
+    categories: Modernization & Migration
     certified: "false"
     containerImage: quay.io/windupeng/windup-operator-native:0.0.1
     imagePullPolicy: Always
     createdAt: 2020-10-30
-    description: MTA Operator is a tool to provision Migration Toolkit for Applications (MTA), an analysis tool of Java applications considering migration paths
     repository: https://github.com/windup/windup-operator/
-    support: MTA
+    support: https://issues.redhat.com/projects/WINDUP
 spec:
   description: >
-    The Migration Toolkit for Applications (MTA) is an assembly of tools that support large-scale Java application modernization and migration projects across a broad range of transformations and use cases. It accelerates application code analysis, supports effort estimation, accelerates code migration, and helps you move applications to the cloud and containers.
+    The Migration Toolkit for Applications (MTA) is a web console application that support large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  
+
+    
+    It accelerates application code analysis, supports effort estimation, accelerates code migration, and helps you move applications to the cloud and containers.  
+
+
+    In order to get more information about the tool , please proceed to the [Overview](https://developers.redhat.com/products/mta/overview) , and to start using it please proceed to [Getting Started](https://developers.redhat.com/products/mta/getting-started)
+
   version: 0.0.1
   maintainers:
     - email: migrate@redhat.com
@@ -115,10 +121,35 @@ spec:
       url: https://red.ht/mta
     - name: GitHub
       url: https://github.com/windup/windup-operator
+    - name: Documentation
+      url: https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications
   customresourcedefinitions:
     owned:
-      - description: Represents a Migration Toolkit for Applications application
-        displayName: Migration Toolkit for Applications application
+      - description: >
+          It creates an MTA Web Console application.  
+          
+
+          To access the MTA Web Console application from :  
+
+
+          * Developer Perspective.  
+
+
+          Please go to Topology and click on the small arrow icon on web-console pod.  
+
+          * Administrator Perspective.  
+
+
+          Please go to Networking->Routes and click on location field in the route element.  
+
+
+          In order to connect with default login credentials , please use "mta" as username and "password" as password.  
+
+          * Known issue  
+
+
+          If you want to customize the MTA Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.
+        displayName: Migration Toolkit for Applications
         kind: Windup
         name: windups.windup.jboss.org
         version: v1
@@ -195,7 +226,7 @@ spec:
                 - patch
           serviceAccountName: windup-operator
       deployments:
-        - name: windup-operator.v0.0.1
+        - name: windup-operator.0.0.1
           spec:
             replicas: 1
             selector:
@@ -243,3 +274,4 @@ spec:
     - troubleshooting
     - run-time
     - migration
+    - modernization
