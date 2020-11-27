@@ -100,13 +100,13 @@ metadata:
     support: https://issues.redhat.com/projects/WINDUP
 spec:
   description: >
-    The Migration Toolkit for Applications (MTA) is a web console application that support large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  
+    The Migration Toolkit for Applications (MTA) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  
 
     
-    It accelerates application code analysis, supports effort estimation, accelerates code migration, and helps you move applications to the cloud and containers.  
+    It analyzes application code, supports effort estimation, accelerates code migration, and enable users to move applications to containers.  
 
 
-    In order to get more information about the tool , please proceed to the [Overview](https://developers.redhat.com/products/mta/overview) , and to start using it please proceed to [Getting Started](https://developers.redhat.com/products/mta/getting-started)
+    For more information please refer to the [https://developers.redhat.com/products/mta/overview](https://developers.redhat.com/products/mta/overview) page.
 
   version: 0.0.1
   maintainers:
@@ -126,28 +126,16 @@ spec:
   customresourcedefinitions:
     owned:
       - description: >
-          It creates an MTA Web Console application.  
+          Create an MTA Web Console application.  
           
 
-          To access the MTA Web Console application from :  
+          To access the MTA Web Console application from the "Developer" perspective, please go to Topology and click on the small arrow icon on web-console pod.  
 
+          Alternatively from the "Administrator" perspective, please go to Networking->Routes and click on the location field in the route element.  
 
-          * Developer Perspective.  
+          In order to connect with default login credentials, please use "mta" as username and "password" as password.  
 
-
-          Please go to Topology and click on the small arrow icon on web-console pod.  
-
-          * Administrator Perspective.  
-
-
-          Please go to Networking->Routes and click on location field in the route element.  
-
-
-          In order to connect with default login credentials , please use "mta" as username and "password" as password.  
-
-          * Known issue  
-
-
+          Known issue  
           If you want to customize the MTA Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.
         displayName: Migration Toolkit for Applications
         kind: Windup
