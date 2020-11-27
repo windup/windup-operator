@@ -103,7 +103,7 @@ spec:
     The Migration Toolkit for Applications (MTA) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  
 
     
-    It analyzes application code, supports effort estimation, accelerates code migration, and enable users to move applications to containers.  
+    It analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  
 
 
     For more information please refer to the [https://developers.redhat.com/products/mta/overview](https://developers.redhat.com/products/mta/overview) page.
@@ -129,13 +129,17 @@ spec:
           Create an MTA Web Console application.  
           
 
-          To access the MTA Web Console application from the "Developer" perspective, please go to Topology and click on the small arrow icon on web-console pod.  
+          To access the MTA Web Console application from the "Developer" perspective, please go to Topology and click on the "Open URL" icon on the web-console pod.  
+          
 
-          Alternatively from the "Administrator" perspective, please go to Networking->Routes and click on the location field in the route element.  
+          Alternatively from the "Administrator" perspective, please go to Networking->Routes and click on the Location hyperlink.  
+          
 
           In order to connect with default login credentials, please use "mta" as username and "password" as password.  
+          
 
           Known issue  
+
           If you want to customize the MTA Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.
         displayName: Migration Toolkit for Applications
         kind: Windup
