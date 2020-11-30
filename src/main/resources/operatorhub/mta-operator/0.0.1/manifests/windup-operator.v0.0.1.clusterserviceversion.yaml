@@ -95,7 +95,7 @@ metadata:
     certified: "false"
     containerImage: quay.io/windupeng/windup-operator-native:0.0.1
     imagePullPolicy: Always
-    createdAt: 2020-10-30
+    createdAt: 2020-12-04
     repository: https://github.com/windup/windup-operator/
     support: https://issues.redhat.com/projects/WINDUP
 spec:
