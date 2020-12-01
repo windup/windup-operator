@@ -20,10 +20,14 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Log
 @QuarkusTest
@@ -74,7 +78,7 @@ public class WindupControllerTest {
 
         Awaitility
         .await()
-        .atMost(10, TimeUnit.SECONDS)
+        .atMost(20, TimeUnit.SECONDS)
         .untilAsserted( () -> {
             assertEquals(3, client.apps().deployments().inNamespace("test").list().getItems().size());
         });
@@ -98,15 +102,34 @@ public class WindupControllerTest {
                 assertEquals(4, status.stream().filter(e -> "True".equalsIgnoreCase(e.getStatus())).count());
                 // Checking there are 5 status with different timestamps : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(5, status.stream().map(e -> e.getLastTransitionTime()).distinct().count());
+
+                // Checking the update times are those expected in order
+                LocalDateTime postgreUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-postgresql");
+                log.info("postgre update time : " + postgreUpdateTime);
+                LocalDateTime windupappUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp");
+                log.info("windupappUpdateTime : " + postgreUpdateTime);
+                LocalDateTime executorUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-executor");
+                log.info("windupapp-executor : " + postgreUpdateTime);
+
+                assertTrue(windupappUpdateTime.isAfter(postgreUpdateTime.plus(Duration.ofMillis(150))));
+                assertTrue(executorUpdateTime.isAfter(windupappUpdateTime.plus(Duration.ofMillis(150))));
+
             }) ;
 
     }
 
+    private LocalDateTime getLastTransitionTimeFromStatus(List<WindupResourceStatusCondition> status, String deployment) {
+        return status.stream()
+                    .filter(e -> deployment.equalsIgnoreCase(e.getType())).findFirst()
+                    .map(e -> LocalDateTime.parse(e.getLastTransitionTime(), DateTimeFormatter.ISO_DATE_TIME))
+                    .get();
+    }
+
     private void setDeploymentReadyReplicas(String name, int replicas) {
-        Deployment postgre = client.apps().deployments().inNamespace("test").withName(name).get();
-        if (postgre.getStatus() == null) postgre.setStatus(new DeploymentStatus());
-        postgre.getStatus().setReadyReplicas(replicas);
-        client.apps().deployments().updateStatus(postgre);
+        Deployment deployment = client.apps().deployments().inNamespace("test").withName(name).get();
+        if (deployment.getStatus() == null) deployment.setStatus(new DeploymentStatus());
+        deployment.getStatus().setReadyReplicas(replicas);
+        client.apps().deployments().updateStatus(deployment);
     }
 
 

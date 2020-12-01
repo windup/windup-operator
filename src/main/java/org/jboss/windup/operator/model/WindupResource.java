@@ -58,10 +58,15 @@ public class WindupResource extends CustomResource {
     setLabelProperty(statusArg, DEPLOYMENT);
   }
   
-  private void setLabelProperty(boolean statusArg, String label) {
+  public void setLabelProperty(boolean statusArg, String label) {
+    setLabelProperty(statusArg, label, null);
+  }
+
+  public void setLabelProperty(boolean statusArg, String label, String reason) {
     WindupResourceStatusCondition labelProperty = getOrAddConditionByType(label);
     labelProperty.setStatus(Boolean.toString(statusArg));
     labelProperty.setLastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+    if (reason != null) labelProperty.setReason(reason);
   }
 
   public Optional<WindupResourceStatusCondition> getConditionByType(String type) {
