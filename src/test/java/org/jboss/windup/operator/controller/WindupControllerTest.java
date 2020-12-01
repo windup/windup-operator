@@ -80,7 +80,9 @@ public class WindupControllerTest {
         });
 
         setDeploymentReadyReplicas("windupapp-postgresql", 1);
+        Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp", 1);
+        Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp-executor", 1);
 
         Awaitility
@@ -90,11 +92,12 @@ public class WindupControllerTest {
             .untilAsserted(() -> {
                 WindupResourceList lista = crClient.inNamespace("test").list();
                 List<WindupResourceStatusCondition> status = lista.getItems().get(0).getStatus().getConditions();
-                log.info("Status : " + status);
+                // Checking there are only 5 status in the CR : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
+                assertEquals(5, status.size());
+                // Checking there are 4 status with True : Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(4, status.stream().filter(e -> "True".equalsIgnoreCase(e.getStatus())).count());
+                // Checking there are 5 status with different timestamps : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(5, status.stream().map(e -> e.getLastTransitionTime()).distinct().count());
-
-                log.info("CR STATUS :  " + status);
             }) ;
 
     }
