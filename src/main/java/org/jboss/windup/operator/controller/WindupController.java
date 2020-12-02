@@ -42,15 +42,16 @@ public class WindupController implements Watcher<WindupResource> {
 	}
 
 	private void onUpdate(WindupResource newResource) {
-		log.info("Event UPDATE " + newResource.getMetadata().getName() + " - DR "
-				+ newResource.deploymentsReady() + " RD " + newResource.isReady());
+		log.info("Event UPDATE " + newResource.getMetadata().getName() + " - DeploymentsReady "
+				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() 
+				+ " Status " + newResource.getStatus().getConditions());
 
 		// Consolidate status of the CR
 		if (newResource.deploymentsReady() == 3 && !newResource.isReady()) {
 			newResource.setReady(true);
-			newResource.getOrAddConditionByType("Deploy").setStatus(Boolean.FALSE.toString());
+			newResource.setStatusDeploy(false); 
 
-			log.info("Setting this CR as Ready");
+			log.info("Setting this CustomResource as Ready");
 			crClient.inNamespace(namespace).updateStatus(newResource);
 		}
 	}

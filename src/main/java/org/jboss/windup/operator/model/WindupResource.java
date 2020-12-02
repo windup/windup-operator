@@ -51,11 +51,22 @@ public class WindupResource extends CustomResource {
   }
   
   public void setReady(boolean statusArg) {
-		getOrAddConditionByType(READY).setStatus(Boolean.toString(statusArg));
+    setLabelProperty(statusArg, READY);
 	}
 
   public void setStatusDeploy(boolean statusArg) {
-    getOrAddConditionByType(DEPLOYMENT).setStatus(Boolean.toString(statusArg));
+    setLabelProperty(statusArg, DEPLOYMENT);
+  }
+  
+  public void setLabelProperty(boolean statusArg, String label) {
+    setLabelProperty(statusArg, label, null);
+  }
+
+  public void setLabelProperty(boolean statusArg, String label, String reason) {
+    WindupResourceStatusCondition labelProperty = getOrAddConditionByType(label);
+    labelProperty.setStatus(Boolean.toString(statusArg));
+    labelProperty.setLastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+    if (reason != null) labelProperty.setReason(reason);
   }
 
   public Optional<WindupResourceStatusCondition> getConditionByType(String type) {
@@ -65,7 +76,7 @@ public class WindupResource extends CustomResource {
 	}
 
 	public WindupResourceStatusCondition getOrAddConditionByType(String type) {
-		Optional<WindupResourceStatusCondition> condition = getConditionByType(type);
+    Optional<WindupResourceStatusCondition> condition = getConditionByType(type);
 		if (!condition.isPresent() ) {
 			log.info(" Condition " + condition + " is NOT present ");
 			condition = Optional.of(WindupResourceStatusCondition.builder()
@@ -83,5 +94,6 @@ public class WindupResource extends CustomResource {
       spec = new WindupResourceSpec();
       status = new WindupResourceStatus();
     }
+
 }
 

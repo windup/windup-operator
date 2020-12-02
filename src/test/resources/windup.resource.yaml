@@ -94,7 +94,6 @@ metadata:
   selfLink: /apis/windup.jboss.org/v1/namespaces/mta/windups/windupapp
   uid: 4e4d714c-6d27-41e1-86df-4a58900ca5d0
 spec:
-  application_name: windup-jon
   auto_deploy_exploded: "false"
   docker_images_repository: docker.io
   db_database: mta

@@ -15,13 +15,3 @@ spec:
   mta_Volume_Capacity: 5G
   db_database: mtadb
   volumeCapacity: 5G
-  web_cpu_request: "0.2"
-  web_mem_request: 0.2Gi
-  executor_cpu_request: "0.2"
-  executor_mem_request: 0.2Gi
-  messaging_serializer: "http.post.serializer"
-  sso_url: "/auth"
-  sso_realm: "mta"
-  docker_images_user: windupeng
-  docker_images_tag: latest
-  max_post_size: "4294967296"
