@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: windup-operator
+  namespace: mta
+  labels:
+      application: windup
+spec:
+  selector:
+    matchLabels:
+      app: windup-operator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: windup-operator
+    spec:
+      serviceAccountName: windup-operator
+      containers:
+        - image: quay.io/windupeng/windup-operator-native:latest
+          name: windup-operator
+          imagePullPolicy: Always
+          env:
+          - name: WATCH_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+

@@ -14,10 +14,10 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus-plugin.version>1.7.1.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>1.9.0.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>1.7.1.Final</quarkus.platform.version>
+    <quarkus.platform.version>1.9.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
   <dependencyManagement>
@@ -54,12 +54,38 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-kubernetes-client</artifactId>
     </dependency>
-  <dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <version>1.18.4</version>
-    <scope>provided</scope>
-</dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.4</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.11</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8</groupId>
+      <artifactId>kubernetes-server-mock</artifactId>
+      <version>4.12.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>4.0.3</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -91,38 +117,25 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.eclipse.jkube</groupId>
-        <artifactId>openshift-maven-plugin</artifactId>
-        <version>1.0.0-rc-1</version>
-        <configuration>
-            <images>
-                <image>
-                    <!-- Add your dockerhub user name here -->
-                    <name>jonathanvila/windup-operator:${project.version}</name>
-                    <alias>podset-operator</alias>
-                    <build>
-                        <from>openjdk:latest</from>
-                        <assembly>
-                            <mode>dir</mode>
-                            <inline>
-                                <id>copy-jar-with-deps</id>
-                                <files>
-                                    <file>
-                                        <source>
-                                            ${project.build.directory}/${project.name}-${project.version}-jar-with-dependencies.jar
-                                        </source>
-                                        <outputDirectory>complete-jar</outputDirectory>
-                                    </file>
-                                </files>
-                            </inline>
-                        </assembly>
-                        <cmd>java -jar maven/complete-jar/${project.name}-${project.version}-jar-with-dependencies.jar</cmd>
-                    </build>
-                </image>
-            </images>
-        </configuration>
-    </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.6</version>
+          <executions>
+              <execution>
+                  <goals>
+                      <goal>prepare-agent</goal>
+                  </goals>
+              </execution>
+              <execution>
+                  <id>report</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                      <goal>report</goal>
+                  </goals>
+              </execution>
+          </executions>
+        </plugin>
     </plugins>
   </build>
   <profiles>

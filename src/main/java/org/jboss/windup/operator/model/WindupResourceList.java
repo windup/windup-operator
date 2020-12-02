@@ -5,6 +5,6 @@ import io.fabric8.kubernetes.client.CustomResourceList;
 
 @JsonSerialize
 public class WindupResourceList extends CustomResourceList<WindupResource> {
-
+    private static final long serialVersionUID = 1L;
 }
 
