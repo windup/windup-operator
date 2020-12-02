@@ -1,0 +1,18 @@
+apiVersion: windup.jboss.org/v1
+kind: Windup
+metadata:
+  namespace: mta
+  name: mta-example
+  labels:
+    application: windup
+spec:
+  webLivenessInitialDelaySeconds: "240"
+  webReadinessInitialDelaySeconds: "240"
+  webLivenessTimeoutSeconds: "100"
+  webReadinessTimeoutSeconds: "100"
+  webReadinessFailureThreshold: "20"
+  webLivenessFailureThreshold: "20"
+  mta_Volume_Capacity: 5G
+  db_database: mtadb
+  volumeCapacity: 5G
+

@@ -1,0 +1,23 @@
+echo "Deleting all application=windup"
+kubectl delete all -l application=windup -A
+echo "Deleting all application=mta-example"
+kubectl delete all -l application=mta-example -A
+echo "Deleting persistentvolumeclaim application=mta-example"
+kubectl delete persistentvolumeclaim -l application=mta-example -A
+echo "Deleting serviceaccounts application=windup"
+kubectl delete serviceaccounts -l application=windup -A
+echo "Deleting clusterrolebinding application=windup"
+kubectl delete clusterrolebinding -l application=windup -A
+echo "Deleting clusterrole application=windup"
+kubectl delete clusterrole -l application=windup -A
+echo "Deleting rolebinding application=windup"
+kubectl delete rolebinding -l application=windup -A
+echo "Deleting role application=windup"
+kubectl delete role -l application=windup -A
+echo "Deleting customresourcedefinition application=windup"
+kubectl delete customresourcedefinition -l application=windup -A
+echo "Deleting services application=mta-example"
+kubectl delete services -l application=mta-example -A
+echo "Deleting ingresses application=mta-example"
+kubectl delete ingresses -l application=mta-example -A
+
