@@ -2,7 +2,7 @@
 
 # everytime you test you need to increase this version number
 # it only affects your test, has no other purposes
-version=0.0.54
+version=0.0.62
 
 # Create operator bundle image
 podman build -f mta-operator/0.0.1/Dockerfile -t mta-operator-bundle:$version mta-operator/0.0.1/

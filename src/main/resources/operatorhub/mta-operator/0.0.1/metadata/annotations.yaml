@@ -1,5 +1,5 @@
 annotations:
-  operators.operatorframework.io.bundle.package.v1: "windup"
+  operators.operatorframework.io.bundle.package.v1: "mta-operator"
   operators.operatorframework.io.bundle.channels.v1: "alpha"
   operators.operatorframework.io.bundle.channel.default.v1: "alpha"
   operators.operatorframework.io.bundle.mediatype.v1: "registry+v1"

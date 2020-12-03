@@ -91,13 +91,14 @@ metadata:
        }
       ]
     capabilities: Basic Install
-    categories: Modernization & Migration
+    categories: OpenShift Optional
     certified: "false"
     containerImage: quay.io/windupeng/windup-operator-native:0.0.1
     imagePullPolicy: Always
     createdAt: 2020-12-04
     repository: https://github.com/windup/windup-operator/
     support: https://issues.redhat.com/projects/WINDUP
+    description: MTA is an analysis tool that supports the modernization and migration of Java applications.
 spec:
   description: >
     The Migration Toolkit for Applications (MTA) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  
@@ -232,7 +233,7 @@ spec:
                 serviceAccountName: windup-operator
                 containers:
                   - name: windup-operator
-                    image: quay.io/windupeng/windup-operator-native:latest
+                    image: quay.io/windupeng/windup-operator-native:0.0.1
                     imagePullPolicy: Always
                     env:
                       - name: WATCH_NAMESPACE
