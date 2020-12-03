@@ -19,7 +19,42 @@
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
     <quarkus.platform.version>1.9.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+
+    <windup.web.scm.connection>scm:git:https://github.com/jonathanvila/windup-operator.git</windup.web.scm.connection>
+    <windup.web.developer.connection>scm:git:git@github.com:jonathanvila/windup-operator.git</windup.web.developer.connection>
+    <windup.web.scm.url>http://github.com/jonathanvila/windup-operator</windup.web.scm.url>
   </properties>
+
+  <scm>
+      <tag>master</tag>
+      <connection>${windup.web.scm.connection}</connection>
+      <developerConnection>${windup.web.developer.connection}</developerConnection>
+      <url>${windup.web.scm.url}</url>
+  </scm>
+
+  <issueManagement>
+      <system>JBoss Jira</system>
+      <url>https://issues.jboss.org/browse/WINDUP</url>
+  </issueManagement>
+  <mailingLists>
+      <mailingList>
+          <name>Windup Core Development</name>
+          <post>windup-dev@lists.jboss.org</post>
+          <archive>http://lists.jboss.org/pipermail/windup-dev/</archive>
+      </mailingList>
+  </mailingLists>
+
+  <distributionManagement>
+      <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      </repository>
+  </distributionManagement>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -174,4 +209,5 @@
       </properties>
     </profile>
   </profiles>
+
 </project>
