@@ -9,7 +9,7 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
 1. Using a Cluster Wide permissions user
 2. Go to Openshift Web Console
 3. Administration->Operators->OperatorHub
-4. Filter by "Migrations"
+4. Filter by keyword "mta"
 5. Click on "Migration Toolkit for Applications"
 6. Install the operator
 7. Select a namespace created previously by you
