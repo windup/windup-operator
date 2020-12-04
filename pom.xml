@@ -27,9 +27,9 @@
     <quarkus.platform.version>1.9.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
 
-    <windup.web.scm.connection>scm:git:https://github.com/jonathanvila/windup-operator.git</windup.web.scm.connection>
-    <windup.web.developer.connection>scm:git:git@github.com:jonathanvila/windup-operator.git</windup.web.developer.connection>
-    <windup.web.scm.url>http://github.com/jonathanvila/windup-operator</windup.web.scm.url>
+    <windup.web.scm.connection>scm:git:https://github.com/windup/windup-operator.git</windup.web.scm.connection>
+    <windup.web.developer.connection>scm:git:git@github.com:windup/windup-operator.git</windup.web.developer.connection>
+    <windup.web.scm.url>http://github.com/windup/windup-operator</windup.web.scm.url>
   </properties>
 
   <scm>
