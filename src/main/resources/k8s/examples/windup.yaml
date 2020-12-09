@@ -15,4 +15,3 @@ spec:
   mta_Volume_Capacity: 5G
   db_database: mtadb
   volumeCapacity: 5G
-
