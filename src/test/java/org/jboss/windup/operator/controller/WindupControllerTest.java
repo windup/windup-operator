@@ -57,7 +57,7 @@ public class WindupControllerTest {
 
         Awaitility
             .await()
-            .atMost(15, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> {
                 assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count());
 
