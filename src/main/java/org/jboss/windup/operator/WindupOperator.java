@@ -41,7 +41,7 @@ public class WindupOperator {
         crClient.watch(windupController);
 
         log.info("Adding Windup Deployments watcher ....");
-        k8Client.apps().deployments().inNamespace(namespace).watch(windupDeploymentController);
+        k8Client.apps().deployments().inNamespace(namespace).withLabel("created-by", "mta-operator") .watch(windupDeploymentController);
     }
 
 }
