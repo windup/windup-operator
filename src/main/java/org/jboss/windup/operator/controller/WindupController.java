@@ -11,7 +11,6 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 import org.jboss.windup.operator.util.WindupDeployment;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -46,10 +45,13 @@ public class WindupController implements Watcher<WindupResource> {
 				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() 
 				+ " Status " + newResource.getStatus().getConditions());
 
-		// Consolidate status of the CR
-		if (newResource.deploymentsReady() == 3 && !newResource.isReady()) {
+		// retrieving number of Deployments ready in the namespace and created by the operator
+		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel("created-by", "mta-operator").list()
+				.getItems().stream().filter(e -> e.getStatus().getReadyReplicas() == 1).count();
+
+		if (operandsReady == 3) {
 			newResource.setReady(true);
-			newResource.setStatusDeploy(false); 
+			newResource.setStatusDeploy(false);
 
 			log.info("Setting this CustomResource as Ready");
 			crClient.inNamespace(namespace).updateStatus(newResource);

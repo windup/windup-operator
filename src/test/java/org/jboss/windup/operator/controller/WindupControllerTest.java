@@ -57,13 +57,14 @@ public class WindupControllerTest {
 
         Awaitility
             .await()
-            .atMost(10, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count()));
-
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+            .atMost(20, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count());
+                assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+            });
     }
 
     // @format:off
@@ -75,12 +76,32 @@ public class WindupControllerTest {
         dispatcher.getRequests().clear();
 
         crClient.inNamespace("test").create(windupResource);
+        
+        // We create another deployment not related with the operator
+        client.apps().deployments().inNamespace("test").createNew()
+            .withNewMetadata()
+                .withName("test-deployment")
+            .endMetadata()
+            .withNewSpec()
+                .withNewTemplate()
+                    .withNewMetadata()
+                        .withName("test-pod")
+                    .endMetadata()
+                    .withNewSpec()
+                        .addNewContainer()
+                            .withImage("helloworld")
+                        .endContainer()
+                    .endSpec()
+                .endTemplate()
+            .endSpec()
+            .done();
 
         Awaitility
         .await()
         .atMost(20, TimeUnit.SECONDS)
         .untilAsserted( () -> {
-            assertEquals(3, client.apps().deployments().inNamespace("test").list().getItems().size());
+            // 4 objects expected : operator, mta-web, mta-executor, mta-postgresql, test-deployment
+            assertEquals(4, client.apps().deployments().inNamespace("test").list().getItems().size());
         });
 
         setDeploymentReadyReplicas("windupapp-postgresql", 1);
@@ -88,15 +109,17 @@ public class WindupControllerTest {
         setDeploymentReadyReplicas("windupapp", 1);
         Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp-executor", 1);
+        setDeploymentReadyReplicas("test-deployment", 1);
 
         Awaitility
             .await()
-            .atMost(20, TimeUnit.SECONDS)
+            .atMost(30, TimeUnit.SECONDS)
             .pollInterval(1, TimeUnit.SECONDS)
             .untilAsserted(() -> {
                 WindupResourceList lista = crClient.inNamespace("test").list();
                 List<WindupResourceStatusCondition> status = lista.getItems().get(0).getStatus().getConditions();
                 // Checking there are only 5 status in the CR : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
+                log.info("Status : " + status);
                 assertEquals(5, status.size());
                 // Checking there are 4 status with True : Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(4, status.stream().filter(e -> "True".equalsIgnoreCase(e.getStatus())).count());

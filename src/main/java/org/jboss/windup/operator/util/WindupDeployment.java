@@ -521,7 +521,7 @@ private Map<String, String> getLabels() {
     Deployment deploymentPostgre = new DeploymentBuilder()
         .withNewMetadata()
           .withName(deployment_postgre)
-          .addToLabels("application", application_name)
+          .withLabels(getLabels())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()

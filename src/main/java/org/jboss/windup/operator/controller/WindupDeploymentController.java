@@ -55,13 +55,7 @@ public class WindupDeploymentController implements Watcher<Deployment> {
             }
 
             log.info("Updating CR Status considering Deployment status : " + obj.getMetadata().getName());
-
-            // We want 1 replica per deployment, so checking if there is 1 replica Ready
-            Boolean deploymentStatus = (obj.getStatus() != null && obj.getStatus().getReadyReplicas() != null
-                    && obj.getStatus().getReadyReplicas() == 1);
-            cr.setLabelProperty(deploymentStatus, obj.getMetadata().getName(), WindupResource.DEPLOYMENT);
-
-            // Sending the new status to K8s
+            // Sending the status change message to the CR , in order to execute the Cr.update event
             crClient.inNamespace(namespace).updateStatus(cr);
         }
     }
