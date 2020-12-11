@@ -41,7 +41,7 @@
 
   <issueManagement>
       <system>JBoss Jira</system>
-      <url>https://issues.jboss.org/browse/WINDUP</url>
+      <url>https://issues.redhat.com/browse/WINDUP</url>
   </issueManagement>
   <mailingLists>
       <mailingList>
