@@ -3,6 +3,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
  
+  <parent>
+    <groupId>org.jboss</groupId>
+    <artifactId>jboss-parent</artifactId>
+    <version>37</version>
+    <relativePath />
+  </parent>
+
   <groupId>org.jboss.windup</groupId>
   <artifactId>windup-operator</artifactId>
   <version>0.0.1-SNAPSHOT</version>
@@ -19,7 +26,42 @@
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
     <quarkus.platform.version>1.9.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+
+    <windup.scm.connection>scm:git:https://github.com/windup/windup-operator.git</windup.scm.connection>
+    <windup.developer.connection>scm:git:git@github.com:windup/windup-operator.git</windup.developer.connection>
+    <windup.scm.url>http://github.com/windup/windup-operator</windup.scm.url>
   </properties>
+
+  <scm>
+      <tag>master</tag>
+      <connection>${windup.scm.connection}</connection>
+      <developerConnection>${windup.developer.connection}</developerConnection>
+      <url>${windup.scm.url}</url>
+  </scm>
+
+  <issueManagement>
+      <system>JBoss Jira</system>
+      <url>https://issues.redhat.com/browse/WINDUP</url>
+  </issueManagement>
+  <mailingLists>
+      <mailingList>
+          <name>Windup Core Development</name>
+          <post>windup-dev@lists.jboss.org</post>
+          <archive>http://lists.jboss.org/pipermail/windup-dev/</archive>
+      </mailingList>
+  </mailingLists>
+
+  <distributionManagement>
+      <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      </repository>
+  </distributionManagement>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -83,6 +125,11 @@
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.2.0</version>
+      </plugin> 
       <plugin>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
@@ -168,4 +215,5 @@
       </properties>
     </profile>
   </profiles>
+
 </project>
