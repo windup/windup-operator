@@ -8,7 +8,6 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import io.quarkus.test.junit.QuarkusTest;
-import lombok.extern.java.Log;
 import org.awaitility.Awaitility;
 import org.jboss.windup.operator.KubernetesCrudRecorderDispatcher;
 import org.jboss.windup.operator.model.WindupResource;
@@ -29,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@Log
 @QuarkusTest
 public class WindupControllerTest {
     @Inject
@@ -52,7 +50,7 @@ public class WindupControllerTest {
         dispatcher.getRequests().clear();
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
-        
+
         crClient.inNamespace("test").create(windupResource);
         Awaitility
         .await()
@@ -76,7 +74,7 @@ public class WindupControllerTest {
         dispatcher.getRequests().clear();
 
         crClient.inNamespace("test").create(windupResource);
-        
+
         // We create another deployment not related with the operator
         client.apps().deployments().inNamespace("test").createNew()
             .withNewMetadata()
@@ -122,7 +120,7 @@ public class WindupControllerTest {
                     // Checking there are only 2 status in the CR  : Deployment, Ready
                     assertEquals(2, status.size());
 
-                    // Checking the update time is the expected 
+                    // Checking the update time is the expected
                     LocalDateTime lastUpdateTime = getLastTransitionTimeFromStatus(status, "Ready");
                     assertTrue(lastUpdateTime.isAfter(startUpdateTime.plus(Duration.ofMillis(400))));
             }) ;

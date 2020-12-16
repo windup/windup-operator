@@ -6,7 +6,6 @@ import io.fabric8.kubernetes.client.server.mock.KubernetesCrudDispatcher;
 import io.fabric8.kubernetes.client.server.mock.KubernetesResponseComposer;
 import io.fabric8.mockwebserver.crud.ResponseComposer;
 import lombok.Getter;
-import lombok.Setter;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
 
