@@ -47,7 +47,7 @@ public class WindupController implements Watcher<WindupResource> {
 
 		// retrieving number of Deployments ready in the namespace and created by the operator
 		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel("created-by", "mta-operator").list()
-				.getItems().stream().filter(e -> e.getStatus().getReadyReplicas() == 1).count();
+				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() == 1).count();
 
 		if (operandsReady == 3) {
 			newResource.setReady(true);
