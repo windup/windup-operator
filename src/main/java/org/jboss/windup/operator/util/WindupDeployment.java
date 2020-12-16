@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 @Log
 public class WindupDeployment {
 
+  public static final String MTA_OPERATOR = "mta-operator";
+  public static final String CREATED_BY = "created-by";
+
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
   KubernetesClient k8sClient;
@@ -199,7 +202,7 @@ private Map<String, String> getLabels() {
     return Map.of(
         "application", application_name,
         "app", application_name,
-        "created-by", "mta-operator");
+        CREATED_BY, MTA_OPERATOR);
   }
 
   // Checking the cluster domain on Openshift

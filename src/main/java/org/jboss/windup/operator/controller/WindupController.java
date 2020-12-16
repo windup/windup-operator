@@ -46,7 +46,7 @@ public class WindupController implements Watcher<WindupResource> {
 				+ " Status " + newResource.getStatus().getConditions());
 
 		// retrieving number of Deployments ready in the namespace and created by the operator
-		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel("created-by", "mta-operator").list()
+		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel(WindupDeployment.CREATED_BY, WindupDeployment.MTA_OPERATOR).list()
 				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() == 1).count();
 
 		if (operandsReady == 3) {
