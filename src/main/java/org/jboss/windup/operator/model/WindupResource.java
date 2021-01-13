@@ -7,6 +7,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -94,6 +95,11 @@ public class WindupResource extends CustomResource {
       spec = new WindupResourceSpec();
       status = new WindupResourceStatus();
     }
+
+	public int desiredDeployments() {
+    // mta-web-console=1 , mta-postgres=1, mta-executor=executor_desired_replicas
+		return 2 + ObjectUtils.defaultIfNull(spec.getExecutor_desired_replicas(), 1);
+	}
 
 }
 

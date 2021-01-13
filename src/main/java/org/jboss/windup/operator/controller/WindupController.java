@@ -1,5 +1,6 @@
 package org.jboss.windup.operator.controller;
 
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
@@ -9,6 +10,7 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
+
 import org.jboss.windup.operator.model.WindupResourceList;
 import org.jboss.windup.operator.util.WindupDeployment;
 
@@ -43,13 +45,22 @@ public class WindupController implements Watcher<WindupResource> {
 
 	private void onUpdate(WindupResource newResource) {
 		log.info("Event UPDATE " + newResource.getMetadata().getName() + " - DeploymentsReady "
-				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() 
+				+ newResource.deploymentsReady() + " isReady " + newResource.isReady()
 				+ " Status " + newResource.getStatus().getConditions());
 
+		// Consolidating replicas on the executor
+		Deployment deploymentExecutor = k8sClient.apps().deployments().inNamespace(namespace)
+										.withName(newResource.getMetadata().getName() + "-executor")
+										.get();
+		if (newResource.getSpec().getExecutor_desired_replicas() != deploymentExecutor.getSpec().getReplicas() ) {
+			deploymentExecutor.getSpec().setReplicas(newResource.getSpec().getExecutor_desired_replicas());
+			k8sClient.apps().deployments().inNamespace(namespace).withName(newResource.getMetadata().getName()).patch(deploymentExecutor);
+		}
+
 		// Consolidate status of the CR
-		if (newResource.deploymentsReady() == 3 && !newResource.isReady()) {
+		if (newResource.deploymentsReady() == newResource.desiredDeployments() && !newResource.isReady()) {
 			newResource.setReady(true);
-			newResource.setStatusDeploy(false); 
+			newResource.setStatusDeploy(false);
 
 			log.info("Setting this CustomResource as Ready");
 			crClient.inNamespace(namespace).updateStatus(newResource);

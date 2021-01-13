@@ -85,5 +85,6 @@ public class WindupResourceSpec implements KubernetesResource {
     private String web_liveness_probe;
     private String executor_readiness_probe;
     private String executor_liveness_probe;
+    private Integer executor_desired_replicas;
 }
 
