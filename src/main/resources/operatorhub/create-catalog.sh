@@ -5,7 +5,7 @@
 version=0.0.62
 
 # Create operator bundle image
-podman build -f mta-operator/0.0.1/Dockerfile -t mta-operator-bundle:$version mta-operator/0.0.1/
+podman build -f mta-operator/0.0.1/Dockerfile -t mta-operator-bundle:$version mta-operator/0.0.2/
 podman tag mta-operator-bundle:$version quay.io/windupeng/mta-operator-bundle:$version
 podman push quay.io/windupeng/mta-operator-bundle:$version
 
