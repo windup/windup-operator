@@ -60,5 +60,5 @@ jobs:
         uses: therussiankid92/gat@v1.3
         with:
           assertion: should.equal
-          expected: 19
+          expected: 18
           actual: ${{steps.getobjects.outputs.value}}
