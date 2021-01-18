@@ -27,6 +27,7 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -220,6 +221,7 @@ private Map<String, String> getLabels() {
   }
 
   private List<Ingress> createIngresses() {
+    List<Ingress> ingresses = new ArrayList<>();
     String hostnameHttp = windupResource.getSpec().getHostname_http();
 
     // if the user doesn't provide hostname we'll try to discover it on Openshift
@@ -229,11 +231,13 @@ private Map<String, String> getLabels() {
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(hostnameHttp);
+    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
+      ingresses.add(createWebConsoleHttpsIngress(hostnameHttp));
+    }
 
-    Ingress ingressWebConsole = createWebConsoleHttpIngress(hostnameHttp);
+    ingresses.add(createWebConsoleHttpIngress(hostnameHttp));
 
-    return List.of(ingressWebConsoleHttps, ingressWebConsole);
+    return ingresses;
   }
 
   private Ingress createWebConsoleHttpIngress(String hostnameHttp) {
@@ -269,7 +273,10 @@ private Map<String, String> getLabels() {
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
     ingress.getMetadata().setName(ingressName);
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
-    ingress.getSpec().setTls(Collections.singletonList(new IngressTLSBuilder().withHosts(hostHTTPS).build()));
+    ingress.getSpec().setTls(Collections.singletonList(new IngressTLSBuilder()
+                                                          .withHosts(hostHTTPS)
+                                                          .withSecretName(windupResource.getSpec().getTls_secret())
+                                                          .build()));
     ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
 
     return ingress;
