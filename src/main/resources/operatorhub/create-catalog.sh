@@ -1,19 +1,19 @@
 #!/bin/sh -x
 
-# everytime you test you need to increase this version number
+# everytime you test you need to increase this bundle version number
 # it only affects your test, has no other purposes
-#version=0.0.64
-#user=windupeng
-while getopts u:v: flag
+# usage `./create-catalog.sh -u myuser -v 210 -m 0.0.2`
+while getopts u:v:m: flag
 do
     case "${flag}" in
         u) quayuser=${OPTARG};;
         v) bundleversion=${OPTARG};;
+        m) mtaoperatorversion=${OPTARG};;
     esac
 done
 
 # Create operator bundle image
-podman build -f mta-operator/0.0.2/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/0.0.2/
+podman build -f mta-operator/$mtaoperatorversion/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/$mtaoperatorversion/
 podman tag mta-operator-bundle:$bundleversion quay.io/$quayuser/mta-operator-bundle:$bundleversion
 podman push quay.io/$quayuser/mta-operator-bundle:$bundleversion
 

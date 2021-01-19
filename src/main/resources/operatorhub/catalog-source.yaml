@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
-  name: test-catalog-{version}
+  name: test-catalog
   namespace: openshift-marketplace
   labels:
     application: windup
