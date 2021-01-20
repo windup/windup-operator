@@ -7,6 +7,8 @@ import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
@@ -231,10 +233,28 @@ private Map<String, String> getLabels() {
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
-      ingresses.add(createWebConsoleHttpsIngress(hostnameHttp));
-    }
+    if (StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
+      // Copy default secret
+      log.info("Getting router-ca secret");
+      Secret secret = k8sClient.secrets().inNamespace("openshift-ingress-operator").withName("router-ca").get();
+      log.info("Got router-ca secret : " + secret);
 
+      if (secret != null) {
+        log.info("Creating secret default-tls-secret");
+        Secret newsecret = new SecretBuilder()
+            .withNewMetadata()
+              .withName("default-tls-secret")
+              .withNamespace(namespace)
+            .endMetadata()
+            .withType("kubernetes.io/tls")
+            .withData(secret.getData())
+            .build();
+        k8sClient.secrets().inNamespace(namespace).create(newsecret);
+        windupResource.getSpec().setTls_secret("default-tls-secret");
+      }
+    }
+    log.info("Adding the 2 Ingresses ");
+    ingresses.add(createWebConsoleHttpsIngress(hostnameHttp));
     ingresses.add(createWebConsoleHttpIngress(hostnameHttp));
 
     return ingresses;

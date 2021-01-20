@@ -172,6 +172,7 @@ spec:
                 - pods
                 - persistentvolumeclaims
                 - services
+                - secrets
               verbs:
                 - create
                 - delete
@@ -218,6 +219,17 @@ spec:
                 - delete
                 - patch
           serviceAccountName: windup-operator
+      clusterPermissions:
+        - rules:
+          - apiGroups:
+            - ""
+            resources:
+            - secrets
+            verbs:
+            - get
+            - watch
+            - list
+          serviceAccountName: windup-operator
       deployments:
         - name: windup-operator.0.0.2
           spec:
@@ -233,7 +245,7 @@ spec:
                 serviceAccountName: windup-operator
                 containers:
                   - name: windup-operator
-                    image: quay.io/windupeng/windup-operator-native:0.0.2
+                    image: quay.io/jonathanvila/windup-operator-native:0.0.2
                     imagePullPolicy: Always
                     env:
                       - name: WATCH_NAMESPACE
