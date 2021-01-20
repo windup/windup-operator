@@ -23,9 +23,15 @@ podman push quay.io/$quayuser/mta-operator-bundle:$bundleversion
 # make build
 
 # Build operator catalog
+# if version on argument is 0.0.1 we will not create the catalog from the community one as it already has that version and would crash
+if [ "0.0.1" = "$mtaoperatorversion" ]; then
+../../../../../operator-registry/bin/opm index add --bundles quay.io/$quayuser/mta-operator-bundle:$bundleversion \
+--tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman
+else
 ../../../../../operator-registry/bin/opm index add --bundles quay.io/$quayuser/mta-operator-bundle:$bundleversion \
 --tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman \
 --from-index quay.io/openshift-community-operators/catalog:latest 
+fi
 
 podman push  quay.io/$quayuser/mta-operator-test-catalog:$bundleversion
 
