@@ -18,13 +18,13 @@ pipeline {
         stage('Releasing and creating container image') {
             environment {
                 JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.1.13-4.fc27.x86_64"
+                GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
             }
             steps {
                 configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                    GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
-
                     echo "Check Maven is using JDK 11"
                     sh "./mvnw -s $MAVEN_SETTINGS -v"
+                    echo "GPG $GPG_PASSPHRASE"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
 //                          " clean verify "
                         " release:prepare -DpreparationGoals='-DskipTests clean install' " +
