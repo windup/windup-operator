@@ -21,10 +21,9 @@ pipeline {
                 GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
             }
             steps {
-                echo "Check Maven is using JDK 11"
-                sh "./mvnw -s $MAVEN_SETTINGS -v"
-
                 configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                    echo "Check Maven is using JDK 11"
+                    sh "./mvnw -s $MAVEN_SETTINGS -v"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                           " clean verify "
 //                        " release:prepare -DpreparationGoals='-DskipTests clean install' " //+
