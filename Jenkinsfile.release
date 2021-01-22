@@ -26,6 +26,7 @@ pipeline {
                     sh "./mvnw -s $MAVEN_SETTINGS -v"
                     echo "GPG $GPG_PASSPHRASE"
                     sh "gpg --list-keys"
+                    sh "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
