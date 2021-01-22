@@ -29,10 +29,11 @@ pipeline {
                     sh " mvn -s $MAVEN_SETTINGS " +
 //                          " clean verify "
                         " release:prepare -DpreparationGoals='-DskipTests clean install' " +
-                        " release:perform -P jboss-release,gpg-sign " +
-                        " -Dgoals='deploy -Pnative -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true " +
+                        " release:perform -P jboss-release,gpg-sign,native " +
+                        " -Dgoals='deploy' " + 
+                        " -Darguments='-DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true " +
                                 " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila " +
-                                " -Dgpg.passphrase=$GPG_PASSPHRASE' " +
+                                " -Dgpg.passphrase=${GPG_PASSPHRASE}' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
                         " -Dtag=${RELEASE_VERSION} -Darguments=-DskipTests -Dmvn.test.skip=true "
                 }
