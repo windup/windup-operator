@@ -25,6 +25,7 @@ pipeline {
                     echo "Check Maven is using JDK 11"
                     sh "./mvnw -s $MAVEN_SETTINGS -v"
                     echo "GPG $GPG_PASSPHRASE"
+                    gpg --list-keys
                     sh " mvn -s $MAVEN_SETTINGS " +
 //                          " clean verify "
                         " release:prepare -DpreparationGoals='-DskipTests clean install' " +
