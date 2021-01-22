@@ -27,7 +27,7 @@ pipeline {
                     echo "GPG $GPG_PASSPHRASE"
                     sh "gpg --list-keys"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
-                        " release:prepare -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false' " +
+                        " release:prepare -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true " +
                                 " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila " +
                                 " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " +
