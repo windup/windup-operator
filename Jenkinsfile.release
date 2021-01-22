@@ -5,7 +5,7 @@ pipeline {
             steps {
                 checkout(
                     [$class: 'GitSCM', branches: [[name: '*/master']],
-                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
+                    userRemoteConfigs: [[url: 'https://github.com/jonathanvila/windup-operator.git']]
                     ]
                 )
             }
@@ -25,12 +25,13 @@ pipeline {
                     echo "Check Maven is using JDK 11"
                     sh "./mvnw -s $MAVEN_SETTINGS -v"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
-                          " clean verify "
-//                        " release:prepare -DpreparationGoals='-DskipTests clean install' " //+
-//                        " release:perform -P jboss-release,gpg-sign " +
-//                        " -Dgoals='deploy -Pnative -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=${RELEASE_VERSION}' " +
-//                        " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
-//                        " -Dtag=${RELEASE_VERSION} -Darguments=-DskipTests -Dmvn.test.skip=true "
+//                          " clean verify "
+                        " release:prepare -DpreparationGoals='-DskipTests clean install' " +
+                        " release:perform -P jboss-release,gpg-sign " +
+                        " -Dgoals='deploy -Pnative -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true " +
+                        " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila'" +
+                        " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
+                        " -Dtag=${RELEASE_VERSION} -Darguments=-DskipTests -Dmvn.test.skip=true "
                 }
             }
         }
@@ -45,7 +46,7 @@ pipeline {
             }
             steps {
                 sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
-                sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
+                sh "docker push quay.io/jonathanvila/windup-operator-native:$RELEASE_VERSION"
             }
         }
 
