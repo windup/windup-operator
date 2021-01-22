@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout(
+                    [$class: 'GitSCM', branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
+                    ]
+                )
+            }
+        }
+        stage('Install JVM 11') {
+            steps {
+                sh "sudo dnf install java-11-openjdk -y"
+            }
+        }
+        stage('Releasing and creating container image') {
+            environment {
+                JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.1.13-4.fc27.x86_64"
+                GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
+            }
+            steps {
+                echo "Check Maven is using JDK 11"
+                sh "./mvnw -s $MAVEN_SETTINGS -v"
+
+                configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                    sh "./mvnw -s $MAVEN_SETTINGS " +
+                          " clean verify "
+//                        " release:prepare -DpreparationGoals='-DskipTests clean install' " //+
+//                        " release:perform -P jboss-release,gpg-sign " +
+//                        " -Dgoals='deploy -Pnative -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=${RELEASE_VERSION}' " +
+//                        " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
+//                        " -Dtag=${RELEASE_VERSION} -Darguments=-DskipTests -Dmvn.test.skip=true "
+                }
+            }
+        }
+        stage('Check Java 8') {
+            steps {
+                sh "java -version"
+            }
+        }
+        stage('Image push') {
+            environment {
+                CREDENTIALS = credentials("38d0aca2-e50e-44ac-ad34-46301e43784c")
+            }
+            steps {
+                sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
+                sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
+            }
+        }
+
+        // To test this pipeline in local you can run jenkins from a container and point to the filesystem
+        // podman run -d -p 8080:8080 -p 50000:50000 \
+        // --mount type=bind,source=/home/jonathan/workspace,target=/var/workspace \
+        // --security-opt label=disable
+        // -v jenkins_home:/var/jenkins_home \
+        // jenkins/jenkins:lts
+    }
+}
