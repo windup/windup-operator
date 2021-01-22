@@ -30,7 +30,8 @@ pipeline {
                         " release:prepare -DpreparationGoals='-DskipTests clean install' " +
                         " release:perform -P jboss-release,gpg-sign " +
                         " -Dgoals='deploy -Pnative -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true " +
-                        " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila'" +
+                                " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila'" +
+                        " -Darguments=-Dgpg.passphrase=$GPG_PASSPHRASE " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
                         " -Dtag=${RELEASE_VERSION} -Darguments=-DskipTests -Dmvn.test.skip=true "
                 }
