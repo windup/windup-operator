@@ -19,6 +19,7 @@ pipeline {
             environment {
                 JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.1.13-4.fc27.x86_64"
                 GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
+                QUAY_CREDENTIALS= credentials('38d0aca2-e50e-44ac-ad34-46301e43784c')
             }
             steps {
                 configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
@@ -28,6 +29,7 @@ pipeline {
                     sh "gpg --list-keys"
                     sh "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh " git checkout master"
+                    sh " docker login quay.io -u jonathanvila -p Janira1609$"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
