@@ -12,7 +12,7 @@ pipeline {
         }
         stage('Install JVM 11') {
             steps {
-                sh "sudo dnf install java-11-openjdk -y"
+                sh "sudo dnf install java-11-openjdk-devel -y"
             }
         }
         stage('Releasing and creating container image') {
