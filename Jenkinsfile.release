@@ -1,5 +1,5 @@
 pipeline {
-    environment {
+/*    environment {
         DOCKER_OPTS="--security-opt label=disable"
     }
     agent {
@@ -7,6 +7,8 @@ pipeline {
             image 'fedora:33'
         }
     }
+*/
+    agent any
     stages {
         stage('Checkout') {
             steps {
