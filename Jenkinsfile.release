@@ -21,8 +21,9 @@ pipeline {
                     relativeTargetDir: 'windup-operator']], 
                     ]
                 )
-            dir("${env.WORKSPACE}/windup-operator"){
-                sh " git log "
+                dir("${env.WORKSPACE}/windup-operator") {
+                    sh " git log "
+                }
             }
         }
         stage('Install JVM 11') {
@@ -38,7 +39,7 @@ pipeline {
                 QUAY_CREDENTIALS= credentials('38d0aca2-e50e-44ac-ad34-46301e43784c')
             }
             steps {
-                dir("${env.WORKSPACE}/windup-operator"){
+                dir("${env.WORKSPACE}/windup-operator") {
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " pwd"
                         sh " gpg --list-keys"
