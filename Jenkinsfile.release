@@ -13,7 +13,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh " pwd "
-                sh " rm -rf /home/fedora/workspace/windup-operator-release "
                 checkout(
                     [$class: 'GitSCM', branches: [[name: '*/master']],
                     userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
@@ -44,6 +43,7 @@ pipeline {
                     sh " git remote -v "
                     sh " cat pom.xml "
                     sh " pwd "
+                    sh " ls -la "
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
