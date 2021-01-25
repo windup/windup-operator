@@ -12,6 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                sh " pwd "
                 checkout(
                     [$class: 'GitSCM', branches: [[name: '*/master']],
                     userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
@@ -41,6 +42,7 @@ pipeline {
                     sh " git status "
                     sh " git remote -v "
                     sh " cat pom.xml "
+                    sh " pwd "
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
