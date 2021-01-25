@@ -10,18 +10,24 @@ pipeline {
 */
     agent any
     stages {
+
         stage('Checkout') {
             steps {
-                sh "rm -rf *"
                 checkout(
-                    [$class: 'GitSCM', branches: [[name: '*/master']],
-                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
+                    [$class: 'GitSCM', 
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']],
+                    extensions: [[$class: 'RelativeTargetDirectory', 
+                    relativeTargetDir: 'windup-operator']], 
                     ]
                 )
+                sh " cd windup-operator "
+                sh " git log "
             }
         }
         stage('Install JVM 11') {
             steps {
+                sh "pwd"
                 sh "sudo dnf install java-11-openjdk-devel -y"
             }
         }
@@ -33,6 +39,7 @@ pipeline {
             }
             steps {
                 configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                    sh " pwd"
                     sh " gpg --list-keys"
                     sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh " git checkout master"
