@@ -13,6 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh " pwd "
+                sh " rm -rf /home/fedora/workspace/windup-operator-release "
                 checkout(
                     [$class: 'GitSCM', branches: [[name: '*/master']],
                     userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
