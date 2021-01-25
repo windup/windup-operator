@@ -14,7 +14,7 @@ pipeline {
             steps {
                 checkout(
                     [$class: 'GitSCM', branches: [[name: '*/master']],
-                    userRemoteConfigs: [[url: 'https://github.com/jonathanvila/windup-operator.git']]
+                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']]
                     ]
                 )
             }
@@ -32,13 +32,10 @@ pipeline {
             }
             steps {
                 configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                    echo "Check Maven is using JDK 11"
-                    sh "./mvnw -s $MAVEN_SETTINGS -v"
-                    echo "GPG $GPG_PASSPHRASE"
                     sh "gpg --list-keys"
                     sh "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh " git checkout master"
-                    sh " docker login quay.io -u jonathanvila -p Janira1609\$"
+                    sh " docker login quay.io -u $QUAY_CREDENTIALS_USR -p $QUAY_CREDENTIALS_PWD "
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
@@ -46,7 +43,7 @@ pipeline {
                     
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true " +
-                                " -Dquarkus.container-image.tag=${RELEASE_VERSION} -Dquarkus.container-image.group=jonathanvila " +
+                                " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
                                 " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
 
                 }
