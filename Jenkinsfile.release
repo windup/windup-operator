@@ -1,5 +1,12 @@
 pipeline {
-    agent any
+    environment {
+        DOCKER_OPTS="--security-opt label=disable"
+    }
+    agent {
+        docker {
+            image 'fedora:33'
+        }
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -29,7 +36,7 @@ pipeline {
                     sh "gpg --list-keys"
                     sh "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh " git checkout master"
-                    sh " docker login quay.io -u jonathanvila -p Janira1609$"
+                    sh " docker login quay.io -u jonathanvila -p Janira1609\$"
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
