@@ -35,6 +35,8 @@ pipeline {
                     sh "gpg --list-keys"
                     sh "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                     sh " git checkout master"
+                    sh " git reset --hard"
+                    sh " git pull origin master"
                     sh " docker login quay.io -u $QUAY_CREDENTIALS_USR -p $QUAY_CREDENTIALS_PSW "
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
