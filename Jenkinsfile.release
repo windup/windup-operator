@@ -38,6 +38,8 @@ pipeline {
                     sh " git reset --hard"
                     sh " git pull origin master"
                     sh " docker login quay.io -u $QUAY_CREDENTIALS_USR -p $QUAY_CREDENTIALS_PSW "
+                    sh " git status "
+                    sh " git remote -v "
                     sh "./mvnw -s $MAVEN_SETTINGS " +
                         " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
                         " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
