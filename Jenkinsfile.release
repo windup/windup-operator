@@ -6,7 +6,11 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                sh " ls -la "
                 sh "rm -rf windup-operator"
+                        sh " gpg --list-keys"
+                        sh " gpg --import RHAMT-private-key.asc "
+                        sh " gpg --list-keys"                
                 checkout(
                     [$class: 'GitSCM', 
                     branches: [[name: '*/master']],
@@ -36,7 +40,6 @@ pipeline {
                 dir("${env.WORKSPACE}/windup-operator") {
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " pwd"
-                        sh " gpg --list-keys"
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh " git checkout master"
                         sh " git reset --hard"
