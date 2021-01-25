@@ -1,18 +1,12 @@
 pipeline {
-/*    environment {
-        DOCKER_OPTS="--security-opt label=disable"
+    agent { 
+        label 'fedora-slave-release' 
     }
-    agent {
-        docker {
-            image 'fedora:33'
-        }
-    }
-*/
-    agent any
     stages {
 
         stage('Checkout') {
             steps {
+                sh "rm -rf windup-operator"
                 checkout(
                     [$class: 'GitSCM', 
                     branches: [[name: '*/master']],
