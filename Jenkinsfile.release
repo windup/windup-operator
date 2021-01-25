@@ -21,7 +21,7 @@ pipeline {
                     relativeTargetDir: 'windup-operator']], 
                     ]
                 )
-                sh " cd windup-operator "
+            dir("${env.WORKSPACE}/windup-operator"){
                 sh " git log "
             }
         }
@@ -38,30 +38,31 @@ pipeline {
                 QUAY_CREDENTIALS= credentials('38d0aca2-e50e-44ac-ad34-46301e43784c')
             }
             steps {
-                configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                    sh " pwd"
-                    sh " gpg --list-keys"
-                    sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
-                    sh " git checkout master"
-                    sh " git reset --hard"
-                    sh " git pull origin master"
-                    sh " docker login quay.io -u $QUAY_CREDENTIALS_USR -p $QUAY_CREDENTIALS_PSW "
-                    sh " git status "
-                    sh " git remote -v "
-                    sh " cat pom.xml "
-                    sh " pwd "
-                    sh " ls -la "
-                    sh " cat $MAVEN_SETTINGS "
-                    sh "./mvnw -s $MAVEN_SETTINGS " +
-                        " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
-                        " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
-                        " -Dtag=${RELEASE_VERSION} -Dmvn.test.skip=true "
-                    
-                    sh "./mvnw -s $MAVEN_SETTINGS " +
-                        " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true " +
-                                " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
-                                " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
-
+                dir("${env.WORKSPACE}/windup-operator"){
+                    configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        sh " pwd"
+                        sh " gpg --list-keys"
+                        sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+                        sh " git checkout master"
+                        sh " git reset --hard"
+                        sh " git pull origin master"
+                        sh " docker login quay.io -u $QUAY_CREDENTIALS_USR -p $QUAY_CREDENTIALS_PSW "
+                        sh " git status "
+                        sh " git remote -v "
+                        sh " cat pom.xml "
+                        sh " pwd "
+                        sh " ls -la "
+                        sh " cat $MAVEN_SETTINGS "
+                        sh "./mvnw -s $MAVEN_SETTINGS " +
+                            " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
+                            " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
+                            " -Dtag=${RELEASE_VERSION} -Dmvn.test.skip=true "
+                        
+                        sh "./mvnw -s $MAVEN_SETTINGS " +
+                            " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.push=true " +
+                                    " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
+                                    " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
+                    }
                 }
             }
         }
