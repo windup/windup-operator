@@ -10,15 +10,15 @@ pipeline {
 
                 checkout(
                     [$class: 'GitSCM', 
-                    branches: [[name: '*/master']],
+                    branches: [[name: '$CHECKOUT_PATH_WINDUP']],
                     userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']],
                     extensions: [[$class: 'RelativeTargetDirectory', 
                     relativeTargetDir: 'windup-operator']], 
                     ]
                 )
-                dir("${env.WORKSPACE}/windup-operator") {
-                    sh "git checkout master"
-                }
+  //              dir("${env.WORKSPACE}/windup-operator") {
+  //                  sh "git checkout master"
+  //              }
             }
         }
         stage('Install JVM 11') {
