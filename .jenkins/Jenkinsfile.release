@@ -12,8 +12,7 @@ pipeline {
                     [$class: 'GitSCM', 
                     branches: [[name: "$CHECKOUT_PATH_WINDUP"]],
                     userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']],
-                    extensions: [[$class: 'RelativeTargetDirectory', 
-                    relativeTargetDir: 'windup-operator']], 
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'windup-operator']], 
                     ]
                 )
                 dir("${env.WORKSPACE}/windup-operator") {
