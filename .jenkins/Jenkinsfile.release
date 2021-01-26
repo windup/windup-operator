@@ -80,7 +80,7 @@ pipeline {
             }
             steps {
                 sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
-                sh "docker push quay.io/windup/windup-operator-native:$RELEASE_VERSION"
+                sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
             }
         }
     }
