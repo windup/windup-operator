@@ -52,7 +52,7 @@ pipeline {
                 }
             }
         }
-        stage('Release Perform') {
+        stage('Release Perform and Build Image') {
             environment {
                 JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.1.13-4.fc27.x86_64"
                 GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
@@ -62,7 +62,7 @@ pipeline {
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh "./mvnw -s $MAVEN_SETTINGS " +
-                            " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.push=false " +
+                            " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=false " +
                                     " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
                                     " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
                     }
