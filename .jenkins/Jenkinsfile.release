@@ -17,7 +17,8 @@ pipeline {
                     ]
                 )
                 dir("${env.WORKSPACE}/windup-operator") {
-                    sh "git checkout $CHECKOUT_NAME"
+                    sh " git checkout $CHECKOUT_NAME"
+                    sh " git log -n 2"
                 }
             }
         }
