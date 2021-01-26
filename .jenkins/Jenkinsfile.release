@@ -16,9 +16,9 @@ pipeline {
                     relativeTargetDir: 'windup-operator']], 
                     ]
                 )
-  //              dir("${env.WORKSPACE}/windup-operator") {
-  //                  sh "git checkout master"
-  //              }
+                dir("${env.WORKSPACE}/windup-operator") {
+                    sh "git checkout $CHECKOUT_PATH_WINDUP"
+                }
             }
         }
         stage('Install JVM 11') {
