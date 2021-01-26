@@ -33,8 +33,7 @@ pipeline {
                 FILE_HASH = credentials('gpg-sign-file')
             }
             steps {
-                code = load 'GoogleDriveFileDownloader.groovy'
-                code.main($FILE_HASH)
+                "${env.WORKSPACE}/GoogleDriveFileDownloader.groovy $FILE_HASH"
                 sh " gpg --list-keys"
                 sh " gpg --import RHAMT-private-key.asc "
                 sh " gpg --list-keys"
