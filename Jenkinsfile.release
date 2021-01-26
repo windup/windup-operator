@@ -8,9 +8,7 @@ pipeline {
             steps {
                 sh " ls -la "
                 sh "rm -rf windup-operator"
-                        sh " gpg --list-keys"
-                        sh " gpg --import RHAMT-private-key.asc "
-                        sh " gpg --list-keys"                
+
                 checkout(
                     [$class: 'GitSCM', 
                     branches: [[name: '*/master']],
@@ -30,6 +28,18 @@ pipeline {
                 sh "sudo dnf install java-11-openjdk-devel -y"
             }
         }
+        stage("Load Groovy downloader") {
+            environment {
+                FILE_HASH = credentials('gpg-sign-file')
+            }
+            steps {
+                code = load 'GoogleDriveFileDownloader.groovy'
+                code.main($FILE_HASH)
+                sh " gpg --list-keys"
+                sh " gpg --import RHAMT-private-key.asc "
+                sh " gpg --list-keys"
+            }
+        }
         stage('Releasing and creating container image') {
             environment {
                 JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.1.13-4.fc27.x86_64"
@@ -39,6 +49,7 @@ pipeline {
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        sh " gpg --list-keys"
                         sh " pwd"
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh " git checkout master"
