@@ -31,7 +31,7 @@ pipeline {
                 FILE_HASH = credentials('gpg-sign-file')
             }
             steps {
-                sh " groovy ${env.WORKSPACE}/GoogleDriveFileDownloader.groovy $FILE_HASH"
+                sh " groovy ${env.WORKSPACE}/.jenkins/GoogleDriveFileDownloader.groovy $FILE_HASH"
                 sh " if gpg --list-keys 66466D8F; then echo 'Private Signing Key Found'; else gpg --import RHAMT-private-key.asc; fi"
                 sh " gpg --list-keys"
             }
