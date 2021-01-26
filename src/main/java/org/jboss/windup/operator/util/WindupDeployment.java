@@ -17,6 +17,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLS;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -233,26 +234,6 @@ private Map<String, String> getLabels() {
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    if (StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
-      // Copy default secret
-      log.info("Getting router-ca secret");
-      Secret secret = k8sClient.secrets().inNamespace("openshift-ingress-operator").withName("router-ca").get();
-      log.info("Got router-ca secret : " + secret);
-
-      if (secret != null) {
-        log.info("Creating secret default-tls-secret");
-        Secret newsecret = new SecretBuilder()
-            .withNewMetadata()
-              .withName("default-tls-secret")
-              .withNamespace(namespace)
-            .endMetadata()
-            .withType("kubernetes.io/tls")
-            .withData(secret.getData())
-            .build();
-        k8sClient.secrets().inNamespace(namespace).create(newsecret);
-        windupResource.getSpec().setTls_secret("default-tls-secret");
-      }
-    }
     log.info("Adding the 2 Ingresses ");
     ingresses.add(createWebConsoleHttpsIngress(hostnameHttp));
     ingresses.add(createWebConsoleHttpIngress(hostnameHttp));
@@ -293,10 +274,15 @@ private Map<String, String> getLabels() {
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
     ingress.getMetadata().setName(ingressName);
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
-    ingress.getSpec().setTls(Collections.singletonList(new IngressTLSBuilder()
-                                                          .withHosts(hostHTTPS)
-                                                          .withSecretName(windupResource.getSpec().getTls_secret())
-                                                          .build()));
+
+    IngressTLS ingressTLS = new IngressTLSBuilder().build();
+    // Only set the host and the secret if we receive a secret
+    // Otherwise an empty array for tls will allow OCP 4.6 to create a TLS Route with default cert
+    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
+      ingressTLS.setHosts(List.of(hostHTTPS));
+      ingressTLS.setSecretName(windupResource.getSpec().getTls_secret());
+    }
+    ingress.getSpec().setTls(Collections.singletonList(ingressTLS));
     ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
 
     return ingress;

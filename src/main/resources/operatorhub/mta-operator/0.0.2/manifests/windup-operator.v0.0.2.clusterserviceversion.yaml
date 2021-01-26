@@ -86,7 +86,8 @@ metadata:
            "web_readiness_probe": "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh",
            "web_liveness_probe": "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh",
            "executor_readiness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh",
-           "executor_liveness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+           "executor_liveness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh",
+           "tls_secret",""
          }
        }
       ]
@@ -219,17 +220,6 @@ spec:
                 - delete
                 - patch
           serviceAccountName: windup-operator
-      clusterPermissions:
-        - rules:
-          - apiGroups:
-            - ""
-            resources:
-            - secrets
-            verbs:
-            - get
-            - watch
-            - list
-          serviceAccountName: windup-operator
       deployments:
         - name: windup-operator.0.0.2
           spec:
@@ -245,7 +235,7 @@ spec:
                 serviceAccountName: windup-operator
                 containers:
                   - name: windup-operator
-                    image: quay.io/jonathanvila/windup-operator-native:0.0.2
+                    image: quay.io/windupeng/windup-operator-native:0.0.2
                     imagePullPolicy: Always
                     env:
                       - name: WATCH_NAMESPACE
