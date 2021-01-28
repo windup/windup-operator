@@ -48,15 +48,12 @@ public class WindupController implements Watcher<WindupResource> {
 				+ newResource.deploymentsReady() + " isReady " + newResource.isReady()
 				+ " Status " + newResource.getStatus().getConditions());
 
-		// Consolidating replicas on the executor
-		Deployment deploymentExecutor = k8sClient.apps().deployments().inNamespace(namespace)
-										.withName(newResource.getMetadata().getName() + "-executor")
-										.get();
-		if (newResource.getSpec().getExecutor_desired_replicas() != deploymentExecutor.getSpec().getReplicas() ) {
-			deploymentExecutor.getSpec().setReplicas(newResource.getSpec().getExecutor_desired_replicas());
-			k8sClient.apps().deployments().inNamespace(namespace).withName(newResource.getMetadata().getName()).patch(deploymentExecutor);
-		}
+		consolidateExecutorDeployment(newResource);
 
+		updateCRStatus(newResource);
+	}
+
+	private void updateCRStatus(WindupResource newResource) {
 		// Consolidate status of the CR
 		if (newResource.deploymentsReady() == newResource.desiredDeployments() && !newResource.isReady()) {
 			newResource.setReady(true);
@@ -64,6 +61,17 @@ public class WindupController implements Watcher<WindupResource> {
 
 			log.info("Setting this CustomResource as Ready");
 			crClient.inNamespace(namespace).updateStatus(newResource);
+		}
+	}
+
+	private void consolidateExecutorDeployment(WindupResource newResource) {
+		// Consolidating replicas on the executor
+		Deployment deploymentExecutor = k8sClient.apps().deployments().inNamespace(namespace)
+										.withName(newResource.getMetadata().getName() + "-executor")
+										.get();
+		if (newResource.getSpec().getExecutor_desired_replicas() != deploymentExecutor.getSpec().getReplicas() ) {
+			deploymentExecutor.getSpec().setReplicas(newResource.getSpec().getExecutor_desired_replicas());
+			k8sClient.apps().deployments().inNamespace(namespace).withName(newResource.getMetadata().getName() + "-executor").patch(deploymentExecutor);
 		}
 	}
 

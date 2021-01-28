@@ -268,3 +268,4 @@ spec:
     - run-time
     - migration
     - modernization
+  replaces:  windup-operator.0.0.1
