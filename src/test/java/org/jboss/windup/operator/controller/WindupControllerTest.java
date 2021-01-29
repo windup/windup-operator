@@ -118,6 +118,43 @@ public class WindupControllerTest {
 
     }
 
+    @Test
+    public void onUpdateCR_numberOfExecutorPodsShouldBeSameAsInCR() {
+        InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
+        WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
+
+        dispatcher.getRequests().clear();
+
+        crClient.inNamespace("test").create(windupResource);
+
+        Awaitility
+        .await()
+        .atMost(20, TimeUnit.SECONDS)
+        .untilAsserted( () -> {
+            assertEquals(3, client.apps().deployments().inNamespace("test").list().getItems().size());
+        });
+
+        setDeploymentReadyReplicas("windupapp-postgresql", 1);
+        setDeploymentReadyReplicas("windupapp", 1);
+        setDeploymentReadyReplicas("windupapp-executor", 1);
+
+        // now lets update the CR
+        int desiredReplicas = 3;
+        windupResource.getSpec().setExecutor_desired_replicas(desiredReplicas);
+        crClient.inNamespace("test").withName(windupResource.getMetadata().getName()).patch(windupResource);
+
+        // if everything went fine, the operator should have received the CR update event and 
+        // will send an update on the Deployment object for the executor
+        Awaitility
+        .await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted( () -> {
+            assertEquals(1, dispatcher.getRequests().stream().filter(e-> "PATCH".equalsIgnoreCase(e.getMethod()) &&
+                                                                 e.getPath().contains("deployments/windupapp-executor") &&
+                                                                 e.getBody().contains("/spec/replicas\",\"value\":" + desiredReplicas)).count());
+        });
+    }
+
     private LocalDateTime getLastTransitionTimeFromStatus(List<WindupResourceStatusCondition> status, String deployment) {
         return status.stream()
                     .filter(e -> deployment.equalsIgnoreCase(e.getType())).findFirst()

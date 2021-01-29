@@ -62,3 +62,26 @@ jobs:
           assertion: should.equal
           expected: 19
           actual: ${{steps.getobjects.outputs.value}}
+
+      - name: Scale up test
+        run: cd ${{github.workspace}} &&
+             cd src/test/resources &&
+             (echo "\n  executor_desired_replicas:3" | cat catalog-source.yaml -) | kubectl -f -
+      
+      - name: Sleep for 5 seconds to allow objects to be created
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '5s'
+
+      - name: List k8s pods for the executor
+        id: executorpods
+        run: kubectl get pods -n mta -o name | grep executor | wc -l
+        shell: bash
+
+      - name: Check executor pods are the expected
+        uses: therussiankid92/gat@v1.3
+        with:
+          assertion: should.equal
+          expected: 3
+          actual: ${{steps.executorpods.outputs.value}}
+
