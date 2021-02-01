@@ -29,9 +29,9 @@ jobs:
         run: cd ${{github.workspace}} &&
              eval $(minikube -p minikube docker-env) &&
              mvn clean package -Pnative -Dquarkus.container-image.build=true -DskipTests \
-                                        -Dquarkus.native.container-runtime=docker \
-                                        -Dquarkus.container-image.tag=test \
-                                        -Dquarkus.container-image.push=false 
+            -Dquarkus.native.container-runtime=docker \
+            -Dquarkus.container-image.tag=test \
+            -Dquarkus.container-image.push=false 
 
       - name: Deploy operator
         run: cd ${{github.workspace}} &&
