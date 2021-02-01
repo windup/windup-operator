@@ -17,7 +17,7 @@ spec:
     spec:
       serviceAccountName: windup-operator
       containers:
-        - image: quay.io/windupeng/windup-operator-native:latest
+        - image: quay.io/windupeng/windup-operator-native:test
           name: windup-operator
           imagePullPolicy: IfNotPresent
           env:
