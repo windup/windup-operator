@@ -2,14 +2,13 @@ package org.jboss.windup.operator.controller;
 
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -20,7 +19,7 @@ import javax.inject.Named;
 @ApplicationScoped
 public class WindupDeploymentController implements Watcher<Deployment> {
     @Inject
-    MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+    MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
     @Named("namespace")
     String namespace;
@@ -33,7 +32,7 @@ public class WindupDeploymentController implements Watcher<Deployment> {
     }
 
     @Override
-    public void onClose(KubernetesClientException cause) {
+    public void onClose(WatcherException cause) {
         // TODO Auto-generated method stub
     }
 
@@ -55,10 +54,11 @@ public class WindupDeploymentController implements Watcher<Deployment> {
             }
 
             log.info("Updating CR Status considering Deployment status : " + obj.getMetadata().getName());
+            int desiredReplicas = (obj.getMetadata().getName().contains("-executor") && cr.getSpec().getExecutor_desired_replicas() != null) ? cr.getSpec().getExecutor_desired_replicas() : 1;
 
             // We want 1 replica per deployment, so checking if there is 1 replica Ready
             Boolean deploymentStatus = (obj.getStatus() != null && obj.getStatus().getReadyReplicas() != null
-                    && obj.getStatus().getReadyReplicas() == 1);
+                    && obj.getStatus().getReadyReplicas() == desiredReplicas);
             cr.setLabelProperty(deploymentStatus, obj.getMetadata().getName(), WindupResource.DEPLOYMENT);
 
             // Sending the new status to K8s

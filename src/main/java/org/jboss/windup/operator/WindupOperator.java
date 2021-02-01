@@ -8,7 +8,6 @@ import lombok.extern.java.Log;
 import org.jboss.windup.operator.controller.WindupController;
 import org.jboss.windup.operator.controller.WindupDeploymentController;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -29,7 +28,7 @@ public class WindupOperator {
     KubernetesClient k8Client;
 
     @Inject
-    MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+    MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
     @Named("namespace")
     String namespace;

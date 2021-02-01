@@ -25,7 +25,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
 import java.util.Arrays;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
 @Log
 public class WindupDeployment {
 
-  MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+  MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
   KubernetesClient k8sClient;
 
@@ -70,7 +69,7 @@ public class WindupDeployment {
   private String ssoPublicKeyDefault;
   private Integer executor_desired_replicas;
 
-  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient, 
+  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
                           KubernetesClient k8sClient, String namespace, 
                           String serviceAccount, String ssoPublicKeyDefault) {
     this.windupResource = windupResource;
@@ -194,7 +193,7 @@ public class WindupDeployment {
           .withKind(windupResource.getKind())
           .withApiVersion(windupResource.getApiVersion())
           .withName(windupResource.getMetadata().getName())
-          .withNewUid(windupResource.getMetadata().getUid())
+//          .withNewUid(windupResource.getMetadata().getUid())
         .build();
 }
 

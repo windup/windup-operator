@@ -11,23 +11,27 @@ import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.java.Log;
 import org.awaitility.Awaitility;
 import org.jboss.windup.operator.KubernetesCrudRecorderDispatcher;
+import org.jboss.windup.operator.Request;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 import org.jboss.windup.operator.model.WindupResourceStatusCondition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 import java.io.InputStream;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Log
 @QuarkusTest
@@ -42,10 +46,18 @@ public class WindupControllerTest {
     KubernetesMockServer server;
 
     @Inject
-    MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+    MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
     @Inject
     KubernetesClient client;
+
+    @BeforeEach
+    public void clean() {
+        if (crClient.inNamespace("test").withName("windupapp").get() != null) {
+            crClient.inNamespace("test").withName("windupapp").delete();
+            Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> assertNull(crClient.inNamespace("test").withName("windupapp").get()));
+        }
+    }
 
     @Test
     public void onAddCR_shouldServerReceiveExactCalls() throws InterruptedException {
@@ -53,13 +65,14 @@ public class WindupControllerTest {
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
         crClient.inNamespace("test").create(windupResource);
 
-        dispatcher.getRequests().clear();
+        dispatcher.setRequests(new ArrayList<Request>());
 
         Awaitility
             .await()
-            .atMost(10, TimeUnit.SECONDS)
+            .atMost(20, TimeUnit.SECONDS)
             .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count()));
 
+        log.info(" Requests : " + dispatcher.getRequests().stream().map(e -> "\n" + e.getPath() + " - " + e.getMethod()).collect(Collectors.joining()));
         assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
         assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
         assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
@@ -72,7 +85,7 @@ public class WindupControllerTest {
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
 
-        dispatcher.getRequests().clear();
+        dispatcher.setRequests(new ArrayList<Request>());
 
         crClient.inNamespace("test").create(windupResource);
 
@@ -91,29 +104,24 @@ public class WindupControllerTest {
 
         Awaitility
             .await()
-            .atMost(20, TimeUnit.SECONDS)
+            .atMost(40, TimeUnit.SECONDS)
             .pollInterval(1, TimeUnit.SECONDS)
             .untilAsserted(() -> {
                 WindupResourceList lista = crClient.inNamespace("test").list();
                 List<WindupResourceStatusCondition> status = lista.getItems().get(0).getStatus().getConditions();
                 // Checking there are only 5 status in the CR : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
+                log.info("Status : \n" + status.stream().map(e -> e.toString()).collect(Collectors.joining("\n")));
                 assertEquals(5, status.size());
                 // Checking there are 4 status with True : Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(4, status.stream().filter(e -> "True".equalsIgnoreCase(e.getStatus())).count());
                 // Checking there are 5 status with different timestamps : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
                 assertEquals(5, status.stream().map(e -> e.getLastTransitionTime()).distinct().count());
 
-                // Checking the update times are those expected in order
-                LocalDateTime postgreUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-postgresql");
-                log.info("postgre update time : " + postgreUpdateTime);
-                LocalDateTime windupappUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp");
-                log.info("windupappUpdateTime : " + postgreUpdateTime);
-                LocalDateTime executorUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-executor");
-                log.info("windupapp-executor : " + postgreUpdateTime);
+                // Checking the updates are those expected in order
 
-                assertTrue(windupappUpdateTime.isAfter(postgreUpdateTime.plus(Duration.ofMillis(150))));
-                assertTrue(executorUpdateTime.isAfter(windupappUpdateTime.plus(Duration.ofMillis(150))));
-
+                List<String> listaStatus = status.stream().sorted(Comparator.comparing(WindupResourceStatusCondition::getLastTransitionTime)).map(e->e.getType()).collect(Collectors.toList());
+                assertTrue(listaStatus.indexOf("windupapp-executor") > listaStatus.indexOf("windupapp"));
+                assertTrue(listaStatus.indexOf("windupapp") > listaStatus.indexOf("windupapp-postgresql"));
             }) ;
 
     }
@@ -123,7 +131,7 @@ public class WindupControllerTest {
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
 
-        dispatcher.getRequests().clear();
+        dispatcher.setRequests(new ArrayList<Request>());
 
         crClient.inNamespace("test").create(windupResource);
 
@@ -145,13 +153,14 @@ public class WindupControllerTest {
 
         // if everything went fine, the operator should have received the CR update event and 
         // will send an update on the Deployment object for the executor
+        log.info("Requests : " + dispatcher.getRequests().toString());
         Awaitility
         .await()
-        .atMost(5, TimeUnit.SECONDS)
+        .atMost(10, TimeUnit.SECONDS)
         .untilAsserted( () -> {
-            assertEquals(1, dispatcher.getRequests().stream().filter(e-> "PATCH".equalsIgnoreCase(e.getMethod()) &&
-                                                                 e.getPath().contains("deployments/windupapp-executor") &&
-                                                                 e.getBody().contains("/spec/replicas\",\"value\":" + desiredReplicas)).count());
+                    assertTrue(dispatcher.getRequests().stream().anyMatch(e -> "PATCH".equalsIgnoreCase(e.getMethod()) &&
+                                                                e.getPath().contains("deployments/windupapp-executor") &&
+                                                                e.getBody().contains("/spec/replicas\",\"value\":" + desiredReplicas)));
         });
     }
 
