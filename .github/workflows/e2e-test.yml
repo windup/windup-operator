@@ -77,9 +77,10 @@ jobs:
           actual: ${{steps.getobjects.outputs.value}}
 
       - name: Scale up test
-        run: cd ${{github.workspace}} &&
-             cd src/test/resources &&
-             (echo "\n  executor_desired_replicas:3" | cat catalog-source.yaml -) | kubectl -f -
+        run: |
+          cd ${{github.workspace}}
+          cd src/test/resources 
+          (echo "\n  executor_desired_replicas:3" | cat windup-test.yaml -) | kubectl apply -f -
 
       - name: Sleep for 5 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
