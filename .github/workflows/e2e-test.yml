@@ -80,7 +80,7 @@ jobs:
         run: |
           cd ${{github.workspace}}
           cd src/test/resources 
-          (echo "\n  executor_desired_replicas: 3" | cat windup-test.yaml -) | kubectl apply -f -
+          (echo "  executor_desired_replicas: 3" | cat windup-test.yaml -) | kubectl apply -f -
 
       - name: Sleep for 5 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
@@ -89,7 +89,7 @@ jobs:
 
       - name: List k8s pods for the executor
         id: executorpods
-        run: kubectl get pods -n mta -o name | grep executor | wc -l
+        run: echo "::set-output name=value::$(kubectl get pods -n mta -o name | grep executor | wc -l)"
         shell: bash
 
       - name: Check executor pods are the expected
