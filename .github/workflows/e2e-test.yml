@@ -47,7 +47,7 @@ jobs:
           kubectl apply -f ../../../../test/resources/windup-test.yaml
 
       - name: Operator Logs
-        run: kubectl logs -l application=windup
+        run: kubectl logs -l app=windup-operator
         shell: bash
 
       - name: Sleep for 30 seconds to allow objects to be created
