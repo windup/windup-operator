@@ -193,7 +193,7 @@ public class WindupDeployment {
           .withKind(windupResource.getKind())
           .withApiVersion(windupResource.getApiVersion())
           .withName(windupResource.getMetadata().getName())
-//          .withNewUid(windupResource.getMetadata().getUid())
+          .withNewUid(windupResource.getMetadata().getUid())
         .build();
 }
 
