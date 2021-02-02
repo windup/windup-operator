@@ -18,12 +18,10 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           start args: ' --force'
 
-      - name: setup-graalvm-ce
-        uses: rinx/setup-graalvm-ce@v0.0.5
+      - name: Setup Java 11
+        uses: actions/setup-java@v1
         with:
-          graalvm-version: "20.1.0"
-          java-version: "java11"
-          native-image: "true"
+          java-version: '11'
 
       - name: Build operator image and push it to the minikube docker host
         run: |
@@ -54,7 +52,7 @@ jobs:
           time: '10s'
 
       - name: Operator Logs
-        run: kubectl logs -l app=windup-operator -n mta
+        run: kubectl logs --tail=100 -l app=windup-operator -n mta 
 
       - name: Sleep for 30 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
