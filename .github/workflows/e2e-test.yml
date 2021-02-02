@@ -28,11 +28,13 @@ jobs:
       - name: Build operator image and push it to the minikube docker host
         run: |
           cd ${{github.workspace}} 
-          eval $(minikube -p minikube docker-env) 
-          mvn clean package -Pnative -Dquarkus.container-image.build=true -DskipTests \
+          mvn clean package -Pnative -DskipTests \
+            -Dquarkus.native.container-build=true \
             -Dquarkus.native.container-runtime=docker \
+            -Dquarkus.container-image.build=true  \
             -Dquarkus.container-image.tag=test \
             -Dquarkus.container-image.push=false 
+          minikube cache add quay.io/windupeng/windup-operator-native:test
 
       - name: Deploy operator
         run: |
