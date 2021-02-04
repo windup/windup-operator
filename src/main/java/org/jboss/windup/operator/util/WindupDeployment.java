@@ -35,6 +35,10 @@ import java.util.stream.Collectors;
 
 @Log
 public class WindupDeployment {
+  public static final  String APPLICATION = "application";
+  public static final  String APP = "app";
+  public static final  String CREATEDBY = "created-by";
+  public static final  String MTAOPERATOR = "mta-operator";
 
   public static final String MTA_OPERATOR = "mta-operator";
   public static final String CREATED_BY = "created-by";
@@ -200,9 +204,9 @@ public class WindupDeployment {
 
 private Map<String, String> getLabels() {
     return Map.of(
-        "application", application_name,
-        "app", application_name,
-        CREATED_BY, MTA_OPERATOR);
+        APPLICATION, application_name,
+        APP, application_name,
+        CREATEDBY, MTAOPERATOR);
   }
 
   // Checking the cluster domain on Openshift

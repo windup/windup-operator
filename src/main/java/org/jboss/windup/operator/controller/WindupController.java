@@ -66,15 +66,18 @@ public class WindupController implements Watcher<WindupResource> {
 	public void eventReceived(Action action, WindupResource resource) {
 		log.info("Event received " + action + " received for WindupResource : " + resource.getMetadata().getName());
 
-		if (action == Action.ADDED) onAdd(resource);
-		if (action == Action.MODIFIED) onUpdate(resource);
-		if (action == Action.DELETED) onDelete(resource);
+		switch(action) {
+			case ADDED : onAdd(resource); break;
+			case MODIFIED : onUpdate(resource); break;
+			case DELETED : onDelete(resource); break;
+			case ERROR : break;
+		}
 	}
 
 	@Override
 	public void onClose(KubernetesClientException cause) {
+		log.info("on close");
 		if (cause != null) {
-			log.info("on close");
 			cause.printStackTrace();
 			System.exit(-1);
 		}
