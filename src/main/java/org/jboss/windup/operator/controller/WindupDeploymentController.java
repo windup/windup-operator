@@ -34,7 +34,11 @@ public class WindupDeploymentController implements Watcher<Deployment> {
 
     @Override
     public void onClose(KubernetesClientException cause) {
-        // TODO Auto-generated method stub
+		log.info("on close");
+		if (cause != null) {
+			cause.printStackTrace();
+			System.exit(-1);
+        }
     }
 
     private void updateCRStatus(Deployment obj) {

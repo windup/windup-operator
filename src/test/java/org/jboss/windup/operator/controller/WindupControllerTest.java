@@ -58,12 +58,14 @@ public class WindupControllerTest {
         Awaitility
             .await()
             .atMost(10, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count()));
+            .untilAsserted(() -> {
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count());
 
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+                assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+            });
     }
 
     // @format:off
@@ -76,11 +78,30 @@ public class WindupControllerTest {
 
         crClient.inNamespace("test").create(windupResource);
 
+        // We create another deployment not related with the operator
+        client.apps().deployments().inNamespace("test").createNew()
+            .withNewMetadata()
+                .withName("test-deployment")
+            .endMetadata()
+            .withNewSpec()
+                .withNewTemplate()
+                    .withNewMetadata()
+                        .withName("test-pod")
+                    .endMetadata()
+                    .withNewSpec()
+                        .addNewContainer()
+                            .withImage("helloworld")
+                        .endContainer()
+                    .endSpec()
+                .endTemplate()
+            .endSpec()
+            .done();
+
         Awaitility
         .await()
         .atMost(20, TimeUnit.SECONDS)
         .untilAsserted( () -> {
-            assertEquals(3, client.apps().deployments().inNamespace("test").list().getItems().size());
+            assertEquals(4, client.apps().deployments().inNamespace("test").list().getItems().size());
         });
 
         setDeploymentReadyReplicas("windupapp-postgresql", 1);
@@ -88,6 +109,7 @@ public class WindupControllerTest {
         setDeploymentReadyReplicas("windupapp", 1);
         Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp-executor", 1);
+        setDeploymentReadyReplicas("test-deployment", 1);
 
         Awaitility
             .await()
