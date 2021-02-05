@@ -27,9 +27,6 @@ pipeline {
             }
         }
         stage("Load Groovy downloader") {
-//            environment {
-//                FILE_HASH = credentials('gpg-sign-file')
-//            }
             steps {
                 sh " groovy ${env.WORKSPACE}/.jenkins/GoogleDriveFileDownloader.groovy ${FILE_HASH}"
                 sh " if gpg --list-keys 66466D8F; then echo 'Private Signing Key Found'; else gpg --import RHAMT-private-key.asc; fi"
@@ -42,8 +39,6 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
-                    echo "debug"
-                    /*
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh "./mvnw -s $MAVEN_SETTINGS " +
@@ -51,7 +46,6 @@ pipeline {
                             " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
                             " -Dtag=${RELEASE_VERSION} -Dmvn.test.skip=true "
                     }
-                    */
                 }
             }
         }
@@ -62,8 +56,6 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
-                    echo "debug"
-                    /*
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh "./mvnw -s $MAVEN_SETTINGS " +
@@ -71,7 +63,6 @@ pipeline {
                                     " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
                                     " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
                     }
-                    */
                 }
             }
         }
@@ -86,10 +77,8 @@ pipeline {
             }
             steps {
                 echo "debug"
-                /*
                 sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
                 sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
-                */
             }
         }
     }
