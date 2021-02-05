@@ -42,6 +42,7 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
+                    echo "debug"
                     /*
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
@@ -61,6 +62,7 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
+                    echo "debug"
                     /*
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
@@ -83,6 +85,7 @@ pipeline {
                 CREDENTIALS = credentials("38d0aca2-e50e-44ac-ad34-46301e43784c")
             }
             steps {
+                echo "debug"
                 /*
                 sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
                 sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
