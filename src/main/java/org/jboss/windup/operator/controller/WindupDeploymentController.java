@@ -16,6 +16,9 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Log
 @ApplicationScoped
 public class WindupDeploymentController implements Watcher<Deployment> {
@@ -59,7 +62,8 @@ public class WindupDeploymentController implements Watcher<Deployment> {
             }
 
             log.info("Updating CR Status considering Deployment status : " + obj.getMetadata().getName());
-            // Sending the status change message to the CR , in order to execute the Cr.update event
+            // Changing the lastTransitionTime and Sending the status change message to the CR , in order to execute the Cr.update event
+            cr.getConditionByType("Ready").ifPresent(e -> e.setLastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)));
             crClient.inNamespace(namespace).updateStatus(cr);
         }
     }

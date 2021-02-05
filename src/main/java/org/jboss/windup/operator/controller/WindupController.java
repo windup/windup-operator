@@ -47,13 +47,15 @@ public class WindupController implements Watcher<WindupResource> {
 
 		// retrieving number of Deployments ready in the namespace and created by the operator
 		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel(WindupDeployment.CREATED_BY, WindupDeployment.MTA_OPERATOR).list()
-				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() == 1).count();
+				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null && e.getStatus().getReadyReplicas() == 1).count();
 
-		if (operandsReady == 3) {
-			newResource.setReady(true);
-			newResource.setStatusDeploy(false);
+		boolean shouldbeReady = operandsReady == 3;
 
-			log.info("Setting this CustomResource as Ready");
+		// if the readyness status changes we updates the CR
+		if (newResource.isReady() != shouldbeReady) {
+			newResource.setReady(shouldbeReady);
+			log.info("Setting this CustomResource as Ready : " + shouldbeReady);
+			if (shouldbeReady) newResource.setStatusDeploy(false);
 			crClient.inNamespace(namespace).updateStatus(newResource);
 		}
 	}
