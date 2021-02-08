@@ -8,7 +8,6 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import io.quarkus.test.junit.QuarkusTest;
-import lombok.extern.java.Log;
 import org.awaitility.Awaitility;
 import org.jboss.windup.operator.KubernetesCrudRecorderDispatcher;
 import org.jboss.windup.operator.model.WindupResource;
@@ -29,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@Log
 @QuarkusTest
 public class WindupControllerTest {
     @Inject
@@ -49,21 +47,22 @@ public class WindupControllerTest {
 
     @Test
     public void onAddCR_shouldServerReceiveExactCalls() throws InterruptedException {
+        dispatcher.getRequests().clear();
         InputStream fileStream = WindupControllerTest.class.getResourceAsStream("/windup.resource.yaml");
         WindupResource windupResource = Serialization.unmarshal(fileStream, WindupResource.class);
+
         crClient.inNamespace("test").create(windupResource);
-
-        dispatcher.getRequests().clear();
-
         Awaitility
-            .await()
-            .atMost(15, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count()));
-
-        assertEquals(4, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
-        assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
-        assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+        .await()
+        .atMost(20, TimeUnit.SECONDS)
+        .untilAsserted(() -> {
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("ingress")).count());
+                // status changes : 1 on deployment=true, 3 on each deployment status change, 1 on ready=true
+                assertEquals(5, dispatcher.getRequests().stream().filter(e-> "PUT".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("status") ).count());
+                assertEquals(2, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("persistentvolumeclaim")).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("deployments") ).count());
+                assertEquals(3, dispatcher.getRequests().stream().filter(e-> "POST".equalsIgnoreCase(e.getMethod()) && e.getPath().contains("service")).count());
+            });
     }
 
     // @format:off
@@ -76,51 +75,62 @@ public class WindupControllerTest {
 
         crClient.inNamespace("test").create(windupResource);
 
+        // We create another deployment not related with the operator
+        client.apps().deployments().inNamespace("test").createNew()
+            .withNewMetadata()
+                .withName("test-deployment")
+            .endMetadata()
+            .withNewSpec()
+                .withNewTemplate()
+                    .withNewMetadata()
+                        .withName("test-pod")
+                    .endMetadata()
+                    .withNewSpec()
+                        .addNewContainer()
+                            .withImage("helloworld")
+                        .endContainer()
+                    .endSpec()
+                .endTemplate()
+            .endSpec()
+            .done();
+
         Awaitility
         .await()
         .atMost(20, TimeUnit.SECONDS)
         .untilAsserted( () -> {
-            assertEquals(3, client.apps().deployments().inNamespace("test").list().getItems().size());
+            // 4 objects expected : operator, mta-web, mta-executor, mta-postgresql, test-deployment
+            assertEquals(4, client.apps().deployments().inNamespace("test").list().getItems().size());
         });
 
+        LocalDateTime startUpdateTime = LocalDateTime.now();
         setDeploymentReadyReplicas("windupapp-postgresql", 1);
         Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp", 1);
         Thread.sleep(200);
         setDeploymentReadyReplicas("windupapp-executor", 1);
+        setDeploymentReadyReplicas("test-deployment", 1);
 
         Awaitility
             .await()
-            .atMost(20, TimeUnit.SECONDS)
+            .atMost(30, TimeUnit.SECONDS)
             .pollInterval(1, TimeUnit.SECONDS)
             .untilAsserted(() -> {
                 WindupResourceList lista = crClient.inNamespace("test").list();
                 List<WindupResourceStatusCondition> status = lista.getItems().get(0).getStatus().getConditions();
-                // Checking there are only 5 status in the CR : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
-                assertEquals(5, status.size());
-                // Checking there are 4 status with True : Ready, windupapp, windupapp-executor, windupapp-postgresql
-                assertEquals(4, status.stream().filter(e -> "True".equalsIgnoreCase(e.getStatus())).count());
-                // Checking there are 5 status with different timestamps : Deployment, Ready, windupapp, windupapp-executor, windupapp-postgresql
-                assertEquals(5, status.stream().map(e -> e.getLastTransitionTime()).distinct().count());
+                    // Checking there are only 2 status in the CR  : Deployment, Ready
+                    assertEquals(2, status.size());
 
-                // Checking the update times are those expected in order
-                LocalDateTime postgreUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-postgresql");
-                log.info("postgre update time : " + postgreUpdateTime);
-                LocalDateTime windupappUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp");
-                log.info("windupappUpdateTime : " + postgreUpdateTime);
-                LocalDateTime executorUpdateTime = getLastTransitionTimeFromStatus(status, "windupapp-executor");
-                log.info("windupapp-executor : " + postgreUpdateTime);
-
-                assertTrue(windupappUpdateTime.isAfter(postgreUpdateTime.plus(Duration.ofMillis(150))));
-                assertTrue(executorUpdateTime.isAfter(windupappUpdateTime.plus(Duration.ofMillis(150))));
-
+                    // Checking the update time is the expected
+                    LocalDateTime lastUpdateTime = getLastTransitionTimeFromStatus(status, "Ready");
+                    assertTrue(lastUpdateTime.isAfter(startUpdateTime.plus(Duration.ofMillis(400))));
             }) ;
 
     }
 
-    private LocalDateTime getLastTransitionTimeFromStatus(List<WindupResourceStatusCondition> status, String deployment) {
+    private LocalDateTime getLastTransitionTimeFromStatus(List<WindupResourceStatusCondition> status,
+            String condition_type) {
         return status.stream()
-                    .filter(e -> deployment.equalsIgnoreCase(e.getType())).findFirst()
+                .filter(e -> condition_type.equalsIgnoreCase(e.getType())).findFirst()
                     .map(e -> LocalDateTime.parse(e.getLastTransitionTime(), DateTimeFormatter.ISO_DATE_TIME))
                     .get();
     }

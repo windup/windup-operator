@@ -11,7 +11,6 @@ import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 import org.jboss.windup.operator.util.WindupDeployment;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -46,12 +45,17 @@ public class WindupController implements Watcher<WindupResource> {
 				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() 
 				+ " Status " + newResource.getStatus().getConditions());
 
-		// Consolidate status of the CR
-		if (newResource.deploymentsReady() == 3 && !newResource.isReady()) {
-			newResource.setReady(true);
-			newResource.setStatusDeploy(false); 
+		// retrieving number of Deployments ready in the namespace and created by the operator
+		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel(WindupDeployment.CREATED_BY, WindupDeployment.MTA_OPERATOR).list()
+				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null && e.getStatus().getReadyReplicas() == 1).count();
 
-			log.info("Setting this CustomResource as Ready");
+		boolean shouldbeReady = operandsReady == 3;
+
+		// if the readyness status changes we updates the CR
+		if (newResource.isReady() != shouldbeReady) {
+			newResource.setReady(shouldbeReady);
+			log.info("Setting this CustomResource as Ready : " + shouldbeReady);
+			if (shouldbeReady) newResource.setStatusDeploy(false);
 			crClient.inNamespace(namespace).updateStatus(newResource);
 		}
 	}
@@ -64,15 +68,18 @@ public class WindupController implements Watcher<WindupResource> {
 	public void eventReceived(Action action, WindupResource resource) {
 		log.info("Event received " + action + " received for WindupResource : " + resource.getMetadata().getName());
 
-		if (action == Action.ADDED) onAdd(resource);
-		if (action == Action.MODIFIED) onUpdate(resource);
-		if (action == Action.DELETED) onDelete(resource);
+		switch(action) {
+			case ADDED : onAdd(resource); break;
+			case MODIFIED : onUpdate(resource); break;
+			case DELETED : onDelete(resource); break;
+			case ERROR : break;
+		}
 	}
 
 	@Override
 	public void onClose(KubernetesClientException cause) {
+		log.info("on close");
 		if (cause != null) {
-			log.info("on close");
 			cause.printStackTrace();
 			System.exit(-1);
 		}
