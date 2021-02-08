@@ -114,7 +114,7 @@ spec:
                 sso_public_key:
                   type: string
                   default: ""
-                  description: leave empty for default key
+                  description: leave empty for auto-generation
                 sso_bearer_only:
                   type: string
                   default: ""
@@ -237,19 +237,19 @@ spec:
                 tls_secret:
                   type: string
               required:
-                  - web_cpu_request
-                  - web_mem_request
-                  - executor_cpu_request
-                  - executor_mem_request
-                  - messaging_serializer
-                  - mta_Volume_Capacity
-                  - db_database
-                  - volumeCapacity
-                  - sso_url
-                  - sso_realm
-                  - docker_images_user
-                  - docker_images_tag
-                  - max_post_size
+              - web_cpu_request
+              - web_mem_request
+              - executor_cpu_request
+              - executor_mem_request
+              - messaging_serializer
+              - mta_Volume_Capacity
+              - db_database
+              - volumeCapacity
+              - sso_url
+              - sso_realm
+              - docker_images_user
+              - docker_images_tag
+              - max_post_size
             status:
               type: object
               properties:
@@ -273,6 +273,5 @@ spec:
                   type: array
           required:
           - spec
-          - apiVersion
 
 

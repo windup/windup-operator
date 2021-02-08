@@ -1,13 +1,21 @@
 #!/bin/sh -x
 
-# everytime you test you need to increase this version number
+# everytime you test you need to increase this bundle version number
 # it only affects your test, has no other purposes
-version=0.0.62
+# usage `./create-catalog.sh -u myuser -v 210 -m 0.0.2`
+while getopts u:v:m: flag
+do
+    case "${flag}" in
+        u) quayuser=${OPTARG};;
+        v) bundleversion=${OPTARG};;
+        m) mtaoperatorversion=${OPTARG};;
+    esac
+done
 
 # Create operator bundle image
-podman build -f mta-operator/0.0.1/Dockerfile -t mta-operator-bundle:$version mta-operator/0.0.1/
-podman tag mta-operator-bundle:$version quay.io/windupeng/mta-operator-bundle:$version
-podman push quay.io/windupeng/mta-operator-bundle:$version
+podman build -f mta-operator/$mtaoperatorversion/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/$mtaoperatorversion/
+podman tag mta-operator-bundle:$bundleversion quay.io/$quayuser/mta-operator-bundle:$bundleversion
+podman push quay.io/$quayuser/mta-operator-bundle:$bundleversion
 
 # Install operator-registry
 # git clone https://github.com/operator-framework/operator-registry
@@ -15,11 +23,18 @@ podman push quay.io/windupeng/mta-operator-bundle:$version
 # make build
 
 # Build operator catalog
-../../../../../operator-registry/bin/opm index add --bundles quay.io/windupeng/mta-operator-bundle:$version \
-                --from-index quay.io/openshift-community-operators/catalog:latest \
-                --tag quay.io/windupeng/mta-operator-test-catalog:$version
-podman push  quay.io/windupeng/mta-operator-test-catalog:$version
+# if version on argument is 0.0.1 we will not create the catalog from the community one as it already has that version and would crash
+if [ "0.0.1" = "$mtaoperatorversion" ]; then
+../../../../../operator-registry/bin/opm index add --bundles quay.io/$quayuser/mta-operator-bundle:$bundleversion \
+--tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman
+else
+../../../../../operator-registry/bin/opm index add --bundles quay.io/$quayuser/mta-operator-bundle:$bundleversion \
+--tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman \
+--from-index quay.io/openshift-community-operators/catalog:latest 
+fi
+
+podman push  quay.io/$quayuser/mta-operator-test-catalog:$bundleversion
 
 sleep 20
 
-oc apply -f catalog-source.yaml
+sed "s/{user}/$quayuser/g" catalog-source.yaml | sed "s/{version}/$bundleversion/g" | kubectl apply -f -
