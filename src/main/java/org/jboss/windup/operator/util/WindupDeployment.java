@@ -40,6 +40,9 @@ public class WindupDeployment {
   public static final  String CREATEDBY = "created-by";
   public static final  String MTAOPERATOR = "mta-operator";
 
+  public static final String MTA_OPERATOR = "mta-operator";
+  public static final String CREATED_BY = "created-by";
+
   MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
 
   KubernetesClient k8sClient;
