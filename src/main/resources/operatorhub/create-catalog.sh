@@ -2,22 +2,41 @@
 
 # everytime you test you need to increase this bundle version number
 # it only affects your test, has no other purposes
-# usage `./create-catalog.sh -u myuser -v 210 -m 0.0.2`
-while getopts u:v:m: flag
+# usage `./create-catalog.sh -u myuser -v 210 -m 0.0.2 -b 1`
+# -u : quay user
+# -v : version of the catalog
+# -m : version of the MTA Operator
+# -b : do the build first ? 1 yes , 0 no
+
+while getopts u:v:m:b: flag
 do
     case "${flag}" in
         u) quayuser=${OPTARG};;
         v) bundleversion=${OPTARG};;
         m) mtaoperatorversion=${OPTARG};;
+        b) dobuild=${OPTARG};;
     esac
 done
 
+# Do the build of the operator with current code, if requested
+if [ "1" = "$dobuild" ]; then 
+  cd ../../../..
+  ./mvnw clean package -Pnative -DskipTests \
+            -Dquarkus.native.container-build=true \
+            -Dquarkus.native.container-runtime=podman \
+            -Dquarkus.container-image.build=true  \
+            -Dquarkus.container-image.tag=$mtaoperatorversion \
+            -Dquarkus.container-image.push=true \
+            -Dquarkus.container-image.group=$quayuser
+  cd src/main/resources/operatorhub
+fi
+
 # Create operator bundle image
-sed -i "s/quay.io\/windupeng/quay.io\/$quayuser/g" "mta-operator/$mtaoperatorversion/manifests/windup-operator.v0.0.2.clusterserviceversion.yaml"
+sed -i "s/quay.io\/windupeng/quay.io\/$quayuser/g" "mta-operator/$mtaoperatorversion/manifests/windup-operator.v$mtaoperatorversion.clusterserviceversion.yaml"
 podman build -f mta-operator/$mtaoperatorversion/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/$mtaoperatorversion/
 podman tag mta-operator-bundle:$bundleversion quay.io/$quayuser/mta-operator-bundle:$bundleversion
 podman push quay.io/$quayuser/mta-operator-bundle:$bundleversion
-sed -i "s/quay.io\/$quayuser/quay.io\/windupeng/g" "mta-operator/$mtaoperatorversion/manifests/windup-operator.v0.0.2.clusterserviceversion.yaml"
+sed -i "s/quay.io\/$quayuser/quay.io\/windupeng/g" "mta-operator/$mtaoperatorversion/manifests/windup-operator.v$mtaoperatorversion.clusterserviceversion.yaml"
 
 
 # Install operator-registry
