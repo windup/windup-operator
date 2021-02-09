@@ -94,7 +94,7 @@ public class WindupControllerTest {
     }
 
     // @format:off
-    //@Test
+    @Test
     public void onAccCR_orderOfReadyStatusShouldBeTheExpectedOne() throws InterruptedException {
 
         // We create another deployment not related with the operator
