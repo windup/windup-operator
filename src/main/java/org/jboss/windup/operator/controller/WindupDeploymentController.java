@@ -15,6 +15,9 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Log
 @ApplicationScoped
 public class WindupDeploymentController implements Watcher<Deployment> {
@@ -33,7 +36,11 @@ public class WindupDeploymentController implements Watcher<Deployment> {
 
     @Override
     public void onClose(WatcherException cause) {
-        // TODO Auto-generated method stub
+		log.info("on close");
+		if (cause != null) {
+			cause.printStackTrace();
+			System.exit(-1);
+        }
     }
 
     private void updateCRStatus(Deployment obj) {
@@ -54,14 +61,8 @@ public class WindupDeploymentController implements Watcher<Deployment> {
             }
 
             log.info("Updating CR Status considering Deployment status : " + obj.getMetadata().getName());
-            int desiredReplicas = (obj.getMetadata().getName().contains("-executor") && cr.getSpec().getExecutor_desired_replicas() != null) ? cr.getSpec().getExecutor_desired_replicas() : 1;
-
-            // We want 1 replica per deployment, so checking if there is 1 replica Ready
-            Boolean deploymentStatus = (obj.getStatus() != null && obj.getStatus().getReadyReplicas() != null
-                    && obj.getStatus().getReadyReplicas() == desiredReplicas);
-            cr.setLabelProperty(deploymentStatus, obj.getMetadata().getName(), WindupResource.DEPLOYMENT);
-
-            // Sending the new status to K8s
+            // Changing the lastTransitionTime and Sending the status change message to the CR , in order to execute the Cr.update event
+            cr.getConditionByType("Ready").ifPresent(e -> e.setLastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)));
             crClient.inNamespace(namespace).updateStatus(cr);
         }
     }

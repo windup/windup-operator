@@ -237,6 +237,9 @@ spec:
                 executor_desired_replicas:
                   type: integer
                   default: 1
+                tls_secret:
+                  type: string
+                  default: ""
               required:
               - web_cpu_request
               - web_mem_request
@@ -251,6 +254,7 @@ spec:
               - docker_images_user
               - docker_images_tag
               - max_post_size
+              - executor_desired_replicas
             status:
               type: object
               properties:

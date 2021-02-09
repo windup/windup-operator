@@ -21,27 +21,27 @@ in order to do the asserts
 public class KubernetesCrudRecorderDispatcher extends KubernetesCrudDispatcher {
   private List<Request> requests = new ArrayList<>();
 
-    public KubernetesCrudRecorderDispatcher() {
-        this(Collections.emptyList());
-      }
+  public KubernetesCrudRecorderDispatcher() {
+      this(Collections.emptyList());
+  }
 
-      public KubernetesCrudRecorderDispatcher(List<CustomResourceDefinitionContext> crdContexts) {
-        this(new KubernetesCrudAttributesExtractor(crdContexts), new KubernetesResponseComposer());
-      }
+  public KubernetesCrudRecorderDispatcher(List<CustomResourceDefinitionContext> crdContexts) {
+    this(new KubernetesCrudAttributesExtractor(crdContexts), new KubernetesResponseComposer());
+  }
 
-      public KubernetesCrudRecorderDispatcher(KubernetesCrudAttributesExtractor attributeExtractor, ResponseComposer responseComposer) {
-        super(attributeExtractor, responseComposer);
-      }
+  public KubernetesCrudRecorderDispatcher(KubernetesCrudAttributesExtractor attributeExtractor, ResponseComposer responseComposer) {
+    super(attributeExtractor, responseComposer);
+  }
 
-    @Override
-    public MockResponse dispatch(RecordedRequest request) {
-        requests.add(new Request(request.getPath(), request.getMethod(), request.getBody().clone().readUtf8()));
-        return super.dispatch(request);
-    }
+  @Override
+  public MockResponse dispatch(RecordedRequest request) {
+      requests.add(new Request(request.getPath(), request.getMethod(), request.getBody().clone().readUtf8()));
+      return super.dispatch(request);
+  }
 
     // to avoid the ConcurrentModificationException that happens when reading the list inside a Stream but also adding elements to it
-    public List<Request> getRequests() {
+  public List<Request> getRequests() {
       return new ArrayList<Request>(requests);
-    }
+  }
 
 }

@@ -7,6 +7,8 @@ import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
@@ -15,6 +17,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLS;
 import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -27,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +39,13 @@ import java.util.stream.Collectors;
 
 @Log
 public class WindupDeployment {
+  public static final  String APPLICATION = "application";
+  public static final  String APP = "app";
+  public static final  String CREATEDBY = "created-by";
+  public static final  String MTAOPERATOR = "mta-operator";
+
+  public static final String MTA_OPERATOR = "mta-operator";
+  public static final String CREATED_BY = "created-by";
 
   MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
@@ -199,9 +210,9 @@ public class WindupDeployment {
 
 private Map<String, String> getLabels() {
     return Map.of(
-        "application", application_name,
-        "app", application_name,
-        "created-by", "mta-operator");
+        APPLICATION, application_name,
+        APP, application_name,
+        CREATEDBY, MTAOPERATOR);
   }
 
   // Checking the cluster domain on Openshift
@@ -222,6 +233,7 @@ private Map<String, String> getLabels() {
   }
 
   private List<Ingress> createIngresses() {
+    List<Ingress> ingresses = new ArrayList<>();
     String hostnameHttp = windupResource.getSpec().getHostname_http();
 
     // if the user doesn't provide hostname we'll try to discover it on Openshift
@@ -231,11 +243,11 @@ private Map<String, String> getLabels() {
       log.info("Cluster Domain : " + hostnameHttp);
     }
 
-    Ingress ingressWebConsoleHttps = createWebConsoleHttpsIngress(hostnameHttp);
+    log.info("Adding the 2 Ingresses ");
+    ingresses.add(createWebConsoleHttpsIngress(hostnameHttp));
+    ingresses.add(createWebConsoleHttpIngress(hostnameHttp));
 
-    Ingress ingressWebConsole = createWebConsoleHttpIngress(hostnameHttp);
-
-    return List.of(ingressWebConsoleHttps, ingressWebConsole);
+    return ingresses;
   }
 
   private Ingress createWebConsoleHttpIngress(String hostnameHttp) {
@@ -271,7 +283,15 @@ private Map<String, String> getLabels() {
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
     ingress.getMetadata().setName(ingressName);
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
-    ingress.getSpec().setTls(Collections.singletonList(new IngressTLSBuilder().withHosts(hostHTTPS).build()));
+
+    IngressTLS ingressTLS = new IngressTLSBuilder().build();
+    // Only set the host and the secret if we receive a secret
+    // Otherwise an empty array for tls will allow OCP 4.6 to create a TLS Route with default cert
+    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
+      ingressTLS.setHosts(List.of(hostHTTPS));
+      ingressTLS.setSecretName(windupResource.getSpec().getTls_secret());
+    }
+    ingress.getSpec().setTls(Collections.singletonList(ingressTLS));
     ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
 
     return ingress;
