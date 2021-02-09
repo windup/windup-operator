@@ -86,7 +86,8 @@ metadata:
            "web_readiness_probe": "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh",
            "web_liveness_probe": "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh",
            "executor_readiness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh",
-           "executor_liveness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+           "executor_liveness_probe": "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh",
+           "tls_secret": ""
          }
        }
       ]

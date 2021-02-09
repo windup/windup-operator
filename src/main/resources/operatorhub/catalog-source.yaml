@@ -3,6 +3,8 @@ kind: CatalogSource
 metadata:
   name: test-catalog
   namespace: openshift-marketplace
+  labels:
+    application: windup
 spec:
   sourceType: grpc
-  image: quay.io/windupeng/mta-operator-test-catalog:0.0.62
+  image: quay.io/{user}/mta-operator-test-catalog:{version}
