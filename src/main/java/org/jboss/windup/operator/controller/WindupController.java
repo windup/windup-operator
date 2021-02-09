@@ -54,7 +54,7 @@ public class WindupController implements Watcher<WindupResource> {
 		// Consolidate status of the CR
 		// retrieving number of Pods ready in the namespace and created by the operator
 		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel(WindupDeployment.CREATED_BY, WindupDeployment.MTA_OPERATOR).list()
-				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null).map(e.getStatus().getReadyReplicas()).sum();
+				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null).mapToInt(e -> e.getStatus().getReadyReplicas()).sum();
 
 		boolean shouldbeReady = operandsReady == newResource.desiredDeployments();
 
