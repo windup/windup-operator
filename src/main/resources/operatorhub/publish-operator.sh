@@ -2,6 +2,12 @@
 
 # This script will ease the process to publish the operator on operatorhub
 #
+# Usage :
+#   $ ./publish-operator.sh 0.0.2
+#
+#   This will copy files in windup-operator/src/main/operatorhub/mta-operator/0.0.2 into the community-operators project and create a PR
+#
+#
 # Prerequisites :
 #   * install github cli : https://github.com/cli/cli
 #   * fork project github.com/operator-framework/community-operators
@@ -21,32 +27,26 @@
 #   6. push changes to the remote forked repo
 #   7. create a PR against operator-framework/community-operators:master 
 
-while getopts u:v:m: flag
-do
-    case "${flag}" in
-        u) githubuser=${OPTARG};;
-        v) newversion=${OPTARG};;
-    esac
-done
+newversion=$1
 
 # clone community-operators user fork
 rm -rf community-operators
-git clone git@github.com:$githubuser/community-operators.git
+git clone git@github.com:windup/community-operators.git
 git remote add upstream git@github.com:operator-framework/community-operators.git
 
 # create branch in it
 cd community-operators
-git branch -b "mta-operator-$mtaoperatorversion" master
+git checkout -b "mta-operator-$newversion" master
 
 # copy files from windup-operator, for the specific version
-cp ../mta-operator/$newversion  ./community-operators/mta-operator/$newversion
+cp ../mta-operator/$newversion  ./community-operators/mta-operator/$newversion -r
 
 # commit
 git add --all ./community-operators/mta-operator 
-git commit -a -s -m "Upgrade MTA Operator to $mtaoperatorversion in community-operators"
+git commit -a -s -m "Upgrade MTA Operator to $newversion in community-operators"
 
 # push
-git push --set-upstream origin "mta-operator-$mtaoperatorversion"
+git push --set-upstream origin "mta-operator-$newversion"
 
 # create pull request
-#gh pr create --title "Upgrade MTA Operator to $mtaoperatorversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
+gh pr create --title "Upgrade MTA Operator to $newversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
