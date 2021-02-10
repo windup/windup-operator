@@ -96,7 +96,7 @@ metadata:
     certified: "false"
     containerImage: quay.io/windupeng/windup-operator-native:0.0.2
     imagePullPolicy: Always
-    createdAt: 2020-12-04
+    createdAt: 2021-01-11
     repository: https://github.com/windup/windup-operator/
     support: https://issues.redhat.com/projects/WINDUP
     description: MTA is an analysis tool that supports the modernization and migration of Java applications.
@@ -173,7 +173,6 @@ spec:
                 - pods
                 - persistentvolumeclaims
                 - services
-                - secrets
               verbs:
                 - create
                 - delete

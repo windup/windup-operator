@@ -2,11 +2,10 @@ apiVersion: windup.jboss.org/v1
 kind: Windup
 metadata:
   namespace: mta
-  name: windups
+  name: winduptest
   labels:
     application: windup
 spec:
-  application_name: windup-jon
   webLivenessInitialDelaySeconds: "240"
   webReadinessInitialDelaySeconds: "240"
   webLivenessTimeoutSeconds: "100"
