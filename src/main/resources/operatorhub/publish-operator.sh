@@ -1,10 +1,17 @@
 #!/bin/sh -x
 
 # This script will ease the process to publish the operator on operatorhub
+#
 # Prerequisites :
 #   * install github cli : https://github.com/cli/cli
 #   * fork project github.com/operator-framework/community-operators
-# 
+#   * have the credentials configured in your /home/~/.gitconfig file
+#       [user]
+#	    name = {your name}
+#	    email = {your email}
+#	    signingkey = [ value retrieved following this https://docs.github.com/en/github/authenticating-to-github/telling-git-about-your-signing-key ]
+#
+#
 # Steps :
 #   1. clone the forked project of : operator-framework/community-operators
 #   2. create a branch for this new version
@@ -42,4 +49,4 @@ git commit -a -s -m "Upgrade MTA Operator to $mtaoperatorversion in community-op
 git push --set-upstream origin "mta-operator-$mtaoperatorversion"
 
 # create pull request
-gh pr create --title "Upgrade MTA Operator to $mtaoperatorversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
+#gh pr create --title "Upgrade MTA Operator to $mtaoperatorversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
