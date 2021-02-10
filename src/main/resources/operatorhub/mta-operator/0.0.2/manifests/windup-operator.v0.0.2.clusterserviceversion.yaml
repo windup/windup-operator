@@ -92,7 +92,7 @@ metadata:
        }
       ]
     capabilities: Basic Install
-    categories: OpenShift Optional
+    categories: Modernization & Migration
     certified: "false"
     containerImage: quay.io/windupeng/windup-operator-native:0.0.2
     imagePullPolicy: Always
