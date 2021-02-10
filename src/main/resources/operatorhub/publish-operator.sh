@@ -22,7 +22,7 @@ cp ../mta-operator/$newversion  ./community-operators/mta-operator/$newversion
 
 # commit
 git add --all ./community-operators/mta-operator 
-git commit -am "Upgrade MTA Operator to $mtaoperatorversion in community-operators" -S
+git commit -a -S -m "Upgrade MTA Operator to $mtaoperatorversion in community-operators"
 
 # push
 git push --set-upstream origin "mta-operator-$mtaoperatorversion"
