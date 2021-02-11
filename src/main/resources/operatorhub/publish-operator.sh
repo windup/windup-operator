@@ -50,3 +50,7 @@ git push --set-upstream origin "mta-operator-$newversion"
 
 # create pull request
 gh pr create --title "Upgrade MTA Operator to $newversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
+
+# clean
+cd ..
+rm -rf community-operators
