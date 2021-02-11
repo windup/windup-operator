@@ -1,0 +1,85 @@
+pipeline {
+    agent { 
+        label 'fedora-slave-release' 
+    }
+    stages {
+
+        stage('Checkout') {
+            steps {
+                sh "rm -rf windup-operator"
+                echo "Params : $CHECKOUT_NAME || $CHECKOUT_PATH_WINDUP"
+                checkout(
+                    [$class: 'GitSCM', 
+                    branches: [[name: "$CHECKOUT_PATH_WINDUP"]],
+                    userRemoteConfigs: [[url: 'https://github.com/windup/windup-operator.git']],
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'windup-operator']], 
+                    ]
+                )
+                dir("${env.WORKSPACE}/windup-operator") {
+                    sh " git checkout $CHECKOUT_NAME"
+                    sh " git log -n 2"
+                }
+            }
+        }
+        stage('Install JVM 11') {
+            steps {
+            sh "curl -L https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/download/jdk-11.0.10%2B9/OpenJDK11U-jdk_x64_linux_11.0.10_9.tar.gz --output openjdk11.0.10.tar.gz"
+            sh "tar -xf openjdk11.0.10.tar.gz"            }
+        }
+        stage("Load Groovy downloader") {
+            steps {
+                sh " groovy ${env.WORKSPACE}/.jenkins/GoogleDriveFileDownloader.groovy ${FILE_HASH}"
+                sh " if gpg --list-keys 66466D8F; then echo 'Private Signing Key Found'; else gpg --import RHAMT-private-key.asc; fi"
+                sh " gpg --list-keys"
+            }
+        }
+        stage('Release Prepare') {
+            environment {
+                JAVA_HOME="./openjdk-11.0.10_9"
+            }
+            steps {
+                dir("${env.WORKSPACE}/windup-operator") {
+                    configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+                        sh "./mvnw -s $MAVEN_SETTINGS " +
+                            " release:prepare -Dresume=false -DpreparationGoals='clean install -DskipTests -Dquarkus.container-image.build=false -Dquarkus.native.container-runtime=' " +
+                            " -DdevelopmentVersion=${NEXT_DEVELOPMENT_VERSION} -DreleaseVersion=${RELEASE_VERSION} " +
+                            " -Dtag=${RELEASE_VERSION} -Dmvn.test.skip=true "
+                    }
+                }
+            }
+        }
+        stage('Release Perform and Build Image') {
+            environment {
+                JAVA_HOME="./openjdk-11.0.10_9"
+                GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
+            }
+            steps {
+                dir("${env.WORKSPACE}/windup-operator") {
+                    configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+                        sh "./mvnw -s $MAVEN_SETTINGS " +
+                            " release:perform -P jboss-release,gpg-sign,native -Dgoals='deploy -DskipTests -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=false " +
+                                    " -Dquarkus.container-image.tag=${RELEASE_VERSION} " +
+                                    " -Dgpg.passphrase=${GPG_PASSPHRASE} -Dquarkus.native.container-runtime=docker' " 
+                    }
+                }
+            }
+        }
+        stage('Check Java 8') {
+            steps {
+                sh "java -version"
+            }
+        }
+        stage('Image push') {
+            environment {
+                CREDENTIALS = credentials("38d0aca2-e50e-44ac-ad34-46301e43784c")
+            }
+            steps {
+                echo "debug"
+                sh "docker login -u $CREDENTIALS_USR -p $CREDENTIALS_PSW quay.io"
+                sh "docker push quay.io/windupeng/windup-operator-native:$RELEASE_VERSION"
+            }
+        }
+    }
+}
