@@ -5,7 +5,7 @@
 # Usage :
 #   $ ./publish-operator.sh 0.0.2
 #
-#   This will copy files in windup-operator/src/main/operatorhub/mta-operator/0.0.2 into the community-operators project and create a PR
+#   This will copy files in windup-operator/src/main/operatorhub/mta-operator/0.0.2 into the community-operators project and create a PR opening the github web page
 #
 #
 # Prerequisites :
@@ -25,7 +25,7 @@
 #   4. add all files to git stage
 #   5. commit the changes , signing
 #   6. push changes to the remote forked repo
-#   7. create a PR against operator-framework/community-operators:master 
+#   7. create a PR against operator-framework/community-operators:master opening the web browser to confirm
 
 newversion=$1
 
@@ -48,8 +48,8 @@ git commit -a -s -m "Upgrade MTA Operator to $newversion in community-operators"
 # push
 git push --set-upstream origin "mta-operator-$newversion"
 
-# create pull request
-gh pr create --title "Upgrade MTA Operator to $newversion in community-operators" --base master --body "$(cat publish-pr-body.md)"
+# create pull request with all info, opening web browser to confirm
+gh pr create -w --title "Upgrade MTA Operator to $newversion in community-operators" --base master --body "$(cat ../publish-pr-body.md)"
 
 # clean
 cd ..
