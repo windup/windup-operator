@@ -16,7 +16,7 @@ fi
 
 set -x
 
-while getopts u:p:v:m:b: flag
+while getopts u:p:m:b: flag
 do
     case "${flag}" in
         u) quayuser=${OPTARG};;
