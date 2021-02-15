@@ -2,7 +2,6 @@ package org.jboss.windup.operator;
 
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinitionVersion;
-import io.fabric8.kubernetes.api.model.apiextensions.v1.DoneableCustomResourceDefinition;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -12,7 +11,6 @@ import io.fabric8.kubernetes.internal.KubernetesDeserializer;
 import io.quarkus.arc.profile.IfBuildProfile;
 import lombok.extern.java.Log;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 
 import javax.enterprise.inject.Produces;
@@ -40,12 +38,12 @@ public class KubernetesClientProducer {
 
     @Produces
     @Singleton
-    MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>>
+    MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>>
     makeWindupCustomResource(NamespacedKubernetesClient defaultClient, CustomResourceDefinitionContext crdContext, @Named("namespace") String namespace) {
         log.info("Registering custom kind");
         KubernetesDeserializer.registerCustomKind("windup.jboss.org/v1", "Windup", WindupResource.class);
 
-        return defaultClient.inNamespace(namespace).customResources(crdContext, WindupResource.class, WindupResourceList.class, WindupResourceDoneable.class);
+        return defaultClient.inNamespace(namespace).customResources(crdContext, WindupResource.class, WindupResourceList.class);
     }
 
     @Produces
@@ -57,7 +55,7 @@ public class KubernetesClientProducer {
         log.info("Loading windup.crd.yaml");
         log.info("client : " + defaultClient);
         log.info("crds : " + defaultClient.customResourceDefinitions());
-        Resource<CustomResourceDefinition, DoneableCustomResourceDefinition> resource = defaultClient.inNamespace(namespace).apiextensions().v1().customResourceDefinitions().load(fileStream);
+        Resource<CustomResourceDefinition> resource = defaultClient.inNamespace(namespace).apiextensions().v1().customResourceDefinitions().load(fileStream);
         log.info("resource : " + resource);
         CustomResourceDefinition windupCRD = resource.get();
         log.info("Loaded windup.crd.yaml");

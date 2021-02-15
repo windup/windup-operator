@@ -1,14 +1,14 @@
 package org.jboss.windup.operator.controller;
 
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.model.WindupResource;
-import org.jboss.windup.operator.model.WindupResourceDoneable;
 import org.jboss.windup.operator.model.WindupResourceList;
 import org.jboss.windup.operator.util.WindupDeployment;
 import javax.enterprise.context.ApplicationScoped;
@@ -19,7 +19,7 @@ import javax.inject.Named;
 @ApplicationScoped
 public class WindupController implements Watcher<WindupResource> {
 	@Inject
-	MixedOperation<WindupResource, WindupResourceList, WindupResourceDoneable, Resource<WindupResource, WindupResourceDoneable>> crClient;
+	MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
 
 	@Named("namespace")
 	String namespace;
@@ -42,14 +42,21 @@ public class WindupController implements Watcher<WindupResource> {
 
 	private void onUpdate(WindupResource newResource) {
 		log.info("Event UPDATE " + newResource.getMetadata().getName() + " - DeploymentsReady "
-				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() 
-				+ " Status " + newResource.getStatus().getConditions());
+				+ newResource.deploymentsReady() + " isReady " + newResource.isReady() + " Status "
+				+ newResource.getStatus().getConditions());
 
-		// retrieving number of Deployments ready in the namespace and created by the operator
+		consolidateExecutorDeployment(newResource);
+
+		updateCRStatus(newResource);
+	}
+
+	private void updateCRStatus(WindupResource newResource) {
+		// Consolidate status of the CR
+		// retrieving number of Pods ready in the namespace and created by the operator
 		long operandsReady = k8sClient.apps().deployments().inNamespace(namespace).withLabel(WindupDeployment.CREATED_BY, WindupDeployment.MTA_OPERATOR).list()
-				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null && e.getStatus().getReadyReplicas() == 1).count();
+				.getItems().stream().filter(e -> e.getStatus() != null && e.getStatus().getReadyReplicas() != null).mapToInt(e -> e.getStatus().getReadyReplicas()).sum();
 
-		boolean shouldbeReady = operandsReady == 3;
+		boolean shouldbeReady = operandsReady == newResource.desiredDeployments();
 
 		// if the readyness status changes we updates the CR
 		if (newResource.isReady() != shouldbeReady) {
@@ -57,6 +64,17 @@ public class WindupController implements Watcher<WindupResource> {
 			log.info("Setting this CustomResource as Ready : " + shouldbeReady);
 			if (shouldbeReady) newResource.setStatusDeploy(false);
 			crClient.inNamespace(namespace).updateStatus(newResource);
+		}
+	}
+
+	private void consolidateExecutorDeployment(WindupResource newResource) {
+		// Consolidating replicas on the executor
+		Deployment deploymentExecutor = k8sClient.apps().deployments().inNamespace(namespace)
+				.withName(newResource.getMetadata().getName() + "-executor").get();
+		if (newResource.getSpec().getExecutor_desired_replicas() != deploymentExecutor.getSpec().getReplicas()) {
+			deploymentExecutor.getSpec().setReplicas(newResource.getSpec().getExecutor_desired_replicas());
+			k8sClient.apps().deployments().inNamespace(namespace)
+					.withName(newResource.getMetadata().getName() + "-executor").patch(deploymentExecutor);
 		}
 	}
 
@@ -77,7 +95,7 @@ public class WindupController implements Watcher<WindupResource> {
 	}
 
 	@Override
-	public void onClose(KubernetesClientException cause) {
+	public void onClose(WatcherException cause) {
 		log.info("on close");
 		if (cause != null) {
 			cause.printStackTrace();
