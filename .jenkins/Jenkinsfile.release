@@ -38,7 +38,7 @@ pipeline {
         }
         stage('Release Prepare') {
             environment {
-                JAVA_HOME="./openjdk-11.0.10_9"
+                JAVA_HOME="${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9"
             }
             steps {
                 dir("${env.WORKSPACE}/windup-operator") {
@@ -54,7 +54,7 @@ pipeline {
         }
         stage('Release Perform and Build Image') {
             environment {
-                JAVA_HOME="./openjdk-11.0.10_9"
+                JAVA_HOME="${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9"
                 GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
             }
             steps {
