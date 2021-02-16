@@ -23,15 +23,14 @@ pipeline {
         }
         stage('Install JVM 11') {
             steps {
-            sh "set"
             sh "java -version"
             sh "umask"
+            sh "pwd"
             sh "curl -L https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/download/jdk-11.0.10%2B9/OpenJDK11U-jdk_x64_linux_11.0.10_9.tar.gz --output openjdk11.0.10.tar.gz"
-            sh "tar -xf openjdk11.0.10.tar.gz"
-            sh "ls -la ${env.WORKSPACE}/windup-operator/*"
-            sh "chmod ugo+r -R ${env.WORKSPACE}/windup-operator/openjdk*"
-            sh "chmod ugo+x -R ${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9/bin/*"
-            sh "ls -la ${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9/bin/*"
+            sh "tar -xf ./openjdk11.0.10.tar.gz"
+            sh "ls -la *"
+            sh "chmod ugo+rx -R ./openjdk*"
+            sh "ls -la ./openjdk-11.0.10_9/bin/*"
             }
         }
         stage("Load Groovy downloader") {
@@ -43,7 +42,7 @@ pipeline {
         }
         stage('Release Prepare') {
             environment {
-                JAVA_HOME="${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9"
+                JAVA_HOME="${env.WORKSPACE}/openjdk-11.0.10_9"
                 PATH="$JAVA_HOME/bin:$PATH"
             }
             steps {
@@ -65,7 +64,7 @@ pipeline {
         }
         stage('Release Perform and Build Image') {
             environment {
-                JAVA_HOME="${env.WORKSPACE}/windup-operator/openjdk-11.0.10_9"
+                JAVA_HOME="${env.WORKSPACE}/openjdk-11.0.10_9"
                 PATH="$JAVA_HOME/bin:$PATH"
                 GPG_PASSPHRASE = credentials('cb67d365-ece5-4e2b-bccf-bdab7ad2d741')
             }
