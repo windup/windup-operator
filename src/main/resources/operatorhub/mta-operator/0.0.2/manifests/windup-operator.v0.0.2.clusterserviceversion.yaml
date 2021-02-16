@@ -22,7 +22,7 @@ metadata:
            "mta_Volume_Capacity": "20G",
            "docker_images_repository": "quay.io",
            "docker_images_user": "windupeng",
-           "docker_images_tag": "stable",
+           "docker_images_tag": "5.1.2.Final",
            "docker_image_web": "windup-web-openshift",
            "docker_image_executor": "windup-web-openshift-messaging-executor",
            "messaging_serializer": "http.post.serializer",
