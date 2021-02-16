@@ -49,6 +49,8 @@ pipeline {
                 sh "java -version"
 
                 dir("${env.WORKSPACE}/windup-operator") {
+                    sh "./mvnw -version"
+                    sh "mvn -version"
                     configFileProvider([configFile(fileId: '5912562e-68e4-428f-9e45-55e11326552f', targetLocation: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh " ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
                         sh "./mvnw -s $MAVEN_SETTINGS " +
