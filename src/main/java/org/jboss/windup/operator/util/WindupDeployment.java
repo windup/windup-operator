@@ -349,7 +349,7 @@ private Map<String, String> getLabels() {
       .withOwnerReferences(getOwnerReference())
     .endMetadata()
     .withNewSpec()
-      .withReplicas(executor_desired_replicas)
+      .withReplicas(1)
       .withNewSelector()
         .addToMatchLabels("deploymentConfig", application_name)
       .endSelector()
