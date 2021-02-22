@@ -261,7 +261,7 @@ private Map<String, String> getLabels() {
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
-                    .withHost(application_name + hostnameHttp)
+                    .withHost(namespace + "-" + application_name + hostnameHttp)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
@@ -277,7 +277,7 @@ private Map<String, String> getLabels() {
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
     String ingressName = "secure-" + application_name;
-    String hostHTTPS = ingressName + hostnameHttp;
+    String hostHTTPS = namespace + "-" + ingressName + hostnameHttp;
 
     // We will use the same HTTP ingress but we'll add what's needed for HTTPS
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
