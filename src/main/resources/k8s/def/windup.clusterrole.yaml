@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: windup-operator-cluster-role
+  namespace: mta
+  labels:
+    application: windup
+  rules:
+  - apiGroups:
+    - config.openshift.io
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
