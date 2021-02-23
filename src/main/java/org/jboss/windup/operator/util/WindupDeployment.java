@@ -23,6 +23,8 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.openshift.client.OpenShiftClient;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -33,6 +35,7 @@ import org.jboss.windup.operator.model.WindupResourceList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -206,9 +209,9 @@ public class WindupDeployment {
           .withName(windupResource.getMetadata().getName())
           .withNewUid(windupResource.getMetadata().getUid())
         .build();
-}
+  }
 
-private Map<String, String> getLabels() {
+  private Map<String, String> getLabels() {
     return Map.of(
         APPLICATION, application_name,
         APP, application_name,
@@ -216,16 +219,23 @@ private Map<String, String> getLabels() {
   }
 
   // Checking the cluster domain on Openshift
+  @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
     String clusterDomain = "";
     try {
-      ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public").get();
+      CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
+      .withName("Ingress")
+      .withGroup("config.openshift.io")
+      .withVersion("v1")
+      .withPlural("ingresses")
+      .withScope("Cluster")
+      .build();
+      Map<String, Object> clusterObject = k8sClient.customResource(customResourceDefinitionContext).get("cluster");
+      HashMap<String,String> objectSpec = (HashMap<String,String>) clusterObject.get("spec");
+      clusterDomain = objectSpec.get("domain");
 
-      if (configMap != null) {
-        clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
-        clusterDomain = clusterDomain.replace("https://console-openshift-console", "");
-      }
     } catch (KubernetesClientException exception) {
+      exception.printStackTrace();
       log.info("You are probably not on Openshift");
     }
 
@@ -261,7 +271,7 @@ private Map<String, String> getLabels() {
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
-                    .withHost(application_name + hostnameHttp)
+                    .withHost(application_name + "." + hostnameHttp)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
@@ -277,7 +287,7 @@ private Map<String, String> getLabels() {
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
     String ingressName = "secure-" + application_name;
-    String hostHTTPS = ingressName + hostnameHttp;
+    String hostHTTPS = ingressName + "." + hostnameHttp;
 
     // We will use the same HTTP ingress but we'll add what's needed for HTTPS
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
