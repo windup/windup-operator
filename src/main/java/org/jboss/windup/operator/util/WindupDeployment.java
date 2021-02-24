@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Log
@@ -231,12 +232,11 @@ public class WindupDeployment {
       .withScope("Cluster")
       .build();
       Map<String, Object> clusterObject = k8sClient.customResource(customResourceDefinitionContext).get("cluster");
-      HashMap<String,String> objectSpec = (HashMap<String,String>) clusterObject.get("spec");
+      Map<String,String> objectSpec = (Map<String,String>) clusterObject.get("spec");
       clusterDomain = objectSpec.get("domain");
 
     } catch (KubernetesClientException exception) {
-      exception.printStackTrace();
-      log.info("You are probably not on Openshift");
+      log.log(Level.WARNING, "You are probably not on Openshift", exception);
     }
 
     return clusterDomain;
