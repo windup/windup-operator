@@ -11,5 +11,5 @@ subjects:
     namespace: mta
 roleRef:
   kind: ClusterRole
-  name: windup-operator-clusterrole
+  name: windup-operator-cluster-role
   apiGroup: rbac.authorization.k8s.io
