@@ -217,7 +217,7 @@ public class WindupDeployment {
   // Checking the cluster domain on Openshift
   @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
-    String clusterDomain = "dummy.com"; // To set a valid value, although non functional, for K8s
+    String clusterDomain = ""; 
     try {
       CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
       .withName("Ingress")
@@ -245,7 +245,7 @@ public class WindupDeployment {
     // if we are in K8s then cluster domain will be blank
     if (StringUtils.isBlank(hostnameHttp)) {
       hostnameHttp = getClusterDomainOnOpenshift();
-      log.info("Cluster Domain : " + hostnameHttp);
+      log.info("Cluster Domain : [" + hostnameHttp + "]");
     }
 
     log.info("Adding the 2 Ingresses ");
@@ -256,7 +256,7 @@ public class WindupDeployment {
   }
 
   private Ingress createWebConsoleHttpIngress(String hostnameHttp) {
-    return new IngressBuilder()
+    Ingress ingressObject = new IngressBuilder()
                 .withNewMetadata()
                   .withName(application_name)
                   .withLabels(getLabels())
@@ -266,7 +266,6 @@ public class WindupDeployment {
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
-                    .withHost(application_name + "." + hostnameHttp)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
@@ -278,6 +277,10 @@ public class WindupDeployment {
                     .endHttp()
                   .endRule()
                 .endSpec().build();
+    if (StringUtils.isNotBlank(hostnameHttp)) {
+      ingressObject.getSpec().getRules().get(0).setHost(application_name + "." + hostnameHttp);
+    }
+    return ingressObject;
   }
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
@@ -290,14 +293,20 @@ public class WindupDeployment {
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
 
     IngressTLS ingressTLS = new IngressTLSBuilder().build();
+
     // Only set the host and the secret if we receive a secret
     // Otherwise an empty array for tls will allow OCP 4.6 to create a TLS Route with default cert
-    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
-      ingressTLS.setHosts(List.of(hostHTTPS));
+    if (StringUtils.isNotBlank(windupResource.getSpec().getTls_secret())) {
+      if (StringUtils.isNotBlank(hostnameHttp)) {
+        ingressTLS.setHosts(List.of(hostHTTPS));
+      }
       ingressTLS.setSecretName(windupResource.getSpec().getTls_secret());
     }
     ingress.getSpec().setTls(Collections.singletonList(ingressTLS));
-    ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
+
+    if (StringUtils.isNotBlank(hostnameHttp)) {
+      ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
+    }
 
     return ingress;
   }
