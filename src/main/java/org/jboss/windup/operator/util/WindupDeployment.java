@@ -217,7 +217,7 @@ public class WindupDeployment {
   // Checking the cluster domain on Openshift
   @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
-    String clusterDomain = "";
+    String clusterDomain = "dummy.com"; // To set a valid value, although non functional, for K8s
     try {
       CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
       .withName("Ingress")
