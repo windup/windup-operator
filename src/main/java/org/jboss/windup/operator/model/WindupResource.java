@@ -35,19 +35,24 @@ public class WindupResource extends CustomResource<WindupResourceSpec, WindupRes
   private WindupResourceStatus status;
 
   @JsonIgnore
+  public boolean getBooleanFromStatus(String status) {
+    return Boolean.parseBoolean(status != null ? status.toLowerCase() : "false");
+  }
+
+  @JsonIgnore
   public boolean isDeploying() {
-    return Boolean.parseBoolean(getOrAddConditionByType(DEPLOYMENT).getStatus());
+    return getBooleanFromStatus(getOrAddConditionByType(DEPLOYMENT).getStatus()); 
 	}
 
   @JsonIgnore
 	public boolean isReady() {
-    return  Boolean.parseBoolean(getOrAddConditionByType(READY).getStatus());
+    return getBooleanFromStatus(getOrAddConditionByType(READY).getStatus());
   }
 
 	public long deploymentsReady() {
 		return (status.getConditions() != null) ? status.getConditions().stream()
       .filter(e -> e != null &&
-              Boolean.parseBoolean(e.getStatus()) &&
+              getBooleanFromStatus(e.getStatus()) &&
               DEPLOYMENT.equalsIgnoreCase(e.getReason()))
 			.count() : 0;
   }
@@ -56,7 +61,7 @@ public class WindupResource extends CustomResource<WindupResourceSpec, WindupRes
     status = new WindupResourceStatus();
     status.setConditions(new ArrayList<>());
   }
-  
+
   public void setReady(boolean statusArg) {
     setLabelProperty(statusArg, READY);
 	}
@@ -64,14 +69,16 @@ public class WindupResource extends CustomResource<WindupResourceSpec, WindupRes
   public void setStatusDeploy(boolean statusArg) {
     setLabelProperty(statusArg, DEPLOYMENT);
   }
-  
+
   public void setLabelProperty(boolean statusArg, String label) {
     setLabelProperty(statusArg, label, null);
   }
 
   public void setLabelProperty(boolean statusArg, String label, String reason) {
     WindupResourceStatusCondition labelProperty = getOrAddConditionByType(label);
-    labelProperty.setStatus(Boolean.toString(statusArg));
+    // Setting explicitly UpperCamelCase and not directly the conversion because in Openshift UI the status field
+    // does a explicit case-sensitive text comparisson : https://github.com/openshift/console/blob/master/frontend/packages/operator-lifecycle-manager/src/components/operand/index.tsx#L162
+    labelProperty.setStatus(statusArg ? "True" : "False");
     labelProperty.setLastTransitionTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
     if (reason != null) labelProperty.setReason(reason);
   }
