@@ -278,14 +278,14 @@ public class WindupDeployment {
                   .endRule()
                 .endSpec().build();
     if (StringUtils.isNotBlank(hostnameHttp)) {
-      ingressObject.getSpec().getRules().get(0).setHost(application_name + "." + hostnameHttp);
+      ingressObject.getSpec().getRules().get(0).setHost(namespace + "-" + application_name + "." + hostnameHttp);
     }
     return ingressObject;
   }
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
     String ingressName = "secure-" + application_name;
-    String hostHTTPS = ingressName + "." + hostnameHttp;
+    String hostHTTPS = namespace + "-" + ingressName + hostnameHttp;
 
     // We will use the same HTTP ingress but we'll add what's needed for HTTPS
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
