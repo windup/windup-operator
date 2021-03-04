@@ -5,11 +5,11 @@ metadata:
   namespace: mta
   labels:
     application: windup
-  rules:
-  - apiGroups:
-    - config.openshift.io
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
+rules:
+- apiGroups:
+  - config.openshift.io
+  resources:
+    - ingresses
+  verbs:
+    - get
+    - list
