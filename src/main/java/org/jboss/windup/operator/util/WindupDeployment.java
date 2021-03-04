@@ -284,12 +284,11 @@ public class WindupDeployment {
   }
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
-    String ingressName = "secure-" + application_name;
-    String hostHTTPS = namespace + "-" + ingressName + hostnameHttp;
+    String hostHTTPS = "secure-" + namespace + "-" + application_name + "." + hostnameHttp;
 
     // We will use the same HTTP ingress but we'll add what's needed for HTTPS
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
-    ingress.getMetadata().setName(ingressName);
+    ingress.getMetadata().setName("secure-" + application_name);
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
 
     IngressTLS ingressTLS = new IngressTLSBuilder().build();
