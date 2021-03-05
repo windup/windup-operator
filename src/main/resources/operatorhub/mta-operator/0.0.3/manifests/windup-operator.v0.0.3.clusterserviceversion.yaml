@@ -152,6 +152,16 @@ spec:
     name: Red Hat
   install:
     spec:
+      clusterPermissions:
+        - rules:
+            - apiGroups:
+              - config.openshift.io
+              resources:
+                - ingresses
+              verbs:
+                - get
+                - list
+          serviceAccountName: windup-operator
       permissions:
         - rules:
             - apiGroups:

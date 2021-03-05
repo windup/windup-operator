@@ -1,14 +1,11 @@
 package org.jboss.windup.operator.util;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
@@ -23,6 +20,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -35,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Log
@@ -206,9 +205,9 @@ public class WindupDeployment {
           .withName(windupResource.getMetadata().getName())
           .withNewUid(windupResource.getMetadata().getUid())
         .build();
-}
+  }
 
-private Map<String, String> getLabels() {
+  private Map<String, String> getLabels() {
     return Map.of(
         APPLICATION, application_name,
         APP, application_name,
@@ -216,17 +215,23 @@ private Map<String, String> getLabels() {
   }
 
   // Checking the cluster domain on Openshift
+  @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
-    String clusterDomain = "";
+    String clusterDomain = ""; 
     try {
-      ConfigMap configMap = k8sClient.configMaps().inNamespace("openshift-config-managed").withName("console-public").get();
+      CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
+      .withName("Ingress")
+      .withGroup("config.openshift.io")
+      .withVersion("v1")
+      .withPlural("ingresses")
+      .withScope("Cluster")
+      .build();
+      Map<String, Object> clusterObject = k8sClient.customResource(customResourceDefinitionContext).get("cluster");
+      Map<String,String> objectSpec = (Map<String,String>) clusterObject.get("spec");
+      clusterDomain = objectSpec.get("domain");
 
-      if (configMap != null) {
-        clusterDomain = configMap.getData().getOrDefault("consoleURL", "");
-        clusterDomain = clusterDomain.replace("https://console-openshift-console", "");
-      }
     } catch (KubernetesClientException exception) {
-      log.info("You are probably not on Openshift");
+      log.log(Level.WARNING, "You are probably not on Openshift", exception);
     }
 
     return clusterDomain;
@@ -240,7 +245,7 @@ private Map<String, String> getLabels() {
     // if we are in K8s then cluster domain will be blank
     if (StringUtils.isBlank(hostnameHttp)) {
       hostnameHttp = getClusterDomainOnOpenshift();
-      log.info("Cluster Domain : " + hostnameHttp);
+      log.info("Cluster Domain : [" + hostnameHttp + "]");
     }
 
     log.info("Adding the 2 Ingresses ");
@@ -251,7 +256,7 @@ private Map<String, String> getLabels() {
   }
 
   private Ingress createWebConsoleHttpIngress(String hostnameHttp) {
-    return new IngressBuilder()
+    Ingress ingressObject = new IngressBuilder()
                 .withNewMetadata()
                   .withName(application_name)
                   .withLabels(getLabels())
@@ -261,7 +266,6 @@ private Map<String, String> getLabels() {
                 .endMetadata()
                 .withNewSpec()
                   .addNewRule()
-                    .withHost(namespace + "-" + application_name + hostnameHttp)
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
@@ -273,26 +277,35 @@ private Map<String, String> getLabels() {
                     .endHttp()
                   .endRule()
                 .endSpec().build();
+    if (StringUtils.isNotBlank(hostnameHttp)) {
+      ingressObject.getSpec().getRules().get(0).setHost(namespace + "-" + application_name + "." + hostnameHttp);
+    }
+    return ingressObject;
   }
 
   private Ingress createWebConsoleHttpsIngress(String hostnameHttp) {
-    String ingressName = "secure-" + application_name;
-    String hostHTTPS = namespace + "-" + ingressName + hostnameHttp;
+    String hostHTTPS = "secure-" + namespace + "-" + application_name + "." + hostnameHttp;
 
     // We will use the same HTTP ingress but we'll add what's needed for HTTPS
     Ingress ingress = createWebConsoleHttpIngress(hostnameHttp);
-    ingress.getMetadata().setName(ingressName);
+    ingress.getMetadata().setName("secure-" + application_name);
     ingress.getMetadata().getAnnotations().remove("console.alpha.openshift.io/overview-app-route");
 
     IngressTLS ingressTLS = new IngressTLSBuilder().build();
+
     // Only set the host and the secret if we receive a secret
     // Otherwise an empty array for tls will allow OCP 4.6 to create a TLS Route with default cert
-    if (!StringUtils.isBlank(windupResource.getSpec().getTls_secret())) {
-      ingressTLS.setHosts(List.of(hostHTTPS));
+    if (StringUtils.isNotBlank(windupResource.getSpec().getTls_secret())) {
+      if (StringUtils.isNotBlank(hostnameHttp)) {
+        ingressTLS.setHosts(List.of(hostHTTPS));
+      }
       ingressTLS.setSecretName(windupResource.getSpec().getTls_secret());
     }
     ingress.getSpec().setTls(Collections.singletonList(ingressTLS));
-    ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
+
+    if (StringUtils.isNotBlank(hostnameHttp)) {
+      ingress.getSpec().getRules().get(0).setHost(hostHTTPS);
+    }
 
     return ingress;
   }
