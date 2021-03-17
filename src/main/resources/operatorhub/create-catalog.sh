@@ -59,15 +59,8 @@ sed -i "s/quay.io\/$quayuser/quay.io\/windupeng/g" "mta-operator/$mtaoperatorver
 --tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman \
 --from-index quay.io/openshift-community-operators/catalog:latest
 else
-# Using an already published version means we are not going to include the community-operators catalog as that one already has this version
-# Create operator test bundle image with the windupeng 0.0.1 operator image
-podman build -f mta-operator/$mtaoperatorversion/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/$mtaoperatorversion/
-podman tag mta-operator-bundle:$bundleversion quay.io/$quayuser/mta-operator-bundle:$bundleversion
-
-podman push quay.io/$quayuser/mta-operator-bundle:$bundleversion
-
-../../../../../operator-registry/bin/opm index add --bundles quay.io/$quayuser/mta-operator-bundle:$bundleversion \
---tag quay.io/$quayuser/mta-operator-test-catalog:$bundleversion --container-tool podman
+# Using an already published version means we are not going recreate anything, just push the existing community-operators catalog as the test catalog
+podman tag quay.io/openshift-community-operators/catalog:latest quay.io/$quayuser/mta-operator-test-catalog:$bundleversion
 
 fi
 
