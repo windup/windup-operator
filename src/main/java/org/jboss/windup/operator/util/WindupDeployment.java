@@ -12,10 +12,10 @@ import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-import io.fabric8.kubernetes.api.model.networking.v1beta1.Ingress;
-import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressBuilder;
-import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLS;
-import io.fabric8.kubernetes.api.model.networking.v1beta1.IngressTLSBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLS;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -125,7 +125,7 @@ public class WindupDeployment {
 
     createServices().stream().forEach(e -> k8sClient.services().inNamespace(namespace).createOrReplace(e));
 
-    createIngresses().stream().forEach(e -> k8sClient.network().ingress().inNamespace(namespace).createOrReplace(e));
+    createIngresses().stream().forEach(e -> k8sClient.network().v1().ingresses().inNamespace(namespace).createOrReplace(e));
   }
 
   private void initCRStatusOnDeployment() {
@@ -269,9 +269,14 @@ public class WindupDeployment {
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
+                        .withPathType("Prefix")
                           .withNewBackend()
-                            .withServiceName(application_name)
-                            .withServicePort(new IntOrString(8080))
+                            .withNewService()
+                              .withNewName(application_name)
+                              .withNewPort()
+                                .withNumber(8080)
+                              .endPort()
+                            .endService()
                           .endBackend()
                         .endPath()
                     .endHttp()

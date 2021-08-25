@@ -6,6 +6,10 @@ jobs:
    minikube:
     name: K8S
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        kubernetes_version: [v1.19.14, v1.20.10, v1.21.4, v1.22.1]
+      fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.4
@@ -13,8 +17,8 @@ jobs:
       - name: Setup Minikube-Kubernetes
         uses: manusa/actions-setup-minikube@v2.4.2
         with:
-          minikube version: v1.13.1
-          kubernetes version: 'v1.19.2'
+          minikube version: v1.22.0
+          kubernetes version: ${{ matrix.kubernetes_version }}
           github token: ${{ secrets.GITHUB_TOKEN }}
           start args: ' --force'
 
@@ -54,7 +58,7 @@ jobs:
           time: '10s'
 
       - name: Operator Logs
-        run: kubectl logs --tail=100 -l app=windup-operator -n mta 
+        run: kubectl logs --tail=-1 -l app=windup-operator -n mta
 
       - name: Sleep for 30 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
