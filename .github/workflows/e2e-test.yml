@@ -58,7 +58,7 @@ jobs:
           time: '10s'
 
       - name: Operator Logs
-        run: kubectl logs --tail=100 -l app=windup-operator -n mta 
+        run: kubectl logs --tail=-1 -l app=windup-operator -n mta
 
       - name: Sleep for 30 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
