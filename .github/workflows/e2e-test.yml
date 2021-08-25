@@ -70,7 +70,7 @@ jobs:
         shell: bash
 
       - name: Operator Test
-        uses: therussiankid92/gat@v1.3
+        uses: therussiankid92/gat@v1.5
         with:
           assertion: should.equal
           expected: 19
@@ -93,7 +93,7 @@ jobs:
         shell: bash
 
       - name: Check executor pods are the expected
-        uses: therussiankid92/gat@v1.3
+        uses: therussiankid92/gat@v1.5
         with:
           assertion: should.equal
           expected: 3
