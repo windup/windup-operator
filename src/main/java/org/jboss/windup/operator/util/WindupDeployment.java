@@ -269,6 +269,7 @@ public class WindupDeployment {
                     .withNewHttp()
                       .addNewPath()
                         .withPath("/")
+                        .withPathType("Prefix")
                           .withNewBackend()
                             .withNewService()
                               .withNewName(application_name)
