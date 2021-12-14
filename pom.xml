@@ -11,7 +11,7 @@
 
   <groupId>org.jboss.windup</groupId>
   <artifactId>windup-operator</artifactId>
-  <version>0.0.9-SNAPSHOT</version>
+  <version>0.0.8-SNAPSHOT</version>
  
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
