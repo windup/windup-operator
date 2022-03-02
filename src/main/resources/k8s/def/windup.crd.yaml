@@ -157,6 +157,9 @@ spec:
                 max_post_size:
                   type: string
                   default: "4294967296"
+                sso_force_legacy_security:
+                  type: string
+                  default: "false"
                 db_database:
                   type: string
                   default: "mta"
@@ -254,6 +257,7 @@ spec:
                   - docker_images_user
                   - docker_images_tag
                   - max_post_size
+                  - sso_force_legacy_security
                   - executor_desired_replicas
             status:
               type: object
