@@ -477,6 +477,7 @@ public class WindupDeployment {
             .addNewEnv().withName("SSO_TRUSTSTORE_PASSWORD").withValue(windupResource.getSpec().getSso_truststore_password()).endEnv()
             .addNewEnv().withName("GC_MAX_METASPACE_SIZE").withValue(windupResource.getSpec().getGc_max_metaspace_size()).endEnv()
             .addNewEnv().withName("MAX_POST_SIZE").withValue(windupResource.getSpec().getMax_post_size()).endEnv()
+            .addNewEnv().withName("SSO_FORCE_LEGACY_SECURITY").withValue(windupResource.getSpec().getSso_force_legacy_security()).endEnv()
           .endContainer()
           .addNewVolume()
             .withName(volume_mtaweb)

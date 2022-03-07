@@ -27,6 +27,7 @@ spec:
   sso_url: /auth
   sso_realm: mta
   max_post_size: "4294967296"
+  sso_force_legacy_security: "false"
   db_password: pas345678
   db_username: userXYZ
   postgresql_cpu_request: "0.5"
