@@ -224,7 +224,7 @@ spec:
                   default: "4Gi"
                 postgresql_image:
                   type: string
-                  default: "centos/postgresql-96-centos7:latest"
+                  default: "registry.redhat.io/rhel8/postgresql-10:1"
                 web_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
