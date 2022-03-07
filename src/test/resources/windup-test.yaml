@@ -36,7 +36,7 @@ spec:
   postgresql_mem_limit: "2Gi"
   docker_images_user: ""
   docker_images_tag: latest
-  docker_images_repository: docker.io
+  docker_images_repository: quay.io
   docker_image_web: httpd
   docker_image_executor: httpd
   postgresql_image: httpd
