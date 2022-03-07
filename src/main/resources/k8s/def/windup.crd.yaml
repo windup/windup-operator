@@ -44,7 +44,7 @@ spec:
                   default: "windupeng"
                 docker_images_tag:
                   type: string
-                  default: "5.1.2.Final"
+                  default: "latest"
                 docker_image_web:
                   type: string
                   default: "windup-web-openshift"
