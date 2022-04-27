@@ -11,7 +11,7 @@
 
   <groupId>org.jboss.windup</groupId>
   <artifactId>windup-operator</artifactId>
-  <version>0.0.10-SNAPSHOT</version>
+  <version>0.0.10</version>
  
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
@@ -32,7 +32,7 @@
   </properties>
 
   <scm>
-      <tag>master</tag>
+      <tag>0.0.10</tag>
       <connection>${windup.scm.connection}</connection>
       <developerConnection>${windup.developer.connection}</developerConnection>
       <url>${windup.scm.url}</url>
