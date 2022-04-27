@@ -46,7 +46,7 @@ fi
 # Build operator catalog
 # if version on argument is the latest version , not published yet, it will create the catalog from the community one to include past published versions
 # it will also mean the container image for the operator will be the one on the $user quay account
-if [ "0.0.9" == "$mtaoperatorversion" ]; then
+if [ "0.0.10" == "$mtaoperatorversion" ]; then
 # Create operator bundle image using user quay image for operator
 sed -i "s/quay.io\/windupeng/quay.io\/$quayuser/g" "mta-operator/$mtaoperatorversion/manifests/windup-operator.v$mtaoperatorversion.clusterserviceversion.yaml"
 podman build -f mta-operator/$mtaoperatorversion/Dockerfile -t mta-operator-bundle:$bundleversion mta-operator/$mtaoperatorversion/
