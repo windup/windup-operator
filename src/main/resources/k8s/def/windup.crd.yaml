@@ -160,7 +160,7 @@ spec:
                 sso_force_legacy_security:
                   type: string
                   default: "false"
-                java_opts_append:
+                java_opts:
                   type: string
                   default: "-Dcom.redhat.fips=false"
                 db_database:
@@ -261,7 +261,7 @@ spec:
                   - docker_images_tag
                   - max_post_size
                   - sso_force_legacy_security
-                  - java_opts_append
+                  - java_opts
                   - executor_desired_replicas
             status:
               type: object

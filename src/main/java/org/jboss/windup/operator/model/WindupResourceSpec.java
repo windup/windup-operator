@@ -60,7 +60,7 @@ public class WindupResourceSpec implements KubernetesResource {
     private String gc_max_metaspace_size;
     private String max_post_size;
     private String sso_force_legacy_security;
-    private String java_opts_append;
+    private String java_opts;
     private String db_database;
     private String postgresql_max_connections;
     private String postgresql_shared_buffers;
