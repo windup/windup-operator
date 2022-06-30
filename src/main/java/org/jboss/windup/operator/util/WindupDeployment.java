@@ -25,6 +25,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.windup.operator.controller.Windup;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceList;
 
@@ -78,19 +79,19 @@ public class WindupDeployment {
   private String sso_public_key;
   private String ssoPublicKeyDefault;
   private Integer executor_desired_replicas;
-  private String applicationServerName;
+  private Windup windup;
 
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
                           KubernetesClient k8sClient, String namespace, 
                           String serviceAccount, String ssoPublicKeyDefault,
-                          String applicationServerName) {
+                          Windup windup) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
     this.ssoPublicKeyDefault = ssoPublicKeyDefault;
-    this.applicationServerName = applicationServerName.trim().toLowerCase();
+    this.windup = windup;
     initParams();
   }
 
@@ -397,12 +398,12 @@ public class WindupDeployment {
             .endResources()
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_mtaweb)
-                                .withMountPath(String.format("/opt/%s/standalone/data/windup", applicationServerName))
+                                .withMountPath(String.format("/opt/%s/standalone/data/windup", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_mtaweb_data)
-                                .withMountPath(String.format("/opt/%s/standalone/data", applicationServerName))
+                                .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
             .withNewLifecycle()
@@ -594,7 +595,7 @@ public class WindupDeployment {
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
                   .withName(application_name + "-mta-web-executor-volume")
-                  .withMountPath(String.format("/opt/%s/standalone/data", applicationServerName))
+                  .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
                   .withReadOnly(false).build())
                 .withNewLifecycle()
                   .withNewPreStop()
@@ -644,8 +645,5 @@ public class WindupDeployment {
            containerImage + ":" +
            windupResource.getSpec().getDocker_images_tag();
   }
-
-
-
 
 }

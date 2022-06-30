@@ -30,8 +30,8 @@ public class WindupController implements Watcher<WindupResource> {
 	@ConfigProperty(name = "operator.sso_public_key")
 	String ssoPublicKey;
 
-	@ConfigProperty(name = "operator.application-server-name")
-	String applicationServerName;
+	@Inject
+	Windup windup;
 
 	@Inject
 	KubernetesClient k8sClient;
@@ -39,7 +39,7 @@ public class WindupController implements Watcher<WindupResource> {
 	private void onAdd(WindupResource resource) {
 		log.info("Event ADD " + resource.getMetadata().getName());
 		if (!resource.isDeploying() && !resource.isReady()) {
-			new WindupDeployment(resource, crClient, k8sClient, namespace, serviceAccount, ssoPublicKey, applicationServerName).deploy();
+			new WindupDeployment(resource, crClient, k8sClient, namespace, serviceAccount, ssoPublicKey, windup).deploy();
 		}
 	}
 
