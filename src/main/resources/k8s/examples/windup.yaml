@@ -6,12 +6,45 @@ metadata:
   labels:
     application: windup
 spec:
+  messaging_serializer: http.post.serializer
+  max_post_size: "4294967296"
+  executor_desired_replicas: 1
+  # SSO
+  sso_url: /auth
+  sso_realm: windup
+  sso_force_legacy_security: "false"
+  # Database
+  db_database: windupdb
+  db_password: pas345678
+  db_username: userXYZ
+  # Volumes
+  windup_Volume_Capacity: 5G
+  volumeCapacity: 5G
+  # Readiness and Liveness
   webLivenessInitialDelaySeconds: "240"
   webReadinessInitialDelaySeconds: "240"
   webLivenessTimeoutSeconds: "100"
   webReadinessTimeoutSeconds: "100"
   webReadinessFailureThreshold: "20"
   webLivenessFailureThreshold: "20"
-  windup_Volume_Capacity: 5G
-  db_database: windupdb
-  volumeCapacity: 5G
+  # Resource limits
+  web_cpu_request: "0.5"
+  web_mem_request: 0.5Gi
+  web_cpu_limit: "4"
+  web_mem_limit: 4Gi
+  executor_cpu_request: "0.5"
+  executor_mem_request: 0.5Gi
+  executor_cpu_limit: "4"
+  executor_mem_limit: 4Gi
+  postgresql_cpu_request: "0.5"
+  postgresql_mem_request: "0.5Gi"
+  postgresql_cpu_limit: "2"
+  postgresql_mem_limit: "2Gi"
+  # Registry
+  docker_images_repository: quay.io
+  docker_images_user: windupeng
+  docker_images_tag: latest
+  # Container images
+  docker_image_web: windup-web-openshift
+  docker_image_executor: windup-web-openshift-messaging-executor
+  postgresql_image: centos/postgresql-96-centos7:latest
