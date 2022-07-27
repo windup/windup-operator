@@ -1,15 +1,19 @@
 # windup-operator project
-This project creates an Operator to deploy Windup/MTA on an Openshift cluster ( Kubernetes in future releases)
 
-It consists on a series of yaml files to deploy the operator (CRD, role, rolebinding, serviceaccount) and the native artifact compiled using Quarkus and GraalVM.
+This project creates an Operator to deploy Windup on an Openshift cluster ( Kubernetes in future releases)
 
-At this moment the operator reacts to creation of the Windup Custom Resource and will deploy all needed objects ( deployments, ingress, services, persistent volumes).
+It consists on a series of yaml files to deploy the operator (CRD, role, rolebinding, serviceaccount) and the native
+artifact compiled using Quarkus and GraalVM.
+
+At this moment the operator reacts to creation of the Windup Custom Resource and will deploy all needed objects (
+deployments, ingress, services, persistent volumes).
 
 # Installation using Openshift 4.4+ OperatorHub
+
 1. Using a Cluster Wide permissions user
 2. Go to Openshift Web Console
 3. Administration->Operators->OperatorHub
-4. Filter by keyword "mta"
+4. Filter by keyword "windup"
 5. Click on "Migration Toolkit for Applications"
 6. Install the operator
 7. Select a namespace created previously by you
@@ -25,4 +29,50 @@ At this moment the operator reacts to creation of the Windup Custom Resource and
 
 You can create as many applications as you like inside the same namespace.
 
-For every namespace you need to install the operator in order to be able to install the Migration Toolkit for Applications application.
+For every namespace you need to install the operator in order to be able to install the Migration Toolkit for
+Applications application.
+
+## Deploy the operator into Minikube
+
+### Container image of the operator
+
+Execute:
+
+```shell
+mvn clean package -DskipTests \
+-Dquarkus.container-image.build=true \
+-Dquarkus.container-image.registry=quay.io \
+-Dquarkus.container-image.group=$USER \
+-Dquarkus.container-image.name=windup-operator \
+-Dquarkus.container-image.tag=test
+```
+
+Push container to the quay.io registry:
+
+```shell
+podman push quay.io/$USER/windup-operator:test
+```
+
+### Minikube
+
+Start Minikube:
+
+```shell
+minikube start --driver=podman --memory=12g
+minikube addons enable ingress
+minikube addons enable olm
+```
+
+Create the k8s `namespace`:
+
+```shell
+kubectl create ns mta
+```
+
+### Deploy operator
+
+Point to your custom container image:
+
+```shell
+sed "s\image: quay.io/windupeng/windup-operator-native:latest\image: quay.io/$USER/windup-operator:test\g" operator.yaml
+```

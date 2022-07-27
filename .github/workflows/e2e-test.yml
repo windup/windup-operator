@@ -1,4 +1,4 @@
-name: MTA Operator E2E Tests
+name: Windup Operator E2E Tests
 
 on: [pull_request,push]
 
@@ -59,21 +59,21 @@ jobs:
           time: '10s'
 
       - name: Operator Logs
-        run: kubectl logs --tail=-1 -l app=windup-operator -n mta
+        run: kubectl logs --tail=-1 -l app=windup-operator -n windup
 
       - name: Sleep for 30 seconds to allow objects to be created
         uses: jakejarvis/wait-action@master
         with:
           time: '30s'
 
-      - name: List k8s objects on mta namespace
+      - name: List k8s objects on windup namespace
         id: listobjects
-        run: kubectl get all,ing,pvc -n mta -o name
+        run: kubectl get all,ing,pvc -n windup -o name
         shell: bash
 
-      - name: Get and store number of k8s objects on mta namespace
+      - name: Get and store number of k8s objects on windup namespace
         id: getobjects
-        run: echo "::set-output name=value::$(kubectl get all,ing,pvc -n mta -o name | wc -l)"
+        run: echo "::set-output name=value::$(kubectl get all,ing,pvc -n windup -o name | wc -l)"
         shell: bash
 
       - name: Operator Test
@@ -96,7 +96,7 @@ jobs:
 
       - name: List k8s pods for the executor
         id: executorpods
-        run: echo "::set-output name=value::$(kubectl get pods -n mta -o name | grep executor | wc -l)"
+        run: echo "::set-output name=value::$(kubectl get pods -n windup -o name | grep executor | wc -l)"
         shell: bash
 
       - name: Check executor pods are the expected

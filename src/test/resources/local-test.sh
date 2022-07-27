@@ -20,8 +20,8 @@ kubectl apply -f windup.crd.yaml
 sed "s/windup-operator-native:latest/windup-operator-native:$containertag/g" ../../../../test/resources/windup.deployment.yaml | kubectl apply -f -
 kubectl apply -f ../../../../test/resources/windup-test.yaml
 sleep 20
-kubectl get all,ing,pvc -n mta -o name
-num=`kubectl get all,ing,pvc -n mta -o name | wc -l`
+kubectl get all,ing,pvc -n windup -o name
+num=`kubectl get all,ing,pvc -n windup -o name | wc -l`
 # 4 deployments (including operator), 2 ingresses, 3 services, 2 pvc, 4 pods (including operator), 4 replicaset
 echo "num $num"
 if [ "$num" -gt "19" ];
