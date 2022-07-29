@@ -61,12 +61,13 @@ Start Minikube:
 minikube start --driver=podman --memory=12g
 minikube addons enable ingress
 minikube addons enable olm
+minikube addons enable dashboard
 ```
 
 Create the k8s `namespace`:
 
 ```shell
-kubectl create ns mta
+kubectl create ns windup
 ```
 
 ### Deploy operator
@@ -74,5 +75,25 @@ kubectl create ns mta
 Point to your custom container image:
 
 ```shell
-sed "s\image: quay.io/windupeng/windup-operator-native:latest\image: quay.io/$USER/windup-operator:test\g" operator.yaml
+sed -i "s\image: quay.io/windupeng/windup-operator-native:latest\image: quay.io/$USER/windup-operator:test\g" src/main/resources/k8s/def/windup.deployment.yaml
+```
+
+Create k8s resources:
+
+```shell
+cd src/main/resources/k8s/def/
+./script.create.all.sh
+cd ../../../../../
+```
+
+### Init Windup
+
+```shell
+kubectl apply -f src/main/resources/k8s/examples/windup.yaml
+```
+
+### See your Pods
+
+```shell
+minikube dashboard
 ```
