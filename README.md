@@ -49,7 +49,7 @@ mvn clean package -DskipTests \
 Push container to the quay.io registry:
 
 ```shell
-podman push quay.io/$USER/windup-operator:test
+podman push quay.io/$USER/windup-operator-native:test
 ```
 
 ### Minikube
@@ -73,7 +73,7 @@ kubectl create ns windup
 Point to your custom container image:
 
 ```shell
-sed -i "s\image: quay.io/windupeng/windup-operator-native:latest\image: quay.io/$USER/windup-operator:test\g" src/main/resources/k8s/def/windup.deployment.yaml
+sed -i "s\image: quay.io/windupeng/windup-operator-native:latest\image: quay.io/$USER/windup-operator-native:test\g" src/main/resources/k8s/def/windup.deployment.yaml
 ```
 
 Create k8s resources:
