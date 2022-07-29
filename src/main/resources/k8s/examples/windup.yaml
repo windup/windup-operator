@@ -10,8 +10,10 @@ spec:
   max_post_size: "4294967296"
   executor_desired_replicas: 1
   # SSO
-  sso_url: /auth
-  sso_realm: windup
+#  sso_server_url: http://localhost:8180/auth
+#  sso_realm: windup
+#  sso_client_id: windup-web
+#  sso_ssl_required: EXTERNAL
   sso_force_legacy_security: "false"
   # Database
   db_database: windupdb

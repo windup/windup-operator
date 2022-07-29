@@ -63,7 +63,6 @@ public class WindupDeployment {
   private String mq_cluster_password;
   private String db_username;
   private String db_password;
-  private String sso_secret;
   private String jgroups_cluster_password;
 
   private String application_name;
@@ -74,19 +73,21 @@ public class WindupDeployment {
 
   private String serviceAccount;
 
-  private String sso_public_key;
-  private String ssoPublicKeyDefault;
+  private String sso_realm;
+  private String sso_server_url;
+  private String sso_client_id;
+  private String sso_ssl_required;
+  private String sso_secret;
+
   private Integer executor_desired_replicas;
 
-  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
-                          KubernetesClient k8sClient, String namespace, 
-                          String serviceAccount, String ssoPublicKeyDefault) {
+  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient,
+                          KubernetesClient k8sClient, String namespace, String serviceAccount) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
-    this.ssoPublicKeyDefault = ssoPublicKeyDefault;
     initParams();
   }
 
@@ -109,12 +110,11 @@ public class WindupDeployment {
     db_password =  StringUtils.defaultIfBlank(windupResource.getSpec().getDb_password(),RandomStringUtils.randomAlphanumeric(8));
     sso_secret = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_secret(),RandomStringUtils.randomAlphanumeric(8));
     jgroups_cluster_password  = StringUtils.defaultIfBlank(windupResource.getSpec().getJgroups_cluster_password(),RandomStringUtils.randomAlphanumeric(8));
-    sso_public_key = StringUtils.defaultIfBlank(windupResource.getSpec().getSso_public_key(), ssoPublicKeyDefault);
     executor_desired_replicas = ObjectUtils.defaultIfNull(windupResource.getSpec().getExecutor_desired_replicas(), 1);
   }
 
   public void deploy() {
-    // We are adding one by one instead of createOrReplace(volumes.toArray(new Volume[2])) 
+    // We are adding one by one instead of createOrReplace(volumes.toArray(new Volume[2]))
     // because in that case we receive an error : Too Many Items to Create
     initCRStatusOnDeployment();
 
@@ -216,7 +216,7 @@ public class WindupDeployment {
   // Checking the cluster domain on Openshift
   @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
-    String clusterDomain = ""; 
+    String clusterDomain = "";
     try {
       CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
       .withName("Ingress")
@@ -455,12 +455,10 @@ public class WindupDeployment {
             .addNewEnv().withName("AUTO_DEPLOY_EXPLODED").withValue(windupResource.getSpec().getAuto_deploy_exploded()).endEnv()
             .addNewEnv().withName("DEFAULT_JOB_REPOSITORY").withValue(deployment_postgre).endEnv()
             .addNewEnv().withName("TIMER_SERVICE_DATA_STORE").withValue(deployment_postgre).endEnv()
-            .addNewEnv().withName("SSO_URL").withValue(windupResource.getSpec().getSso_url()).endEnv()
-            .addNewEnv().withName("SSO_SERVICE_URL").withValue(windupResource.getSpec().getSso_service_url()).endEnv()
+            .addNewEnv().withName("SSO_AUTH_SERVER_URL").withValue(windupResource.getSpec().getSso_server_url()).endEnv()
             .addNewEnv().withName("SSO_REALM").withValue(windupResource.getSpec().getSso_realm()).endEnv()
-            .addNewEnv().withName("SSO_USERNAME").withValue(windupResource.getSpec().getSso_username()).endEnv()
-            .addNewEnv().withName("SSO_PASSWORD").withValue(windupResource.getSpec().getSso_password()).endEnv()
-            .addNewEnv().withName("SSO_PUBLIC_KEY").withValue(sso_public_key).endEnv()
+            .addNewEnv().withName("SSO_CLIENT_ID").withValue(windupResource.getSpec().getSso_client_id()).endEnv()
+            .addNewEnv().withName("SSO_SSL_REQUIRED").withValue(windupResource.getSpec().getSso_ssl_required()).endEnv()
             .addNewEnv().withName("SSO_BEARER_ONLY").withValue(windupResource.getSpec().getSso_bearer_only()).endEnv()
             .addNewEnv().withName("SSO_SAML_KEYSTORE_SECRET").withValue(windupResource.getSpec().getSso_saml_keystore_secret()).endEnv()
             .addNewEnv().withName("SSO_SAML_KEYSTORE").withValue(windupResource.getSpec().getSso_saml_keystore()).endEnv()

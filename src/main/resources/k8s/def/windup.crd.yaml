@@ -96,28 +96,14 @@ spec:
                 auto_deploy_exploded:
                   type: string
                   default: "false"
-                sso_url:
+                sso_server_url:
                   type: string
-                  default: "/auth"
-                sso_service_url:
-                  type: string
-                  default: "/auth"
                 sso_realm:
                   type: string
-                  default: "windup"
-                sso_username:
+                sso_client_id:
                   type: string
-                  default: ""
-                sso_password:
+                sso_ssl_required:
                   type: string
-                  default: ""
-                sso_public_key:
-                  type: string
-                  default: ""
-                  description: leave empty for default key
-                sso_bearer_only:
-                  type: string
-                  default: ""
                 sso_saml_keystore_secret:
                   type: string
                   default: "eap7-app-secret"
@@ -252,8 +238,6 @@ spec:
                   - windup_Volume_Capacity
                   - db_database
                   - volumeCapacity
-                  - sso_url
-                  - sso_realm
                   - docker_images_user
                   - docker_images_tag
                   - max_post_size

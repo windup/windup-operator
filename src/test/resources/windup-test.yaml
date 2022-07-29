@@ -24,10 +24,12 @@ spec:
   windup_Volume_Capacity: 5G
   db_database: windup
   volumeCapacity: 5G
-  sso_url: /auth
-  sso_realm: windup
-  max_post_size: "4294967296"
+#  sso_server_url: http://localhost:8180/auth
+#  sso_realm: windup
+#  sso_client_id: windup-web
+#  sso_ssl_required: EXTERNAL
   sso_force_legacy_security: "false"
+  max_post_size: "4294967296"
   db_password: pas345678
   db_username: userXYZ
   postgresql_cpu_request: "0.5"
