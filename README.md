@@ -43,7 +43,6 @@ mvn clean package -DskipTests \
 -Dquarkus.container-image.build=true \
 -Dquarkus.container-image.registry=quay.io \
 -Dquarkus.container-image.group=$USER \
--Dquarkus.container-image.name=windup-operator \
 -Dquarkus.container-image.tag=test
 ```
 
@@ -58,9 +57,8 @@ podman push quay.io/$USER/windup-operator:test
 Start Minikube:
 
 ```shell
-minikube start --driver=podman --memory=12g
+minikube start --memory=12g
 minikube addons enable ingress
-minikube addons enable olm
 minikube addons enable dashboard
 ```
 
