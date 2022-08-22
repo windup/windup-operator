@@ -25,6 +25,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.windup.operator.controller.Windup;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceList;
 
@@ -80,14 +81,18 @@ public class WindupDeployment {
   private String sso_secret;
 
   private Integer executor_desired_replicas;
+  private Windup windup;
 
-  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient,
-                          KubernetesClient k8sClient, String namespace, String serviceAccount) {
+  public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
+                          KubernetesClient k8sClient, String namespace, 
+                          String serviceAccount,
+                          Windup windup) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
+    this.windup = windup;
     initParams();
   }
 
@@ -393,24 +398,24 @@ public class WindupDeployment {
             .endResources()
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_windup_web)
-                                .withMountPath("/opt/eap/standalone/data/windup")
+                                .withMountPath(String.format("/opt/%s/standalone/data/windup", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_windup_web_data)
-                                .withMountPath("/opt/eap/standalone/data")
+                                .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
             .withNewLifecycle()
               .withNewPreStop()
                 .withNewExec()
-                  .withCommand("/opt/eap/bin/jboss-cli.sh", "-c", ":shutdown(timeout=60)")
+                  .withCommand("${JBOSS_HOME}/bin/jboss-cli.sh", "-c", ":shutdown(timeout=60)")
                 .endExec()
               .endPreStop()
             .endLifecycle()
             .withNewLivenessProbe()
               .withNewExec()
-                .withCommand(Arrays.stream(windupResource.getSpec().getWeb_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/eap/bin/livenessProbe.sh")
+                .withCommand(Arrays.stream(windupResource.getSpec().getWeb_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'")
               .endExec()
               .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebLivenessInitialDelaySeconds()))
               .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebLivenessFailureThreshold()))
@@ -419,7 +424,7 @@ public class WindupDeployment {
             .endLivenessProbe()
             .withNewReadinessProbe()
               .withNewExec()
-                .withCommand(Arrays.stream(windupResource.getSpec().getWeb_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/eap/bin/readinessProbe.sh")
+                .withCommand(Arrays.stream(windupResource.getSpec().getWeb_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'")
               .endExec()
               .withInitialDelaySeconds(Integer.parseInt(windupResource.getSpec().getWebReadinessInitialDelaySeconds()))
               .withFailureThreshold(Integer.parseInt(windupResource.getSpec().getWebReadinessFailureThreshold()))
@@ -442,7 +447,7 @@ public class WindupDeployment {
             .addNewEnv().withName("DB_TX_ISOLATION").withValue(windupResource.getSpec().getDb_tx_isolation()).endEnv()
             .addNewEnv().withName("OPENSHIFT_KUBE_PING_LABELS").withValue("application=" + application_name).endEnv()
             .addNewEnv().withName("OPENSHIFT_KUBE_PING_NAMESPACE").withValue(namespace).endEnv()
-            .addNewEnv().withName("HTTPS_KEYSTORE_DIR").withValue("/etc/eap-secret-volume").endEnv()
+            .addNewEnv().withName("HTTPS_KEYSTORE_DIR").withValue("/etc/wildfly-secret-volume").endEnv()
             .addNewEnv().withName("MQ_CLUSTER_PASSWORD").withValue(mq_cluster_password).endEnv()
             .addNewEnv().withName("MQ_QUEUES").withValue(windupResource.getSpec().getMq_queues()).endEnv()
             .addNewEnv().withName("MQ_TOPICS").withValue(windupResource.getSpec().getMq_topics()).endEnv()
@@ -588,7 +593,7 @@ public class WindupDeployment {
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
                   .withName(application_name + "-windup-web-executor-volume")
-                  .withMountPath("/opt/eap/standalone/data")
+                  .withMountPath("/opt/wildfly/standalone/data")
                   .withReadOnly(false).build())
                 .withNewLifecycle()
                   .withNewPreStop()
@@ -638,8 +643,5 @@ public class WindupDeployment {
            containerImage + ":" +
            windupResource.getSpec().getDocker_images_tag();
   }
-
-
-
 
 }

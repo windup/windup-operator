@@ -80,7 +80,7 @@ spec:
                   default: ""
                 jgroups_encrypt_secret:
                   type: string
-                  default: "eap-app-secret"
+                  default: "wildfly-app-secret"
                 jgroups_encrypt_keystore:
                   type: string
                   default: "jgroups.jceks"
@@ -106,7 +106,7 @@ spec:
                   type: string
                 sso_saml_keystore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 sso_saml_keystore:
                   type: string
                   default: "keystore.jks"
@@ -136,7 +136,7 @@ spec:
                   default: ""
                 sso_truststore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 gc_max_metaspace_size:
                   type: integer
                   default: 512
@@ -213,10 +213,10 @@ spec:
                   default: "registry.redhat.io/rhel8/postgresql-10:1"
                 web_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
                 web_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
                 executor_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"

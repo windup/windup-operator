@@ -46,3 +46,4 @@ spec:
   web_readiness_probe: ""
   executor_liveness_probe: ""
   executor_readiness_probe: ""
+  executor_desired_replicas: 1
