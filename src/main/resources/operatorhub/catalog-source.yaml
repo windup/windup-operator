@@ -7,4 +7,4 @@ metadata:
     application: windup
 spec:
   sourceType: grpc
-  image: quay.io/{user}/mta-operator-test-catalog:{version}
+  image: quay.io/{user}/windup-operator-test-catalog:{version}

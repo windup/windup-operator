@@ -33,7 +33,7 @@ spec:
                 volumeCapacity:
                   type: string
                   default: "20G"
-                mta_Volume_Capacity:
+                windup_Volume_Capacity:
                   type: string
                   default: "20G"
                 docker_images_repository:
@@ -104,7 +104,7 @@ spec:
                   default: "/auth"
                 sso_realm:
                   type: string
-                  default: "mta"
+                  default: "windup"
                 sso_username:
                   type: string
                   default: ""
@@ -162,7 +162,7 @@ spec:
                   default: "false"
                 db_database:
                   type: string
-                  default: "mta"
+                  default: "windup"
                 postgresql_max_connections:
                   type: string
                   default: "200"
@@ -233,10 +233,10 @@ spec:
                   default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
                 executor_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_desired_replicas:
                   type: integer
                   default: 1
@@ -249,7 +249,7 @@ spec:
                   - executor_cpu_request
                   - executor_mem_request
                   - messaging_serializer
-                  - mta_Volume_Capacity
+                  - windup_Volume_Capacity
                   - db_database
                   - volumeCapacity
                   - sso_url

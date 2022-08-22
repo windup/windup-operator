@@ -110,7 +110,7 @@ public class WindupResource extends CustomResource<WindupResourceSpec, WindupRes
     }
 
 	public int desiredDeployments() {
-    // mta-web-console=1 , mta-postgres=1, mta-executor=executor_desired_replicas
+        // windup-web-console=1 , windup-postgres=1, windup-executor=executor_desired_replicas
 		return 2 + ObjectUtils.defaultIfNull(spec.getExecutor_desired_replicas(), 1);
 	}
 

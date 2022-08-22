@@ -1,7 +1,7 @@
 apiVersion: windup.jboss.org/v1
 kind: Windup
 metadata:
-  namespace: mta
+  namespace: windup
   name: winduptest
   labels:
     application: windup
@@ -21,11 +21,11 @@ spec:
   executor_cpu_limit: "4"
   executor_mem_limit: 4Gi
   messaging_serializer: http.post.serializer
-  mta_Volume_Capacity: 5G
-  db_database: mta
+  windup_Volume_Capacity: 5G
+  db_database: windup
   volumeCapacity: 5G
   sso_url: /auth
-  sso_realm: mta
+  sso_realm: windup
   max_post_size: "4294967296"
   sso_force_legacy_security: "false"
   db_password: pas345678

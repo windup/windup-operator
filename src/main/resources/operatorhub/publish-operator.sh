@@ -5,7 +5,7 @@
 # Usage :
 #   $ ./publish-operator.sh 0.0.2
 #
-#   This will copy files in windup-operator/src/main/operatorhub/mta-operator/0.0.2 into the community-operators project and create a PR opening the github web page
+#   This will copy files in windup-operator/src/main/operatorhub/windup-operator/0.0.2 into the community-operators project and create a PR opening the github web page
 #
 #
 # Prerequisites :
@@ -21,7 +21,7 @@
 # Steps :
 #   1. clone the forked project of : operator-framework/community-operators
 #   2. create a branch for this new version
-#   3. copy contents of operatorhub/mta-operator/$version into that project
+#   3. copy contents of operatorhub/windup-operator/$version into that project
 #   4. add all files to git stage
 #   5. commit the changes , signing
 #   6. push changes to the remote forked repo
@@ -36,20 +36,20 @@ git remote add upstream git@github.com:operator-framework/community-operators.gi
 
 # create branch in it
 cd community-operators
-git checkout -b "mta-operator-$newversion" master
+git checkout -b "windup-operator-$newversion" master
 
 # copy files from windup-operator, for the specific version
-cp ../mta-operator/$newversion  ./community-operators/mta-operator/$newversion -r
+cp ../windup-operator/$newversion  ./community-operators/windup-operator/$newversion -r
 
 # commit
-git add --all ./community-operators/mta-operator 
-git commit -a -s -m "Upgrade MTA Operator to $newversion in community-operators"
+git add --all ./community-operators/windup-operator
+git commit -a -s -m "Upgrade Windup Operator to $newversion in community-operators"
 
 # push
-git push --set-upstream origin "mta-operator-$newversion"
+git push --set-upstream origin "windup-operator-$newversion"
 
 # create pull request with all info, opening web browser to confirm
-gh pr create -w --title "Upgrade MTA Operator to $newversion in community-operators" --base master --body "$(cat ../publish-pr-body.md)"
+gh pr create -w --title "Upgrade Windup Operator to $newversion in community-operators" --base master --body "$(cat ../publish-pr-body.md)"
 
 # clean
 cd ..

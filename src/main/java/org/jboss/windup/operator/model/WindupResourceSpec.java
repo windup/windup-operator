@@ -17,7 +17,7 @@ public class WindupResourceSpec implements KubernetesResource {
     private String application_name;
     private String hostname_http;
     private String volumeCapacity;
-    private String mta_Volume_Capacity;
+    private String windup_Volume_Capacity;
     private String docker_images_repository;
     private String docker_images_user;
     private String docker_images_tag;

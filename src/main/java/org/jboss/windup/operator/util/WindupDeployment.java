@@ -42,9 +42,8 @@ public class WindupDeployment {
   public static final  String APPLICATION = "application";
   public static final  String APP = "app";
   public static final  String CREATEDBY = "created-by";
-  public static final  String MTAOPERATOR = "mta-operator";
 
-  public static final String MTA_OPERATOR = "mta-operator";
+  public static final String WINDUP_OPERATOR = "windup-operator";
   public static final String CREATED_BY = "created-by";
 
   MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient;
@@ -56,11 +55,11 @@ public class WindupDeployment {
   private String deployment_executor;
   private String deployment_postgre;
   private String volume_postgresql_claim;
-  private String volume_mtaweb_claim;
+  private String volume_windup_web_claim;
   private String volume_postgresql;
   private String volume_executor;
-  private String volume_mtaweb;
-  private String volume_mtaweb_data;
+  private String volume_windup_web;
+  private String volume_windup_web_data;
 
   private String mq_cluster_password;
   private String db_username;
@@ -101,11 +100,11 @@ public class WindupDeployment {
     volume_postgresql_claim = application_name + "-postgresql-claim";
     deployment_postgre = application_name + "-postgresql";
     deployment_executor = application_name + "-executor";
-    volume_mtaweb_claim = application_name + "-mta-web-claim";
+    volume_windup_web_claim = application_name + "-windup-web-claim";
     volume_postgresql = application_name + "-postgresql-pvol";
-    volume_executor = application_name + "-mta-web-executor-volume";
-    volume_mtaweb = application_name + "-mta-web-pvol";
-    volume_mtaweb_data = application_name + "-mta-web-pvol-data";
+    volume_executor = application_name + "-windup-web-executor-volume";
+    volume_windup_web = application_name + "-windup-web-pvol";
+    volume_windup_web_data = application_name + "-windup-web-pvol-data";
     deployment_amq = application_name + "-amq";
 
     // Calculate values if they come blank
@@ -143,7 +142,7 @@ public class WindupDeployment {
 
   // @format:off
   private List<Service> createServices() {
-    Service mtaWebConsoleSvc = new ServiceBuilder()
+    Service windupWebConsoleSvc = new ServiceBuilder()
         .withApiVersion("v1")
         .withNewMetadata()
           .withName(application_name)
@@ -185,7 +184,7 @@ public class WindupDeployment {
         .withNewMetadata()
           .withName(application_name + "-amq")
           .withLabels(getLabels())
-          .addToAnnotations("description", "MTA Master AMQ port.")
+          .addToAnnotations("description", "Windup Master AMQ port.")
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
@@ -198,7 +197,7 @@ public class WindupDeployment {
         .endSpec().build();
     log.info("Created Service for AMQ");
 
-    return List.of(mtaWebConsoleSvc, postgreSvc, amqSvc);
+    return List.of(windupWebConsoleSvc, postgreSvc, amqSvc);
   }
 
   private OwnerReference getOwnerReference() {
@@ -215,7 +214,7 @@ public class WindupDeployment {
     return Map.of(
         APPLICATION, application_name,
         APP, application_name,
-        CREATEDBY, MTAOPERATOR);
+        CREATEDBY, WINDUP_OPERATOR);
   }
 
   // Checking the cluster domain on Openshift
@@ -334,21 +333,21 @@ public class WindupDeployment {
         .endSpec().build();
     log.info("Created PVC for postgre");
 
-    PersistentVolumeClaim mtaPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
+    PersistentVolumeClaim windupPersistentVolumeClaim = new PersistentVolumeClaimBuilder()
         .withNewMetadata()
-          .withName(volume_mtaweb_claim)
+          .withName(volume_windup_web_claim)
           .withLabels(getLabels())
           .withOwnerReferences(getOwnerReference())
         .endMetadata()
         .withNewSpec()
           .withAccessModes("ReadWriteOnce")
           .withNewResources()
-            .addToRequests("storage", new Quantity(windupResource.getSpec().getMta_Volume_Capacity()))
+            .addToRequests("storage", new Quantity(windupResource.getSpec().getWindup_Volume_Capacity()))
           .endResources()
         .endSpec().build();
-    log.info("Created PVC for mta");
+    log.info("Created PVC for windup");
 
-    return List.of(postgrPersistentVolumeClaim, mtaPersistentVolumeClaim);
+    return List.of(postgrPersistentVolumeClaim, windupPersistentVolumeClaim);
   }
 
   private List<Deployment> createDeployment() {
@@ -357,14 +356,14 @@ public class WindupDeployment {
 
     Deployment deploymentPostgre = deploymentPostgre();
 
-    Deployment deploymentMTAweb = deploymentWeb();
+    Deployment deploymentWindupWeb = deploymentWeb();
 
-    return List.of(deploymentMTAweb, deploymentExecutor, deploymentPostgre);
+    return List.of(deploymentWindupWeb, deploymentExecutor, deploymentPostgre);
   }
   //@format:on
 
   private Deployment deploymentWeb() {
-    Deployment deploymentMTAweb = new DeploymentBuilder()
+    Deployment deploymentWindupWeb = new DeploymentBuilder()
     .withNewMetadata()
       .withName(application_name)
       .withLabels(getLabels())
@@ -397,12 +396,12 @@ public class WindupDeployment {
               .addToLimits(Map.of("memory", new Quantity(windupResource.getSpec().getWeb_mem_limit())))
             .endResources()
             .addToVolumeMounts(new VolumeMountBuilder()
-                                .withName(volume_mtaweb)
+                                .withName(volume_windup_web)
                                 .withMountPath(String.format("/opt/%s/standalone/data/windup", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
             .addToVolumeMounts(new VolumeMountBuilder()
-                                .withName(volume_mtaweb_data)
+                                .withName(volume_windup_web_data)
                                 .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
                                 .withReadOnly(false)
                                 .build())
@@ -484,13 +483,13 @@ public class WindupDeployment {
             .addNewEnv().withName("SSO_FORCE_LEGACY_SECURITY").withValue(windupResource.getSpec().getSso_force_legacy_security()).endEnv()
           .endContainer()
           .addNewVolume()
-            .withName(volume_mtaweb)
+            .withName(volume_windup_web)
             .withNewPersistentVolumeClaim()
-              .withClaimName(volume_mtaweb_claim)
+              .withClaimName(volume_windup_web_claim)
             .endPersistentVolumeClaim()
           .endVolume()
           .addNewVolume()
-            .withName(volume_mtaweb_data)
+            .withName(volume_windup_web_data)
             .withNewEmptyDir().endEmptyDir()
           .endVolume()
         .endSpec()
@@ -499,7 +498,7 @@ public class WindupDeployment {
 
     log.info("Created Deployment windup-web");
 
-    return deploymentMTAweb;
+    return deploymentWindupWeb;
   }
 
   private Deployment deploymentPostgre() {
@@ -594,19 +593,19 @@ public class WindupDeployment {
                   .addToLimits(Map.of("memory", new Quantity(windupResource.getSpec().getExecutor_mem_limit())))
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
-                  .withName(application_name + "-mta-web-executor-volume")
-                  .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
+                  .withName(application_name + "-windup-web-executor-volume")
+                  .withMountPath("/opt/wildfly/standalone/data")
                   .withReadOnly(false).build())
                 .withNewLifecycle()
                   .withNewPreStop()
                     .withNewExec()
-                      .withCommand("/opt/mta-cli/bin/stop.sh")
+                      .withCommand("/opt/windup-cli/bin/stop.sh")
                     .endExec()
                   .endPreStop()
                 .endLifecycle()
                 .withNewLivenessProbe()
                   .withNewExec()
-                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_liveness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/windup-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
@@ -615,7 +614,7 @@ public class WindupDeployment {
                 .endLivenessProbe()
                 .withNewReadinessProbe()
                   .withNewExec()
-                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/mta-cli/bin/livenessProbe.sh")
+                    .withCommand(Arrays.stream(windupResource.getSpec().getExecutor_readiness_probe().split(",")).map(String::trim).collect(Collectors.toList())) //"/bin/bash", "-c", "/opt/windup-cli/bin/livenessProbe.sh")
                   .endExec()
                   .withInitialDelaySeconds(120)
                   .withFailureThreshold(3)
