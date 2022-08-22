@@ -32,9 +32,9 @@ You can create as many applications as you like inside the same namespace.
 For every namespace you need to install the operator in order to be able to install the Migration Toolkit for
 Applications application.
 
-## Deploy the operator into Minikube
+## Deploy the operator into OCP
 
-### Container image of the operator
+### Create a Container image of the operator
 
 Execute:
 
@@ -52,17 +52,11 @@ Push container to the quay.io registry:
 podman push quay.io/$USER/windup-operator-native:test
 ```
 
-### Minikube
+### OCP
 
-Start Minikube:
+You need to have an instance of OCP running with admin access.
 
-```shell
-minikube start --memory=12g
-minikube addons enable ingress
-minikube addons enable dashboard
-```
-
-Create the k8s `namespace`:
+Create the a `namespace` called `windup`:
 
 ```shell
 kubectl create ns windup
@@ -90,8 +84,8 @@ cd ../../../../../
 kubectl apply -f src/main/resources/k8s/examples/windup.yaml
 ```
 
-### See your Pods
+### See your deployments
 
 ```shell
-minikube dashboard
+kubectl get deployments -n windup
 ```
