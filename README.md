@@ -80,6 +80,8 @@ cd ../../../../../
 
 ### Init Windup
 
+Make all the necessary changes to the input data of the operator editing the file `src/main/resources/k8s/examples/windup.yaml` and then:
+
 ```shell
 kubectl apply -f src/main/resources/k8s/examples/windup.yaml
 ```
