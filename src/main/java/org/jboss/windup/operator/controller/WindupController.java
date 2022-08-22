@@ -27,9 +27,6 @@ public class WindupController implements Watcher<WindupResource> {
 	@ConfigProperty(name = "operator.serviceaccount", defaultValue = "windup-operator")
 	String serviceAccount;
 
-	@ConfigProperty(name = "operator.sso_public_key")
-	String ssoPublicKey;
-
 	@Inject
 	Windup windup;
 

@@ -64,6 +64,7 @@ public class WindupDeployment {
   private String mq_cluster_password;
   private String db_username;
   private String db_password;
+  private String sso_secret;
   private String jgroups_cluster_password;
 
   private String application_name;
@@ -74,19 +75,13 @@ public class WindupDeployment {
 
   private String serviceAccount;
 
-  private String sso_realm;
-  private String sso_server_url;
-  private String sso_client_id;
-  private String sso_ssl_required;
-  private String sso_secret;
-
   private Integer executor_desired_replicas;
+
   private Windup windup;
 
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
                           KubernetesClient k8sClient, String namespace, 
-                          String serviceAccount,
-                          Windup windup) {
+                          String serviceAccount, Windup windup) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
