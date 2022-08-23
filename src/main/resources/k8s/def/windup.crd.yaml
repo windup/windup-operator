@@ -33,7 +33,7 @@ spec:
                 volumeCapacity:
                   type: string
                   default: "20G"
-                mta_Volume_Capacity:
+                windup_Volume_Capacity:
                   type: string
                   default: "20G"
                 docker_images_repository:
@@ -80,7 +80,7 @@ spec:
                   default: ""
                 jgroups_encrypt_secret:
                   type: string
-                  default: "eap-app-secret"
+                  default: "wildfly-app-secret"
                 jgroups_encrypt_keystore:
                   type: string
                   default: "jgroups.jceks"
@@ -96,31 +96,17 @@ spec:
                 auto_deploy_exploded:
                   type: string
                   default: "false"
-                sso_url:
+                sso_server_url:
                   type: string
-                  default: "/auth"
-                sso_service_url:
-                  type: string
-                  default: "/auth"
                 sso_realm:
                   type: string
-                  default: "mta"
-                sso_username:
+                sso_client_id:
                   type: string
-                  default: ""
-                sso_password:
+                sso_ssl_required:
                   type: string
-                  default: ""
-                sso_public_key:
-                  type: string
-                  default: ""
-                  description: leave empty for default key
-                sso_bearer_only:
-                  type: string
-                  default: ""
                 sso_saml_keystore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 sso_saml_keystore:
                   type: string
                   default: "keystore.jks"
@@ -150,7 +136,7 @@ spec:
                   default: ""
                 sso_truststore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 gc_max_metaspace_size:
                   type: integer
                   default: 512
@@ -162,7 +148,7 @@ spec:
                   default: "false"
                 db_database:
                   type: string
-                  default: "mta"
+                  default: "windup"
                 postgresql_max_connections:
                   type: string
                   default: "200"
@@ -227,16 +213,16 @@ spec:
                   default: "registry.redhat.io/rhel8/postgresql-10:1"
                 web_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
                 web_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
                 executor_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_desired_replicas:
                   type: integer
                   default: 1
@@ -249,11 +235,9 @@ spec:
                   - executor_cpu_request
                   - executor_mem_request
                   - messaging_serializer
-                  - mta_Volume_Capacity
+                  - windup_Volume_Capacity
                   - db_database
                   - volumeCapacity
-                  - sso_url
-                  - sso_realm
                   - docker_images_user
                   - docker_images_tag
                   - max_post_size

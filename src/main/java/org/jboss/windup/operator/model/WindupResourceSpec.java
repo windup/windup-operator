@@ -17,7 +17,7 @@ public class WindupResourceSpec implements KubernetesResource {
     private String application_name;
     private String hostname_http;
     private String volumeCapacity;
-    private String mta_Volume_Capacity;
+    private String windup_Volume_Capacity;
     private String docker_images_repository;
     private String docker_images_user;
     private String docker_images_tag;
@@ -39,12 +39,10 @@ public class WindupResourceSpec implements KubernetesResource {
     private String jgroups_encrypt_password;
     private String jgroups_cluster_password;
     private String auto_deploy_exploded;
-    private String sso_url;
-    private String sso_service_url;
+    private String sso_server_url;
     private String sso_realm;
-    private String sso_username;
-    private String sso_password;
-    private String sso_public_key;
+    private String sso_client_id;
+    private String sso_ssl_required;
     private String sso_bearer_only;
     private String sso_saml_keystore_secret;
     private String sso_saml_keystore;
@@ -57,9 +55,9 @@ public class WindupResourceSpec implements KubernetesResource {
     private String sso_truststore;
     private String sso_truststore_password;
     private String sso_truststore_secret;
+    private String sso_force_legacy_security;
     private String gc_max_metaspace_size;
     private String max_post_size;
-    private String sso_force_legacy_security;
     private String db_database;
     private String postgresql_max_connections;
     private String postgresql_shared_buffers;

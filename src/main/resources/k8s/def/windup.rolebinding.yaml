@@ -2,13 +2,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: windup-operator-role-binding
-  namespace: mta
+  namespace: windup
   labels:
       application: windup
 subjects:
   - kind: ServiceAccount
     name: windup-operator
-    namespace: mta
+    namespace: windup
 roleRef:
   kind: Role
   name: windup-operator-role

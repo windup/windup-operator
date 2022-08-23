@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: windup-operator
-  namespace: mta
+  namespace: windup
   labels:
       application: windup
 spec:

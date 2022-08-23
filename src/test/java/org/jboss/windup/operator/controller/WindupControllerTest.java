@@ -120,7 +120,7 @@ public class WindupControllerTest {
         .await()
         .atMost(20, TimeUnit.SECONDS)
         .untilAsserted( () -> {
-            // 4 objects expected : operator, mta-web, mta-executor, mta-postgresql, test-deployment
+            // 4 objects expected : operator, windup-web, windup-executor, windup-postgresql, test-deployment
             assertEquals(4, client.apps().deployments().inNamespace(testNamespace).list().getItems().size());
         });
 
