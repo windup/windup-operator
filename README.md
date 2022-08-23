@@ -52,6 +52,8 @@ Push container to the quay.io registry:
 podman push quay.io/$USER/windup-operator-native:test
 ```
 
+> **$USER** should match your username in [quay.io](https://quay.io/) otherwise replace it manually with a correct value.
+
 ### OCP
 
 You need to have an instance of OCP running with admin access.
