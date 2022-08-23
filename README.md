@@ -36,6 +36,8 @@ Applications application.
 
 ### Create a Container image of the operator
 
+> **$USER** should match your username in [quay.io](https://quay.io/) otherwise replace it manually with a correct value.
+
 Execute:
 
 ```shell
@@ -51,8 +53,6 @@ Push container to the quay.io registry:
 ```shell
 podman push quay.io/$USER/windup-operator-native:test
 ```
-
-> **$USER** should match your username in [quay.io](https://quay.io/) otherwise replace it manually with a correct value.
 
 ### OCP
 
