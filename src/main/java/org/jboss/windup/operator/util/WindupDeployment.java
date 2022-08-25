@@ -25,7 +25,6 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jboss.windup.operator.controller.Windup;
 import org.jboss.windup.operator.model.WindupResource;
 import org.jboss.windup.operator.model.WindupResourceList;
 
@@ -77,17 +76,14 @@ public class WindupDeployment {
 
   private Integer executor_desired_replicas;
 
-  private Windup windup;
-
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
                           KubernetesClient k8sClient, String namespace, 
-                          String serviceAccount, Windup windup) {
+                          String serviceAccount) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
-    this.windup = windup;
     initParams();
   }
 
@@ -393,12 +389,12 @@ public class WindupDeployment {
             .endResources()
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_windup_web)
-                                .withMountPath(String.format("/opt/%s/standalone/data/windup", windup.getAppServerType()))
+                                .withMountPath("/opt/windup/data/windup")
                                 .withReadOnly(false)
                                 .build())
             .addToVolumeMounts(new VolumeMountBuilder()
                                 .withName(volume_windup_web_data)
-                                .withMountPath(String.format("/opt/%s/standalone/data", windup.getAppServerType()))
+                                .withMountPath("/opt/windup/data")
                                 .withReadOnly(false)
                                 .build())
             .withNewLifecycle()
@@ -588,7 +584,7 @@ public class WindupDeployment {
                 .endResources()
                 .addToVolumeMounts(new VolumeMountBuilder()
                   .withName(application_name + "-windup-web-executor-volume")
-                  .withMountPath("/opt/wildfly/standalone/data")
+                  .withMountPath("/opt/windup/data")
                   .withReadOnly(false).build())
                 .withNewLifecycle()
                   .withNewPreStop()
