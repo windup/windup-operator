@@ -36,21 +36,12 @@ spec:
                 windup_Volume_Capacity:
                   type: string
                   default: "20G"
-                docker_images_repository:
+                web_console_image:
                   type: string
-                  default: "quay.io"
-                docker_images_user:
+                  default: "quay.io/windupeng/windup-web-openshift:latest"
+                executor_image:
                   type: string
-                  default: "windupeng"
-                docker_images_tag:
-                  type: string
-                  default: "latest"
-                docker_image_web:
-                  type: string
-                  default: "windup-web-openshift"
-                docker_image_executor:
-                  type: string
-                  default: "windup-web-openshift-messaging-executor"
+                  default: "quay.io/windupeng/windup-web-openshift-messaging-executor:latest"
                 messaging_serializer:
                   type: string
                   default: "http.post.serializer"
@@ -238,8 +229,8 @@ spec:
                   - windup_Volume_Capacity
                   - db_database
                   - volumeCapacity
-                  - docker_images_user
-                  - docker_images_tag
+                  - web_console_image
+                  - executor_image
                   - max_post_size
                   - sso_force_legacy_security
                   - executor_desired_replicas

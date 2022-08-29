@@ -18,11 +18,8 @@ public class WindupResourceSpec implements KubernetesResource {
     private String hostname_http;
     private String volumeCapacity;
     private String windup_Volume_Capacity;
-    private String docker_images_repository;
-    private String docker_images_user;
-    private String docker_images_tag;
-    private String docker_image_web;
-    private String docker_image_executor;
+    private String web_console_image;
+    private String executor_image;
     private String messaging_serializer;
     private String db_jndi;
     private String db_username;

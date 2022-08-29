@@ -23,7 +23,7 @@ deployments, ingress, services, persistent volumes).
 11. Change the default values or leave them as they are
 12. Click "Create"
 13. After a while all pods will be ready
-14. Go to "Adminitration->Network->Routes" filtering by the namespace used
+14. Go to "Administration->Network->Routes" filtering by the namespace used
 15. Select the route location
 16. This will open a window with the Migration Toolkit for Applications
 
