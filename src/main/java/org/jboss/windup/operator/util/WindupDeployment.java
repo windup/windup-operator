@@ -379,7 +379,7 @@ public class WindupDeployment {
           .withServiceAccount(serviceAccount).withTerminationGracePeriodSeconds(75L)
           .addNewContainer()
             .withName(application_name)
-            .withImage(getContainerImageName( windupResource.getSpec().getDocker_image_web()))
+            .withImage(windupResource.getSpec().getWeb_console_image())
             .withNewImagePullPolicy("Always")
             .withNewResources()
               .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getWeb_cpu_request())))
@@ -574,7 +574,7 @@ public class WindupDeployment {
               .withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
                 .withName(deployment_executor)
-                .withImage(getContainerImageName(windupResource.getSpec().getDocker_image_executor()))
+                .withImage(windupResource.getSpec().getExecutor_image())
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getExecutor_cpu_request())))
@@ -627,12 +627,4 @@ public class WindupDeployment {
     log.info("Created Deployment for executor");
     return deploymentExecutor;
   }
-
-  private String getContainerImageName(String containerImage) {
-    return windupResource.getSpec().getDocker_images_repository() + "/" +
-           ((!windupResource.getSpec().getDocker_images_user().isBlank()) ? windupResource.getSpec().getDocker_images_user() + "/" : "") +
-           containerImage + ":" +
-           windupResource.getSpec().getDocker_images_tag();
-  }
-
 }

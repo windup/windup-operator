@@ -36,11 +36,8 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
-  docker_images_user: ""
-  docker_images_tag: latest
-  docker_images_repository: quay.io
-  docker_image_web: httpd
-  docker_image_executor: httpd
+  web_console_image: httpd
+  executor_image: httpd
   postgresql_image: httpd
   web_liveness_probe: ""
   web_readiness_probe: ""
