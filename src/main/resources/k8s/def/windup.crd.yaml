@@ -201,7 +201,7 @@ spec:
                   default: "4Gi"
                 postgresql_image:
                   type: string
-                  default: "registry.redhat.io/rhel8/postgresql-10:1"
+                  default: "registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"
                 web_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
