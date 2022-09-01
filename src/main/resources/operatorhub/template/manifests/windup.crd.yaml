@@ -6,26 +6,34 @@ metadata:
     application: windup
 spec:
   group: windup.jboss.org
-  scope: Namespaced
-  preserveUnknownFields: false
   names:
+    kind: Windup
+    listKind: WindupList
     plural: windups
     singular: windup
-    kind: Windup
-    shortNames:
-      - w
+  scope: Namespaced
   versions:
     - name: v1
-      served: true
-      storage: true
-      subresources:
-        status: { }
       schema:
         openAPIV3Schema:
-          type: object
+          description: Windup Schema
           properties:
-            spec:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation
+                          of an object. Servers should convert recognized schemas to the latest
+                          internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this
+                          object represents. Servers may infer this from the endpoint the client
+                          submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              type: string
+            metadata:
               type: object
+            spec:
+              description: Spec defines the desired state of Windup
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
               properties:
                 hostname_http:
                   type: string
@@ -33,15 +41,24 @@ spec:
                 volumeCapacity:
                   type: string
                   default: "20G"
-                windup_Volume_Capacity:
+                mta_Volume_Capacity:
                   type: string
                   default: "20G"
-                web_console_image:
+                docker_images_repository:
                   type: string
-                  default: "quay.io/windupeng/windup-web-openshift:${RELEASE_VERSION}"
-                executor_image:
+                  default: "quay.io"
+                docker_images_user:
                   type: string
-                  default: "quay.io/windupeng/windup-web-openshift-messaging-executor:${RELEASE_VERSION}"
+                  default: "windupeng"
+                docker_images_tag:
+                  type: string
+                  default: "5.3.0.Final"
+                docker_image_web:
+                  type: string
+                  default: "windup-web-openshift"
+                docker_image_executor:
+                  type: string
+                  default: "windup-web-openshift-messaging-executor"
                 messaging_serializer:
                   type: string
                   default: "http.post.serializer"
@@ -71,7 +88,7 @@ spec:
                   default: ""
                 jgroups_encrypt_secret:
                   type: string
-                  default: "wildfly-app-secret"
+                  default: "eap-app-secret"
                 jgroups_encrypt_keystore:
                   type: string
                   default: "jgroups.jceks"
@@ -87,18 +104,31 @@ spec:
                 auto_deploy_exploded:
                   type: string
                   default: "false"
-                sso_server_url:
+                sso_url:
                   type: string
+                  default: "/auth"
+                sso_service_url:
+                  type: string
+                  default: "/auth"
                 sso_realm:
                   type: string
-                sso_client_id:
+                  default: "mta"
+                sso_username:
                   type: string
-                sso_ssl_required:
+                  default: ""
+                sso_password:
                   type: string
-                  default: "EXTERNAL"
+                  default: ""
+                sso_public_key:
+                  type: string
+                  default: ""
+                  description: leave empty for auto-generation
+                sso_bearer_only:
+                  type: string
+                  default: ""
                 sso_saml_keystore_secret:
                   type: string
-                  default: "wildfly-app-secret"
+                  default: "eap7-app-secret"
                 sso_saml_keystore:
                   type: string
                   default: "keystore.jks"
@@ -128,7 +158,7 @@ spec:
                   default: ""
                 sso_truststore_secret:
                   type: string
-                  default: "wildfly-app-secret"
+                  default: "eap7-app-secret"
                 gc_max_metaspace_size:
                   type: integer
                   default: 512
@@ -140,7 +170,7 @@ spec:
                   default: "false"
                 db_database:
                   type: string
-                  default: "windup"
+                  default: "mta"
                 postgresql_max_connections:
                   type: string
                   default: "200"
@@ -202,19 +232,19 @@ spec:
                   default: "4Gi"
                 postgresql_image:
                   type: string
-                  default: "registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"
+                  default: "registry.redhat.io/rhel8/postgresql-10:1"
                 web_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
+                  default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
                 web_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
+                  default: "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh"
                 executor_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
                 executor_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
                 executor_desired_replicas:
                   type: integer
                   default: 1
@@ -227,16 +257,20 @@ spec:
                 - executor_cpu_request
                 - executor_mem_request
                 - messaging_serializer
-                - windup_Volume_Capacity
+                - mta_Volume_Capacity
                 - db_database
                 - volumeCapacity
-                - web_console_image
-                - executor_image
+                - sso_url
+                - sso_realm
+                - docker_images_user
+                - docker_images_tag
                 - max_post_size
                 - sso_force_legacy_security
                 - executor_desired_replicas
             status:
+              description: Status defines the observed state of Tackle
               type: object
+              x-kubernetes-preserve-unknown-fields: true
               properties:
                 conditions:
                   items:
@@ -256,6 +290,14 @@ spec:
                       - type
                     type: object
                   type: array
-          required:
-            - spec
-            - apiVersion
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: { }
+  status:
+    acceptedNames:
+      kind: ""
+      plural: ""
+    conditions: null
+    storedVersions: null
