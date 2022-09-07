@@ -106,7 +106,19 @@ spec:
         version: v1
         kind: Windup
         displayName: Windup
-        description: Windup
+        description: >
+          Create a Windup Web Console application.  
+
+
+          To access the Windup Web Console application from the "Developer" perspective, please go to Topology and click on the "Open URL" icon on the web-console pod.  
+
+
+          Alternatively from the "Administrator" perspective, please go to Networking->Routes and click on the Location hyperlink.  
+
+
+          Known issue  
+
+          If you want to customize the Windup Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.
   description: >
     Windup is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.
     
