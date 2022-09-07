@@ -48,9 +48,10 @@ metadata:
            "jgroups_cluster_password": "",
            "auto_deploy_exploded": "false",
            "sso_server_url": "",
-           "sso_realm": "mta",
+           "sso_realm": "",
            "sso_client_id": "",
            "sso_ssl_required": "EXTERNAL",
+           "sso_bearer_only": "",
            "sso_saml_keystore_secret": "wildfly-app-secret",
            "sso_saml_keystore": "keystore.jks",
            "sso_saml_certificate_name": "jboss",
@@ -113,7 +114,7 @@ spec:
     It analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.
     
     
-    For more information please refer to the [https://windup.github.io/) page.
+    For more information please refer to the [https://windup.github.io/](https://windup.github.io/) page.
 
   displayName: Windup Operator
   icon:
@@ -255,6 +256,3 @@ spec:
     - name: GitHub
       url: https://github.com/windup/windup-operator
   version: ${RELEASE_VERSION}
-
-
-

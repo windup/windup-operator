@@ -41,24 +41,15 @@ spec:
                 volumeCapacity:
                   type: string
                   default: "20G"
-                mta_Volume_Capacity:
+                windup_Volume_Capacity:
                   type: string
                   default: "20G"
-                docker_images_repository:
+                web_console_image:
                   type: string
-                  default: "quay.io"
-                docker_images_user:
+                  default: "quay.io/windupeng/windup-web-openshift:${RELEASE_VERSION}"
+                executor_image:
                   type: string
-                  default: "windupeng"
-                docker_images_tag:
-                  type: string
-                  default: "5.3.0.Final"
-                docker_image_web:
-                  type: string
-                  default: "windup-web-openshift"
-                docker_image_executor:
-                  type: string
-                  default: "windup-web-openshift-messaging-executor"
+                  default: "quay.io/windupeng/windup-web-openshift-messaging-executor:${RELEASE_VERSION}"
                 messaging_serializer:
                   type: string
                   default: "http.post.serializer"
@@ -88,7 +79,7 @@ spec:
                   default: ""
                 jgroups_encrypt_secret:
                   type: string
-                  default: "eap-app-secret"
+                  default: "wildfly-app-secret"
                 jgroups_encrypt_keystore:
                   type: string
                   default: "jgroups.jceks"
@@ -104,31 +95,24 @@ spec:
                 auto_deploy_exploded:
                   type: string
                   default: "false"
-                sso_url:
+                sso_server_url:
                   type: string
-                  default: "/auth"
-                sso_service_url:
-                  type: string
-                  default: "/auth"
+                  default: ""
                 sso_realm:
                   type: string
-                  default: "mta"
-                sso_username:
+                  default: ""
+                sso_client_id:
                   type: string
                   default: ""
-                sso_password:
+                sso_ssl_required:
                   type: string
-                  default: ""
-                sso_public_key:
-                  type: string
-                  default: ""
-                  description: leave empty for auto-generation
+                  default: "EXTERNAL"
                 sso_bearer_only:
                   type: string
                   default: ""
                 sso_saml_keystore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 sso_saml_keystore:
                   type: string
                   default: "keystore.jks"
@@ -158,7 +142,7 @@ spec:
                   default: ""
                 sso_truststore_secret:
                   type: string
-                  default: "eap7-app-secret"
+                  default: "wildfly-app-secret"
                 gc_max_metaspace_size:
                   type: integer
                   default: 512
@@ -170,7 +154,7 @@ spec:
                   default: "false"
                 db_database:
                   type: string
-                  default: "mta"
+                  default: "windup"
                 postgresql_max_connections:
                   type: string
                   default: "200"
@@ -232,19 +216,19 @@ spec:
                   default: "4Gi"
                 postgresql_image:
                   type: string
-                  default: "registry.redhat.io/rhel8/postgresql-10:1"
+                  default: "registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"
                 web_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/readinessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
                 web_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/eap/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
                 executor_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, /opt/mta-cli/bin/livenessProbe.sh"
+                  default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
                 executor_desired_replicas:
                   type: integer
                   default: 1
@@ -257,13 +241,11 @@ spec:
                 - executor_cpu_request
                 - executor_mem_request
                 - messaging_serializer
-                - mta_Volume_Capacity
+                - windup_Volume_Capacity
                 - db_database
                 - volumeCapacity
-                - sso_url
-                - sso_realm
-                - docker_images_user
-                - docker_images_tag
+                - web_console_image
+                - executor_image
                 - max_post_size
                 - sso_force_legacy_security
                 - executor_desired_replicas
