@@ -30,8 +30,8 @@ public class WindupDeploymentController implements Watcher<Deployment> {
     @Override
     public void eventReceived(Action action, Deployment deployment) {
         log.info("Event " + action + " received for Deployment : " + deployment.getMetadata().getName());
-
-        updateCRStatus(deployment);
+        // if the action is DELETED then there's no deployment to update
+        if (action != Action.DELETED) updateCRStatus(deployment);
     }
 
     @Override
