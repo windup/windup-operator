@@ -26,11 +26,11 @@ spec:
               fieldRef:
                 fieldPath: metadata.namespace
           - name: RELATED_IMAGE_MTR_WEB
-            value: {{ mtr_web_pullspec }}
+            value: quay.io/windupeng/windup-web-openshift:latest
           - name: RELATED_IMAGE_MTR_WEB_EXECUTOR
-            value: {{ mtr_web_executor_pullspec }}
+            value: quay.io/windupeng/windup-web-openshift-messaging-executor:latest
           - name: RELATED_IMAGE_POSTGRESQL
-            value: {{ postgresql_pullspec }}
+            value: registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
           resources:
             limits:
               cpu: 1
