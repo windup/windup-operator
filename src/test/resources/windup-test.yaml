@@ -41,3 +41,4 @@ spec:
   executor_liveness_probe: ""
   executor_readiness_probe: ""
   executor_desired_replicas: 1
+  ingress_custom_labels: "key1: value1, key2 : value2 ,key3:value3, key4:, ,:value5"

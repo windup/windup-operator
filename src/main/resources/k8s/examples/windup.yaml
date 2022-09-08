@@ -42,3 +42,4 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
+  ingress_custom_labels: "key1: value1, key2 : value2 ,key3:value3, key4:, ,:value5"

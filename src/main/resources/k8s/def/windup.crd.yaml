@@ -211,6 +211,9 @@ spec:
                 tls_secret:
                   type: string
                   default: ""
+                ingress_custom_labels:
+                  type: string
+                  default: ""
               required:
                   - web_cpu_request
                   - web_mem_request

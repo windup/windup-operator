@@ -25,4 +25,16 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-
+          - name: RELATED_IMAGE_MTR_WEB
+            value: {{ mtr_web_pullspec }}
+          - name: RELATED_IMAGE_MTR_WEB_EXECUTOR
+            value: {{ mtr_web_executor_pullspec }}
+          - name: RELATED_IMAGE_POSTGRESQL
+            value: {{ postgresql_pullspec }}
+          resources:
+            limits:
+              cpu: 1
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 50Mi

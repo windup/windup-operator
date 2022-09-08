@@ -80,5 +80,6 @@ public class WindupResourceSpec implements KubernetesResource {
     private String executor_liveness_probe;
     private Integer executor_desired_replicas;
     private String tls_secret;
+    private String ingress_custom_labels;
 }
 
