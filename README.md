@@ -41,7 +41,7 @@ Applications application.
 Execute:
 
 ```shell
-mvn clean package -DskipTests \
+mvn clean package -DskipTests -Pnative \
 -Dquarkus.container-image.build=true \
 -Dquarkus.container-image.registry=quay.io \
 -Dquarkus.container-image.group=$USER \
@@ -77,7 +77,7 @@ Create k8s resources:
 ```shell
 cd src/main/resources/k8s/def/
 ./script.create.all.sh
-cd ../../../../../
+cd -
 ```
 
 ### Init Windup
