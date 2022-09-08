@@ -76,14 +76,21 @@ public class WindupDeployment {
 
   private Integer executor_desired_replicas;
 
+  private String webConsoleImage;
+  private String executorImage;
+  private String postgresqlImage;
+
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
-                          KubernetesClient k8sClient, String namespace, 
-                          String serviceAccount) {
+                          KubernetesClient k8sClient, String namespace, String serviceAccount,
+                          String webConsoleImage, String executorImage, String postgresqlImage) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
+    this.webConsoleImage = webConsoleImage;
+    this.executorImage = executorImage;
+    this.postgresqlImage = postgresqlImage;
     initParams();
   }
 
@@ -379,7 +386,7 @@ public class WindupDeployment {
           .withServiceAccount(serviceAccount).withTerminationGracePeriodSeconds(75L)
           .addNewContainer()
             .withName(application_name)
-            .withImage(windupResource.getSpec().getWeb_console_image())
+            .withImage(webConsoleImage)
             .withNewImagePullPolicy("Always")
             .withNewResources()
               .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getWeb_cpu_request())))
@@ -522,7 +529,7 @@ public class WindupDeployment {
                   .endPersistentVolumeClaim().build())
               .addNewContainer()
                 .withName(deployment_postgre)
-                .withImage(windupResource.getSpec().getPostgresql_image())
+                .withImage(postgresqlImage)
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getPostgresql_cpu_request())))
@@ -574,7 +581,7 @@ public class WindupDeployment {
               .withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
                 .withName(deployment_executor)
-                .withImage(windupResource.getSpec().getExecutor_image())
+                .withImage(executorImage)
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getExecutor_cpu_request())))

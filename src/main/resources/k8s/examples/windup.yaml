@@ -42,7 +42,3 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
-  # Container images
-  web_console_image: quay.io/windupeng/windup-web-openshift:latest
-  executor_image: quay.io/windupeng/windup-web-openshift-messaging-executor:latest
-  postgresql_image: registry.access.redhat.com/rhscl/postgresql-10-rhel7:1

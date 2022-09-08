@@ -18,8 +18,6 @@ public class WindupResourceSpec implements KubernetesResource {
     private String hostname_http;
     private String volumeCapacity;
     private String windup_Volume_Capacity;
-    private String web_console_image;
-    private String executor_image;
     private String messaging_serializer;
     private String db_jndi;
     private String db_username;
@@ -62,7 +60,6 @@ public class WindupResourceSpec implements KubernetesResource {
     private String postgresql_mem_request;
     private String postgresql_cpu_limit;
     private String postgresql_mem_limit;
-    private String postgresql_image;
     private String webLivenessInitialDelaySeconds;
     private String webLivenessTimeoutSeconds;
     private String webLivenessFailureThreshold;
