@@ -219,10 +219,10 @@ spec:
                   default: "registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"
                 web_readiness_probe:
                   type: string
-                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
                 web_liveness_probe:
                   type: string
-                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
+                  default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"
                 executor_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh"
