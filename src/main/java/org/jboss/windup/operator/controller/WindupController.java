@@ -30,10 +30,10 @@ public class WindupController implements Watcher<WindupResource> {
 	@Inject
 	KubernetesClient k8sClient;
 
-	@ConfigProperty(name = "RELATED_IMAGE_MTR_WEB")
+	@ConfigProperty(name = "RELATED_IMAGE_WINDUP_WEB")
 	String webConsoleImage;
 
-	@ConfigProperty(name = "RELATED_IMAGE_MTR_WEB_EXECUTOR")
+	@ConfigProperty(name = "RELATED_IMAGE_WINDUP_WEB_EXECUTOR")
 	String executorImage;
 
 	@ConfigProperty(name = "RELATED_IMAGE_POSTGRESQL")
