@@ -223,7 +223,7 @@
                   <artifacts>
                     <artifact>
                       <file>${project.build.directory}/${project.build.finalName}-runner</file>
-                      <type>runner</type>
+                      <type>bin</type>
                     </artifact>
                   </artifacts>
                 </configuration>
