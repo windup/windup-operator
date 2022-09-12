@@ -31,10 +31,13 @@ import org.jboss.windup.operator.model.WindupResourceList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Log
 public class WindupDeployment {
@@ -76,14 +79,21 @@ public class WindupDeployment {
 
   private Integer executor_desired_replicas;
 
+  private String webConsoleImage;
+  private String executorImage;
+  private String postgresqlImage;
+
   public WindupDeployment(WindupResource windupResource, MixedOperation<WindupResource, WindupResourceList, Resource<WindupResource>> crClient, 
-                          KubernetesClient k8sClient, String namespace, 
-                          String serviceAccount) {
+                          KubernetesClient k8sClient, String namespace, String serviceAccount,
+                          String webConsoleImage, String executorImage, String postgresqlImage) {
     this.windupResource = windupResource;
     this.crClient = crClient;
     this.k8sClient = k8sClient;
     this.namespace = namespace;
     this.serviceAccount = serviceAccount;
+    this.webConsoleImage = webConsoleImage;
+    this.executorImage = executorImage;
+    this.postgresqlImage = postgresqlImage;
     initParams();
   }
 
@@ -209,6 +219,18 @@ public class WindupDeployment {
         CREATEDBY, WINDUP_OPERATOR);
   }
 
+  private Map<String, String> getIngressLabels() {
+    String[] customLabelsEntries = windupResource.getSpec().getIngress_custom_labels().split(",");
+    Map<String, String> labels = new HashMap<>(getLabels());
+    Stream.of(customLabelsEntries)
+            .filter(Predicate.not(String::isBlank))
+            .forEach(customLabelsEntry -> {
+              String[] entry = customLabelsEntry.split(":");
+              if (entry.length == 2 && !entry[0].isBlank()) labels.put(entry[0].trim(), entry[1].trim());
+            });
+    return labels;
+  }
+
   // Checking the cluster domain on Openshift
   @SuppressWarnings("unchecked")
   private String getClusterDomainOnOpenshift() {
@@ -254,7 +276,7 @@ public class WindupDeployment {
     Ingress ingressObject = new IngressBuilder()
                 .withNewMetadata()
                   .withName(application_name)
-                  .withLabels(getLabels())
+                  .withLabels(getIngressLabels())
                   .addToAnnotations("description", "Route for application's http service.")
                   .addToAnnotations("console.alpha.openshift.io/overview-app-route", "true")
                   .withOwnerReferences(getOwnerReference())
@@ -379,7 +401,7 @@ public class WindupDeployment {
           .withServiceAccount(serviceAccount).withTerminationGracePeriodSeconds(75L)
           .addNewContainer()
             .withName(application_name)
-            .withImage(windupResource.getSpec().getWeb_console_image())
+            .withImage(webConsoleImage)
             .withNewImagePullPolicy("Always")
             .withNewResources()
               .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getWeb_cpu_request())))
@@ -522,7 +544,7 @@ public class WindupDeployment {
                   .endPersistentVolumeClaim().build())
               .addNewContainer()
                 .withName(deployment_postgre)
-                .withImage(windupResource.getSpec().getPostgresql_image())
+                .withImage(postgresqlImage)
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getPostgresql_cpu_request())))
@@ -574,7 +596,7 @@ public class WindupDeployment {
               .withTerminationGracePeriodSeconds(75L)
               .addNewContainer()
                 .withName(deployment_executor)
-                .withImage(windupResource.getSpec().getExecutor_image())
+                .withImage(executorImage)
                 .withNewImagePullPolicy("Always")
                 .withNewResources()
                   .addToRequests(Map.of("cpu", new Quantity(windupResource.getSpec().getExecutor_cpu_request())))
