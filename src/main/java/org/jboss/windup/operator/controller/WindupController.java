@@ -30,10 +30,19 @@ public class WindupController implements Watcher<WindupResource> {
 	@Inject
 	KubernetesClient k8sClient;
 
+	@ConfigProperty(name = "RELATED_IMAGE_WINDUP_WEB")
+	String webConsoleImage;
+
+	@ConfigProperty(name = "RELATED_IMAGE_WINDUP_WEB_EXECUTOR")
+	String executorImage;
+
+	@ConfigProperty(name = "RELATED_IMAGE_POSTGRESQL")
+	String postgresqlImage;
+
 	private void onAdd(WindupResource resource) {
 		log.info("Event ADD " + resource.getMetadata().getName());
 		if (!resource.isDeploying() && !resource.isReady()) {
-			new WindupDeployment(resource, crClient, k8sClient, namespace, serviceAccount).deploy();
+			new WindupDeployment(resource, crClient, k8sClient, namespace, serviceAccount, webConsoleImage, executorImage, postgresqlImage).deploy();
 		}
 	}
 

@@ -36,11 +36,9 @@ spec:
   postgresql_mem_request: "0.5Gi"
   postgresql_cpu_limit: "2"
   postgresql_mem_limit: "2Gi"
-  web_console_image: httpd
-  executor_image: httpd
-  postgresql_image: httpd
   web_liveness_probe: ""
   web_readiness_probe: ""
   executor_liveness_probe: ""
   executor_readiness_probe: ""
   executor_desired_replicas: 1
+  ingress_custom_labels: "key1: value1, key2 : value2 ,key3:value3, key4:, ,:value5"

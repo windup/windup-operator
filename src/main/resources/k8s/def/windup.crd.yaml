@@ -36,12 +36,6 @@ spec:
                 windup_Volume_Capacity:
                   type: string
                   default: "20G"
-                web_console_image:
-                  type: string
-                  default: "quay.io/windupeng/windup-web-openshift:latest"
-                executor_image:
-                  type: string
-                  default: "quay.io/windupeng/windup-web-openshift-messaging-executor:latest"
                 messaging_serializer:
                   type: string
                   default: "http.post.serializer"
@@ -199,9 +193,6 @@ spec:
                 executor_mem_limit:
                   type: string
                   default: "4Gi"
-                postgresql_image:
-                  type: string
-                  default: "registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"
                 web_readiness_probe:
                   type: string
                   default: "/bin/bash, -c, ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"
@@ -220,6 +211,9 @@ spec:
                 tls_secret:
                   type: string
                   default: ""
+                ingress_custom_labels:
+                  type: string
+                  default: ""
               required:
                   - web_cpu_request
                   - web_mem_request
@@ -229,8 +223,6 @@ spec:
                   - windup_Volume_Capacity
                   - db_database
                   - volumeCapacity
-                  - web_console_image
-                  - executor_image
                   - max_post_size
                   - sso_force_legacy_security
                   - executor_desired_replicas
