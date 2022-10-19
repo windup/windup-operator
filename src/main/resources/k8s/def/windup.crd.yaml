@@ -89,6 +89,7 @@ spec:
                   type: string
                 sso_ssl_required:
                   type: string
+                  default: "EXTERNAL"
                 sso_saml_keystore_secret:
                   type: string
                   default: "wildfly-app-secret"
