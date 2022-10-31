@@ -17,7 +17,7 @@ jobs:
 
       - name: Setup Minikube-Kubernetes
         # check version in https://github.com/manusa/actions-setup-minikube/releases
-        uses: manusa/actions-setup-minikube@v2.7.0
+        uses: manusa/actions-setup-minikube@v2.7.1
         with:
           # check version in https://github.com/kubernetes/minikube/releases
           minikube version: v1.26.1
