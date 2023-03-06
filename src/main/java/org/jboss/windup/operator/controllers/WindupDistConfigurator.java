@@ -19,18 +19,17 @@ package org.jboss.windup.operator.controllers;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.SecretKeySelector;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupSecretBasicAuth;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupWebService;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupSpec;
-import org.jboss.windup.operator.utils.CRDUtils;
 import io.quarkus.logging.Log;
+import org.jboss.windup.operator.Constants;
+import org.jboss.windup.operator.cdrs.v2alpha1.DBSecret;
+import org.jboss.windup.operator.cdrs.v2alpha1.WebConsolePersistentVolumeClaim;
+import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,12 +52,9 @@ public class WindupDistConfigurator {
         this.allVolumes = new ArrayList<>();
         this.allVolumeMounts = new ArrayList<>();
 
-        configureHttp();
+        configureDefaults();
         configureDatabase();
-        configureBasicAuth();
-        configureOidc();
-        configureSunat();
-        configureWorkspace();
+        configureDataDirectory();
     }
 
     public List<EnvVar> getAllEnvVars() {
@@ -73,121 +69,59 @@ public class WindupDistConfigurator {
         return allVolumeMounts;
     }
 
-    private void configureHttp() {
-        var optionMapper = optionMapper(cr.getSpec().getHttpSpec());
+    private void configureDefaults() {
+        List<EnvVar> envVars = optionMapper(cr.getSpec())
+                .mapOption("IS_MASTER", spec -> "true")
+                .mapOption("MESSAGING_SERIALIZER", spec -> "http.post.serializer")
+                .mapOption("AUTO_DEPLOY_EXPLODED", spec -> "false")
+                .mapOption("GC_MAX_METASPACE_SIZE", spec -> "512")
+                .mapOption("MAX_POST_SIZE", spec -> "4294967296")
+                .mapOption("SSO_FORCE_LEGACY_SECURITY", spec -> "false")
+                .getEnvVars();
 
-        configureTLS(optionMapper);
-
-        List<EnvVar> envVars = optionMapper.getEnvVars();
         allEnvVars.addAll(envVars);
-    }
-
-    private void configureTLS(OptionMapper<WindupSpec.HttpSpec> optionMapper) {
-        final String certFileOptionName = "QUARKUS_HTTP_SSL_CERTIFICATE_FILE";
-        final String keyFileOptionName = "QUARKUS_HTTP_SSL_CERTIFICATE_KEY_FILE";
-
-        if (!WindupWebService.isTlsConfigured(cr)) {
-            // for mapping and triggering warning in status if someone uses the fields directly
-            optionMapper.mapOption(certFileOptionName);
-            optionMapper.mapOption(keyFileOptionName);
-            return;
-        }
-
-        optionMapper.mapOption(certFileOptionName, Constants.CERTIFICATES_FOLDER + "/tls.crt");
-        optionMapper.mapOption(keyFileOptionName, Constants.CERTIFICATES_FOLDER + "/tls.key");
-
-        optionMapper.mapOption("QUARKUS_HTTP_INSECURE_REQUESTS", "redirect");
-
-        var volume = new VolumeBuilder()
-                .withName("searchpe-tls-certificates")
-                .withNewSecret()
-                .withSecretName(cr.getSpec().getHttpSpec().getTlsSecret())
-                .withOptional(false)
-                .endSecret()
-                .build();
-
-        var volumeMount = new VolumeMountBuilder()
-                .withName(volume.getName())
-                .withMountPath(Constants.CERTIFICATES_FOLDER)
-                .build();
-
-        allVolumes.add(volume);
-        allVolumeMounts.add(volumeMount);
     }
 
     private void configureDatabase() {
-        List<EnvVar> envVars = optionMapper(cr.getSpec().getDatabaseSpec())
-                .mapOption("QUARKUS_DATASOURCE_USERNAME", WindupSpec.DatabaseSpec::getUsernameSecret)
-                .mapOption("QUARKUS_DATASOURCE_PASSWORD", WindupSpec.DatabaseSpec::getPasswordSecret)
-                .mapOption("QUARKUS_DATASOURCE_JDBC_URL", WindupSpec.DatabaseSpec::getUrl)
-                .getEnvVars();
-        allEnvVars.addAll(envVars);
-    }
+        String dbSecretName = DBSecret.getSecretName(cr);
 
-    private void configureBasicAuth() {
-        boolean isBasicAuthEnabled = CRDUtils
-                .getValueFromSubSpec(cr.getSpec().getBasicAuthSpec(), WindupSpec.BasicAuthSpec::isEnabled)
-                .orElse(false);
-        if (!isBasicAuthEnabled) {
-            return;
-        }
-
-        SecretKeySelector sessionEncryptionKeySecret = CRDUtils
-                .getValueFromSubSpec(cr.getSpec().getBasicAuthSpec(), WindupSpec.BasicAuthSpec::getSessionEncryptionKeySecret)
-                .orElseGet(() -> new SecretKeySelector(Constants.BASIC_AUTH_SECRET_ENCRYPTIONKEY, WindupSecretBasicAuth.getSecretName(cr), false));
-
-        List<EnvVar> envVars = optionMapper(cr.getSpec().getBasicAuthSpec())
-                .mapOption("QUARKUS_HTTP_AUTH_SESSION_ENCRYPTION_KEY", basicAuthSpec -> sessionEncryptionKeySecret)
+        List<EnvVar> envVars = optionMapper(cr.getSpec())
+                .mapOption("DB_USERNAME", spec -> new SecretKeySelector(Constants.DB_SECRET_USERNAME, dbSecretName, false))
+                .mapOption("DB_PASSWORD", spec -> new SecretKeySelector(Constants.DB_SECRET_PASSWORD, dbSecretName, false))
+                .mapOption("DB_DATABASE", spec -> new SecretKeySelector(Constants.DB_SECRET_DATABASE_NAME, dbSecretName, false))
                 .getEnvVars();
 
         allEnvVars.addAll(envVars);
     }
 
-    private void configureOidc() {
-        boolean isOidcAuthEnabled = CRDUtils
-                .getValueFromSubSpec(cr.getSpec().getOidcSpec(), WindupSpec.OidcSpec::isEnabled)
-                .orElse(false);
-        if (!isOidcAuthEnabled) {
-            return;
-        }
-
-        List<EnvVar> envVars = optionMapper(cr.getSpec().getOidcSpec())
-                .mapOption("QUARKUS_OIDC_AUTH_SERVER_URL", WindupSpec.OidcSpec::getServerUrl)
-                .mapOption("QUARKUS_OIDC_CLIENT_ID", WindupSpec.OidcSpec::getClientId)
-                .mapOption("QUARKUS_OIDC_CREDENTIALS_SECRET", WindupSpec.OidcSpec::getCredentialsSecret)
-                .getEnvVars();
-
-        allEnvVars.addAll(envVars);
-    }
-
-    private void configureSunat() {
-        List<EnvVar> envVars = optionMapper(cr.getSpec().getSunatSpec())
-                .mapOption("SEARCHPE_SUNAT_PADRONREDUCIDOURL", WindupSpec.SunatSpec::getPadronReducidoUrl)
-                .mapOption("SEARCHPE_SCHEDULED_CRON", WindupSpec.SunatSpec::getPadronReducidoCron)
-                .getEnvVars();
-
-        allEnvVars.addAll(envVars);
-    }
-
-    private void configureWorkspace() {
-        var volume = new VolumeBuilder()
-                .withName("searchpe-workspace")
+    private void configureDataDirectory() {
+        var volume1 = new VolumeBuilder()
+                .withName("windup-web-pvol")
+                .withPersistentVolumeClaim(new PersistentVolumeClaimVolumeSourceBuilder()
+                        .withClaimName(WebConsolePersistentVolumeClaim.getPersistentVolumeClaimName(cr))
+                        .build()
+                )
+                .build();
+        var volume2 = new VolumeBuilder()
+                .withName("windup-web-pvol-data")
                 .withNewEmptyDir()
                 .endEmptyDir()
                 .build();
 
-        var volumeMount = new VolumeMountBuilder()
-                .withName(volume.getName())
-                .withMountPath(Constants.WORKSPACES_FOLDER)
+        var volumeMount1 = new VolumeMountBuilder()
+                .withName(volume1.getName())
+                .withMountPath("/opt/windup/data/windup")
+                .build();
+        var volumeMount2 = new VolumeMountBuilder()
+                .withName(volume2.getName())
+                .withMountPath("/opt/windup/data")
                 .build();
 
-        allEnvVars.add(new EnvVarBuilder()
-                .withName("SEARCHPE_WORKSPACE_DIRECTORY")
-                .withValue(Constants.WORKSPACES_FOLDER)
-                .build()
-        );
-        allVolumes.add(volume);
-        allVolumeMounts.add(volumeMount);
+        allVolumes.add(volume1);
+        allVolumes.add(volume2);
+
+        allVolumeMounts.add(volumeMount1);
+        allVolumeMounts.add(volumeMount2);
     }
 
     private <T> OptionMapper<T> optionMapper(T optionSpec) {

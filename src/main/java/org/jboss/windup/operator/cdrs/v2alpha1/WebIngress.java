@@ -16,47 +16,31 @@
  */
 package org.jboss.windup.operator.cdrs.v2alpha1;
 
-import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
-import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.utils.CRDUtils;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
-import io.quarkus.logging.Log;
+import org.jboss.windup.operator.Constants;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
-import java.util.Optional;
 
-public class WindupWebIngress extends CRUDKubernetesDependentResource<Ingress, Windup> implements Condition<Ingress, Windup> {
+@ApplicationScoped
+public class WebIngress extends CRUDKubernetesDependentResource<Ingress, Windup> implements Condition<Ingress, Windup> {
 
-    public WindupWebIngress() {
+    public WebIngress() {
         super(Ingress.class);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected Ingress desired(Windup cr, Context<Windup> context) {
-        boolean isIngressEnabled = cr.getSpec().getIngressSpec() != null && CRDUtils.getValueFromSubSpec(cr.getSpec().getIngressSpec(), WindupSpec.IngressSpec::isEnabled)
-                .orElse(false);
-
         return newIngress(cr, context);
     }
 
     @Override
     public boolean isMet(Windup cr, Ingress ingress, Context<Windup> context) {
-        boolean isIngressEnabled = CRDUtils.getValueFromSubSpec(cr.getSpec().getIngressSpec(), WindupSpec.IngressSpec::isEnabled)
-                .orElse(false);
-
-        if (!isIngressEnabled) {
-            return true;
-        }
-
         return context.getSecondaryResource(Ingress.class)
                 .map(in -> {
                     final var status = in.getStatus();
@@ -75,21 +59,20 @@ public class WindupWebIngress extends CRUDKubernetesDependentResource<Ingress, W
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-        var port = WindupWebService.getServicePort(cr);
-        var backendProtocol = (!WindupWebService.isTlsConfigured(cr)) ? "HTTP" : "HTTPS";
+        var port = WebService.getServicePort(cr);
 
         Ingress ingress = new IngressBuilder()
                 .withNewMetadata()
                 .withName(cr.getMetadata().getName() + Constants.INGRESS_SUFFIX)
                 .withNamespace(cr.getMetadata().getNamespace())
-                .addToAnnotations("nginx.ingress.kubernetes.io/backend-protocol", backendProtocol)
+                .addToAnnotations("nginx.ingress.kubernetes.io/backend-protocol", "HTTP")
                 .addToAnnotations("route.openshift.io/termination", "passthrough")
                 .withLabels(labels)
                 .endMetadata()
                 .withNewSpec()
                 .withNewDefaultBackend()
                 .withNewService()
-                .withName(cr.getMetadata().getName() + Constants.WEB_SERVICE_SUFFIX)
+                .withName(getIngressName(cr))
                 .withNewPort()
                 .withNumber(port)
                 .endPort()
@@ -102,7 +85,7 @@ public class WindupWebIngress extends CRUDKubernetesDependentResource<Ingress, W
                 .withPathType("ImplementationSpecific")
                 .withNewBackend()
                 .withNewService()
-                .withName(cr.getMetadata().getName() + Constants.WEB_SERVICE_SUFFIX)
+                .withName(WebService.getServiceName(cr))
                 .withNewPort()
                 .withNumber(port)
                 .endPort()
@@ -127,41 +110,45 @@ public class WindupWebIngress extends CRUDKubernetesDependentResource<Ingress, W
         return ingress;
     }
 
-    @SuppressWarnings("unchecked")
-    private Optional<String> getClusterDomainOnOpenshift(Context<Windup> context) {
-        final var k8sClient = (KubernetesClient) context.managedDependentResourceContext()
-                .getMandatory(Constants.CONTEXT_K8S_CLIENT_KEY, KubernetesClient.class);
+//    @SuppressWarnings("unchecked")
+//    private Optional<String> getClusterDomainOnOpenshift(Context<Windup> context) {
+//        final var k8sClient = (KubernetesClient) context.managedDependentResourceContext()
+//                .getMandatory(Constants.CONTEXT_K8S_CLIENT_KEY, KubernetesClient.class);
+//
+//        String clusterDomain = null;
+//        try {
+//            CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
+//                    .withName("Ingress")
+//                    .withGroup("config.openshift.io")
+//                    .withVersion("v1")
+//                    .withPlural("ingresses")
+//                    .withScope("Cluster")
+//                    .build();
+//            GenericKubernetesResource clusterObject = k8sClient.genericKubernetesResources(customResourceDefinitionContext)
+//                    .withName("cluster")
+//                    .get();
+//            Map<String, String> objectSpec = clusterObject.get("spec");
+//            clusterDomain = objectSpec.get("domain");
+//
+//            Log.info("Domain " + clusterDomain);
+//        } catch (KubernetesClientException exception) {
+//            // Nothing to do
+//            Log.info("No Openshift host found");
+//        }
+//
+//        return Optional.ofNullable(clusterDomain);
+//    }
+//
+//    public static Optional<String> getExposedURL(Windup cr, Ingress ingress) {
+//        final var status = ingress.getStatus();
+//        final var ingresses = status.getLoadBalancer().getIngress();
+//        Optional<LoadBalancerIngress> ing = ingresses.isEmpty() ? Optional.empty() : Optional.of(ingresses.get(0));
+//
+//        final var protocol = WindupWebService.isTlsConfigured(cr) ? "https" : "http";
+//        return ing.map(i -> protocol + "://" + (i.getHostname() != null ? i.getHostname() : i.getIp()));
+//    }
 
-        String clusterDomain = null;
-        try {
-            CustomResourceDefinitionContext customResourceDefinitionContext = new CustomResourceDefinitionContext.Builder()
-                    .withName("Ingress")
-                    .withGroup("config.openshift.io")
-                    .withVersion("v1")
-                    .withPlural("ingresses")
-                    .withScope("Cluster")
-                    .build();
-            GenericKubernetesResource clusterObject = k8sClient.genericKubernetesResources(customResourceDefinitionContext)
-                    .withName("cluster")
-                    .get();
-            Map<String, String> objectSpec = clusterObject.get("spec");
-            clusterDomain = objectSpec.get("domain");
-
-            Log.info("Domain " + clusterDomain);
-        } catch (KubernetesClientException exception) {
-            // Nothing to do
-            Log.info("No Openshift host found");
-        }
-
-        return Optional.ofNullable(clusterDomain);
-    }
-
-    public static Optional<String> getExposedURL(Windup cr, Ingress ingress) {
-        final var status = ingress.getStatus();
-        final var ingresses = status.getLoadBalancer().getIngress();
-        Optional<LoadBalancerIngress> ing = ingresses.isEmpty() ? Optional.empty() : Optional.of(ingresses.get(0));
-
-        final var protocol = WindupWebService.isTlsConfigured(cr) ? "https" : "http";
-        return ing.map(i -> protocol + "://" + (i.getHostname() != null ? i.getHostname() : i.getIp()));
+    public String getIngressName(Windup cr) {
+        return cr.getMetadata().getName() + Constants.WEB_SERVICE_SUFFIX;
     }
 }

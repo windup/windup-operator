@@ -26,6 +26,7 @@ public interface Config {
     interface Windup {
         String webImage();
         String executorImage();
+        String dbImage();
 
         String imagePullPolicy();
     }

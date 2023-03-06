@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.SecretKeySelector;
-import org.jboss.windup.operator.ValueOrSecret;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,27 +33,14 @@ import java.util.List;
 @NoArgsConstructor
 public class WindupSpec {
 
-    @JsonPropertyDescription("Number of instances. Default is 1.")
-    private int instances = 1;
+    @JsonPropertyDescription("Number of instances of the executor pod. Default is 1.")
+    private int executorInstances = 1;
 
-    @JsonPropertyDescription("Custom image to be used.")
-    private String image;
+    @JsonPropertyDescription("Size of the PVC where the reports will be stored")
+    private String dataSize = "1G";
 
     @JsonPropertyDescription("Secret(s) that might be used when pulling an image from a private container image registry or repository.")
     private List<LocalObjectReference> imagePullSecrets;
-
-    @JsonPropertyDescription("Configuration of the server.\n" +
-            "expressed as a keys and values that can be either direct values or references to secrets.")
-    private List<ValueOrSecret> additionalOptions;
-
-    @JsonProperty("http")
-    @JsonPropertyDescription("In this section you can configure features related to HTTP and HTTPS")
-    private HttpSpec httpSpec;
-
-    @JsonProperty("ingress")
-    @JsonPropertyDescription("The deployment is, by default, exposed through a basic ingress.\n" +
-            "You can change this behaviour by setting the enabled property to false.")
-    private IngressSpec ingressSpec;
 
     @JsonProperty("db")
     @JsonPropertyDescription("In this section you can find all properties related to connect to a database.")
@@ -67,24 +53,6 @@ public class WindupSpec {
     @JsonProperty("oidc")
     @JsonPropertyDescription("In this section you can configure Oidc settings.")
     private OidcSpec oidcSpec;
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class HttpSpec {
-        @JsonPropertyDescription("A secret containing the TLS configuration for HTTPS. Reference: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets.")
-        private String tlsSecret;
-    }
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class IngressSpec {
-        @JsonProperty("enabled")
-        private boolean enabled = true;
-    }
 
     @Data
     @Builder

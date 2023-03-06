@@ -18,25 +18,24 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import org.jboss.windup.operator.Constants;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.jboss.windup.operator.Constants;
 
-import java.util.Base64;
 import java.util.Map;
-import java.util.UUID;
 
-public class WindupSecretBasicAuth extends CRUDKubernetesDependentResource<Secret, Windup> implements Creator<Secret, Windup> {
+public class DBSecret extends CRUDKubernetesDependentResource<Secret, Windup> implements Creator<Secret, Windup> {
 
-    public WindupSecretBasicAuth() {
+    public DBSecret() {
         super(Secret.class);
     }
 
     @Override
     protected Secret desired(Windup cr, Context<Windup> context) {
-        return newIngress(cr, context);
+        return newSecret(cr, context);
     }
 
     @Override
@@ -46,27 +45,23 @@ public class WindupSecretBasicAuth extends CRUDKubernetesDependentResource<Secre
     }
 
     @SuppressWarnings("unchecked")
-    private Secret newIngress(Windup cr, Context<Windup> context) {
+    private Secret newSecret(Windup cr, Context<Windup> context) {
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-        String encryptionKey = Base64.getEncoder().encodeToString(UUID.randomUUID().toString().getBytes());
-
-        Secret secret = new SecretBuilder()
+        return new SecretBuilder()
                 .withNewMetadata()
                 .withName(getSecretName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
                 .endMetadata()
-                .withData(Map.of(
-                        Constants.BASIC_AUTH_SECRET_ENCRYPTIONKEY, encryptionKey
-                ))
+                .addToStringData(Constants.DB_SECRET_USERNAME, RandomStringUtils.randomAlphanumeric(8))
+                .addToStringData(Constants.DB_SECRET_PASSWORD, RandomStringUtils.randomAlphanumeric(8))
+                .addToStringData(Constants.DB_SECRET_DATABASE_NAME, "windup")
                 .build();
-
-        return secret;
     }
 
     public static String getSecretName(Windup cr) {
-        return cr.getMetadata().getName() + Constants.BASIC_AUTH_SECRET_SUFFIX + Constants.SECRET_SUFFIX;
+        return cr.getMetadata().getName() + Constants.DB_SECRET_SUFFIX;
     }
 }

@@ -22,61 +22,53 @@ import io.fabric8.kubernetes.api.model.ServiceSpec;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.utils.CRDUtils;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 
-public class WindupWebService extends CRUDKubernetesDependentResource<Service, Windup> {
+@KubernetesDependent(resourceDiscriminator = DBServiceDiscriminator.class)
+@ApplicationScoped
+public class DBService extends CRUDKubernetesDependentResource<Service, Windup> {
 
-    public WindupWebService() {
+    public DBService() {
         super(Service.class);
     }
 
     @Override
-    public Service desired(Windup cr, Context context) {
+    public Service desired(Windup cr, Context<Windup> context) {
         return newService(cr, context);
     }
 
     @SuppressWarnings("unchecked")
-    private Service newService(Windup cr, Context context) {
+    private Service newService(Windup cr, Context<Windup> context) {
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-        Service service = new ServiceBuilder()
+        return new ServiceBuilder()
                 .withNewMetadata()
-                .withName(cr.getMetadata().getName() + Constants.WEB_SERVICE_SUFFIX)
+                .withName(getServiceName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
                 .endMetadata()
                 .withSpec(getServiceSpec(cr))
                 .build();
-        return service;
     }
 
     private ServiceSpec getServiceSpec(Windup cr) {
         return new ServiceSpecBuilder()
                 .addNewPort()
-                .withPort(getServicePort(cr))
+                .withPort(5432)
                 .withProtocol(Constants.SERVICE_PROTOCOL)
                 .endPort()
-                .withSelector(Constants.DEFAULT_LABELS)
+                .withSelector(Constants.DB_SELECTOR_LABELS)
                 .withType("ClusterIP")
                 .build();
     }
 
-    public static int getServicePort(Windup cr) {
-        // we assume HTTP when TLS is not configured
-        if (!isTlsConfigured(cr)) {
-            return Constants.HTTP_PORT;
-        } else {
-            return Constants.HTTPS_PORT;
-        }
-    }
-
-    public static boolean isTlsConfigured(Windup cr) {
-        var tlsSecret = CRDUtils.getValueFromSubSpec(cr.getSpec().getHttpSpec(), WindupSpec.HttpSpec::getTlsSecret);
-        return tlsSecret.isPresent() && !tlsSecret.get().trim().isEmpty();
+    public static String getServiceName(Windup cr) {
+        return cr.getMetadata().getName() + Constants.DB_SERVICE_SUFFIX;
     }
 
 }

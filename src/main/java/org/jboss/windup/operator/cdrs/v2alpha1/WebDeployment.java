@@ -19,10 +19,7 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.EnvVarBuilder;
-import io.fabric8.kubernetes.api.model.EnvVarSource;
-import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
-import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
+import io.fabric8.kubernetes.api.model.ExecActionBuilder;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
 import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
@@ -33,24 +30,27 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
-import org.jboss.windup.operator.Config;
-import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.ValueOrSecret;
-import org.jboss.windup.operator.controllers.WindupDistConfigurator;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
+import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
+import org.jboss.windup.operator.Config;
+import org.jboss.windup.operator.Constants;
+import org.jboss.windup.operator.controllers.WindupDistConfigurator;
 
-import java.util.ArrayList;
+import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deployment, Windup> implements Matcher<Deployment, Windup> {
+@KubernetesDependent(resourceDiscriminator = WebDeploymentDiscriminator.class)
+@ApplicationScoped
+public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, Windup>
+        implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
 
-    public WindupWebDeployment() {
+    public WebDeployment() {
         super(Deployment.class);
     }
 
@@ -62,16 +62,29 @@ public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deploym
 
     @Override
     public Result<Deployment> match(Deployment actual, Windup cr, Context<Windup> context) {
-        final var desiredSpec = cr.getSpec();
         final var container = actual.getSpec()
                 .getTemplate().getSpec().getContainers()
                 .stream()
                 .findFirst();
 
         return Result.nonComputed(container
-                .map(c -> c.getImage().equals(desiredSpec.getImage()))
+                .map(c -> c.getImage() != null)
                 .orElse(false)
         );
+    }
+
+    @Override
+    public boolean isMet(Windup primary, Deployment secondary, Context<Windup> context) {
+        return context.getSecondaryResource(Deployment.class, new WebDeploymentDiscriminator())
+                .map(deployment -> {
+                    final var status = deployment.getStatus();
+                    if (status != null) {
+                        final var readyReplicas = status.getReadyReplicas();
+                        return readyReplicas != null && readyReplicas >= 1;
+                    }
+                    return false;
+                })
+                .orElse(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -79,15 +92,14 @@ public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deploym
         final var contextLabels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-        Deployment deployment = new DeploymentBuilder()
+        return new DeploymentBuilder()
                 .withNewMetadata()
-                .withName(cr.getMetadata().getName() + Constants.DEPLOYMENT_SUFFIX)
+                .withName(getDeploymentName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(contextLabels)
                 .endMetadata()
                 .withSpec(getDeploymentSpec(cr, context, distConfigurator))
                 .build();
-        return deployment;
     }
 
     @SuppressWarnings("unchecked")
@@ -97,28 +109,16 @@ public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deploym
         final var contextLabels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-        Map<String, String> selectorLabels = Constants.DEFAULT_LABELS;
-        String image = Optional.ofNullable(cr.getSpec().getImage()).orElse(config.windup().webImage());
+        Map<String, String> selectorLabels = Constants.WEB_SELECTOR_LABELS;
+        String image = config.windup().webImage();
         String imagePullPolicy = config.windup().imagePullPolicy();
 
-        List<EnvVar> envVars = Stream.concat(
-                getEnvVars(cr, config).stream(),
-                distConfigurator.getAllEnvVars().stream()
-        ).collect(Collectors.toList());
+        List<EnvVar> envVars = distConfigurator.getAllEnvVars();
         List<Volume> volumes = distConfigurator.getAllVolumes();
         List<VolumeMount> volumeMounts = distConfigurator.getAllVolumeMounts();
 
-        var tlsConfigured = WindupWebService.isTlsConfigured(cr);
-        var protocol = !tlsConfigured ? "http" : "https";
-        var port = WindupWebService.getServicePort(cr);
-
-        var baseProbe = new ArrayList<>(List.of("curl", "--head", "--fail", "--silent"));
-        if (tlsConfigured) {
-            baseProbe.add("--insecure");
-        }
-
         return new DeploymentSpecBuilder()
-                .withReplicas(cr.getSpec().getInstances())
+                .withReplicas(1)
                 .withSelector(new LabelSelectorBuilder()
                         .withMatchLabels(selectorLabels)
                         .build()
@@ -146,31 +146,36 @@ public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deploym
                                                         .withContainerPort(8080)
                                                         .build(),
                                                 new ContainerPortBuilder()
-                                                        .withName("https")
+                                                        .withName("jolokia")
                                                         .withProtocol("TCP")
-                                                        .withContainerPort(8443)
+                                                        .withContainerPort(8778)
+                                                        .build(),
+                                                new ContainerPortBuilder()
+                                                        .withName("ping")
+                                                        .withProtocol("TCP")
+                                                        .withContainerPort(8888)
                                                         .build()
                                         )
                                         .withReadinessProbe(new ProbeBuilder()
-                                                .withHttpGet(new HTTPGetActionBuilder()
-                                                        .withPath("/q/health/ready")
-                                                        .withNewPort("http")
+                                                .withExec(new ExecActionBuilder()
+                                                        .withCommand("/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'")
                                                         .build()
                                                 )
-                                                .withInitialDelaySeconds(20)
+                                                .withInitialDelaySeconds(120)
+                                                .withTimeoutSeconds(10)
                                                 .withPeriodSeconds(2)
-                                                .withFailureThreshold(250)
+                                                .withFailureThreshold(3)
                                                 .build()
                                         )
                                         .withLivenessProbe(new ProbeBuilder()
-                                                .withHttpGet(new HTTPGetActionBuilder()
-                                                        .withPath("/q/health/live")
-                                                        .withNewPort("http")
+                                                .withExec(new ExecActionBuilder()
+                                                        .withCommand("/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'")
                                                         .build()
                                                 )
-                                                .withInitialDelaySeconds(20)
+                                                .withInitialDelaySeconds(120)
+                                                .withTimeoutSeconds(10)
                                                 .withPeriodSeconds(2)
-                                                .withFailureThreshold(150)
+                                                .withFailureThreshold(3)
                                                 .build()
                                         )
                                         .withVolumeMounts(volumeMounts)
@@ -184,34 +189,8 @@ public class WindupWebDeployment extends CRUDKubernetesDependentResource<Deploym
                 .build();
     }
 
-    private List<EnvVar> getEnvVars(Windup cr, Config config) {
-        // default config values
-        List<ValueOrSecret> serverConfig = Constants.DEFAULT_DIST_CONFIG.entrySet().stream()
-                .map(e -> new ValueOrSecret(e.getKey(), e.getValue(), null))
-                .collect(Collectors.toList());
-
-        // merge with the CR; the values in CR take precedence
-        if (cr.getSpec().getAdditionalOptions() != null) {
-            serverConfig.removeAll(cr.getSpec().getAdditionalOptions());
-            serverConfig.addAll(cr.getSpec().getAdditionalOptions());
-        }
-
-        // set env vars
-        List<EnvVar> envVars = serverConfig.stream()
-                .map(v -> {
-                    String envValue = v.getValue();
-                    EnvVarSource envValueFrom = new EnvVarSourceBuilder()
-                            .withSecretKeyRef(v.getSecret())
-                            .build();
-
-                    return new EnvVarBuilder()
-                            .withName(v.getName())
-                            .withValue(v.getSecret() == null ? envValue : null)
-                            .withValueFrom(v.getSecret() != null ? envValueFrom : null)
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        return envVars;
+    public static String getDeploymentName(Windup cr) {
+        return cr.getMetadata().getName() + Constants.WEB_DEPLOYMENT_SUFFIX;
     }
+
 }

@@ -1,13 +1,6 @@
 kind: "Windup"
 apiVersion: "windup.jboss.org/v1"
 metadata:
-  name: windup
+  name: test
 spec:
-  db:
-    usernameSecret:
-      name: postgresql-pguser-foo
-      key: user
-    passwordSecret:
-      name: postgresql-pguser-foo
-      key: password
-    url: jdbc:postgresql://postgresql-primary.default.svc:5432/windupdb
+

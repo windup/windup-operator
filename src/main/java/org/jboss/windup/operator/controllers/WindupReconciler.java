@@ -16,38 +16,66 @@
  */
 package org.jboss.windup.operator.controllers;
 
-import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.jboss.windup.operator.Config;
-import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupWebDeployment;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupWebIngress;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupSecretBasicAuth;
-import org.jboss.windup.operator.cdrs.v2alpha1.WindupWebService;
+import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ContextInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
+import io.javaoperatorsdk.operator.processing.event.source.EventSource;
+import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
 import org.jboss.logging.Logger;
+import org.jboss.windup.operator.Config;
+import org.jboss.windup.operator.Constants;
+import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
+import org.jboss.windup.operator.cdrs.v2alpha1.DBPersistentVolumeClaim;
+import org.jboss.windup.operator.cdrs.v2alpha1.DBSecret;
+import org.jboss.windup.operator.cdrs.v2alpha1.DBService;
+import org.jboss.windup.operator.cdrs.v2alpha1.ExecutorDeployment;
+import org.jboss.windup.operator.cdrs.v2alpha1.WebConsolePersistentVolumeClaim;
+import org.jboss.windup.operator.cdrs.v2alpha1.WebDeployment;
+import org.jboss.windup.operator.cdrs.v2alpha1.WebIngress;
+import org.jboss.windup.operator.cdrs.v2alpha1.WebService;
+import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
 
 import javax.inject.Inject;
 import java.time.Duration;
 import java.util.Map;
 
-import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
+import static org.jboss.windup.operator.controllers.WindupReconciler.DEPLOYMENT_EVENT_SOURCE;
+import static org.jboss.windup.operator.controllers.WindupReconciler.PVC_EVENT_SOURCE;
+import static org.jboss.windup.operator.controllers.WindupReconciler.SERVICE_EVENT_SOURCE;
 
-@ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE, name = "windup", dependents = {
-        @Dependent(name = "secret", type = WindupSecretBasicAuth.class),
-        @Dependent(name = "deployment", type = WindupWebDeployment.class),
-        @Dependent(name = "service", type = WindupWebService.class),
-        @Dependent(name = "ingress", type = WindupWebIngress.class, readyPostcondition = WindupWebIngress.class, dependsOn = "service")
-})
-public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<Windup> {
+@ControllerConfiguration(
+//        namespaces = WATCH_CURRENT_NAMESPACE,
+//        name = "windup",
+        dependents = {
+                @Dependent(name = "db-pvc", type = DBPersistentVolumeClaim.class, useEventSourceWithName = PVC_EVENT_SOURCE),
+                @Dependent(name = "db-secret", type = DBSecret.class),
+                @Dependent(name = "db-deployment", type = DBDeployment.class, dependsOn = {"db-pvc", "db-secret"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE, readyPostcondition = DBDeployment.class),
+                @Dependent(name = "db-service", type = DBService.class, dependsOn = {"db-deployment"}, useEventSourceWithName = SERVICE_EVENT_SOURCE),
+                @Dependent(name = "web-pvc", type = WebConsolePersistentVolumeClaim.class, useEventSourceWithName = PVC_EVENT_SOURCE),
+                @Dependent(name = "web-deployment", type = WebDeployment.class, dependsOn = {"db-deployment", "db-service", "web-pvc"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE, readyPostcondition = WebDeployment.class),
+                @Dependent(name = "web-service", type = WebService.class, dependsOn = {"web-deployment"}, useEventSourceWithName = SERVICE_EVENT_SOURCE),
+                @Dependent(name = "executor-deployment", type = ExecutorDeployment.class, dependsOn = {"web-service"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE),
+                @Dependent(name = "ingress", type = WebIngress.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngress.class)
+        }
+)
+public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<Windup>,
+        EventSourceInitializer<Windup> {
 
     private static final Logger logger = Logger.getLogger(WindupReconciler.class);
+
+    public static final String PVC_EVENT_SOURCE = "PVCEventSource";
+    public static final String DEPLOYMENT_EVENT_SOURCE = "DeploymentEventSource";
+    public static final String SERVICE_EVENT_SOURCE = "ServiceEventSource";
 
     @Inject
     Config config;
@@ -58,8 +86,9 @@ public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<
     @Override
     public void initContext(Windup cr, Context<Windup> context) {
         final var labels = Map.of(
+                "app.kubernetes.io/managed-by", "windup-operator",
                 "app.kubernetes.io/name", cr.getMetadata().getName(),
-                "openubl-operator/cluster", Constants.WINDUP_WEB_NAME
+                "openubl-operator/cluster", Constants.WINDUP_NAME
         );
         context.managedDependentResourceContext().put(Constants.CONTEXT_LABELS_KEY, labels);
         context.managedDependentResourceContext().put(Constants.CONTEXT_CONFIG_KEY, config);
@@ -69,26 +98,33 @@ public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<
     @SuppressWarnings("unchecked")
     @Override
     public UpdateControl<Windup> reconcile(Windup cr, Context context) {
-        final var name = cr.getMetadata().getName();
-
-        // retrieve the workflow reconciliation result and re-schedule if we have dependents that are not yet ready
         return context.managedDependentResourceContext()
                 .getWorkflowReconcileResult()
                 .map(wrs -> {
                     if (wrs.allDependentResourcesReady()) {
-                        Ingress ingress = (Ingress) context.getSecondaryResource(Ingress.class).orElseThrow();
-                        final var url = WindupWebIngress.getExposedURL(cr, ingress);
-                        url.ifPresent(serverUrl -> {
-                            logger.infof("App %s is exposed and ready to be used at %s", name, serverUrl);
-                        });
                         return UpdateControl.<Windup>noUpdate();
                     } else {
                         final var duration = Duration.ofSeconds(5);
-                        logger.infof("App %s is not ready yet, rescheduling reconciliation after %ss", name, duration.toSeconds());
                         return UpdateControl.<Windup>noUpdate().rescheduleAfter(duration);
                     }
                 })
                 .orElseThrow();
     }
 
+    @Override
+    public Map<String, EventSource> prepareEventSources(EventSourceContext<Windup> context) {
+        var pcvInformerConfiguration = InformerConfiguration.from(PersistentVolumeClaim.class, context).build();
+        var deploymentInformerConfiguration = InformerConfiguration.from(Deployment.class, context).build();
+        var serviceInformerConfiguration = InformerConfiguration.from(Service.class, context).build();
+
+        var pcvInformerEventSource = new InformerEventSource<>(pcvInformerConfiguration, context);
+        var deploymentInformerEventSource = new InformerEventSource<>(deploymentInformerConfiguration, context);
+        var serviceInformerEventSource = new InformerEventSource<>(serviceInformerConfiguration, context);
+
+        return Map.of(
+                PVC_EVENT_SOURCE, pcvInformerEventSource,
+                DEPLOYMENT_EVENT_SOURCE, deploymentInformerEventSource,
+                SERVICE_EVENT_SOURCE, serviceInformerEventSource
+        );
+    }
 }
