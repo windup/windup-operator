@@ -26,6 +26,8 @@ import io.fabric8.kubernetes.api.model.LifecycleHandlerBuilder;
 import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -39,6 +41,7 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernete
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.windup.operator.Config;
 import org.jboss.windup.operator.Constants;
+import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Arrays;
@@ -98,6 +101,9 @@ public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployme
         Map<String, String> selectorLabels = Constants.DB_SELECTOR_LABELS;
         String image = config.windup().executorImage();
         String imagePullPolicy = config.windup().imagePullPolicy();
+
+        WindupSpec.ResourcesLimitSpec resourcesLimitSpec = CRDUtils.getValueFromSubSpec(cr.getSpec(), WindupSpec::getExecutorResourceLimitSpec)
+                .orElse(null);
 
         return new DeploymentSpecBuilder()
                 .withStrategy(new DeploymentStrategyBuilder()
@@ -162,6 +168,17 @@ public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployme
                                         .withVolumeMounts(new VolumeMountBuilder()
                                                 .withName("executor-pvol")
                                                 .withMountPath("/opt/windup/data")
+                                                .build()
+                                        )
+                                        .withResources(new ResourceRequirementsBuilder()
+                                                .withRequests(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuRequest).orElse("0.5")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryRequest).orElse("0.5Gi"))
+                                                ))
+                                                .withLimits(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuLimit).orElse("4")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryLimit).orElse("4Gi"))
+                                                ))
                                                 .build()
                                         )
                                         .build()

@@ -46,6 +46,7 @@ public class DBPersistentVolumeClaim extends CRUDKubernetesDependentResource<Per
         return newPersistentVolumeClaim(cr, context);
     }
 
+    @SuppressWarnings("unchecked")
     private PersistentVolumeClaim newPersistentVolumeClaim(Windup cr, Context<Windup> context) {
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
@@ -73,12 +74,11 @@ public class DBPersistentVolumeClaim extends CRUDKubernetesDependentResource<Per
     @Override
     public Matcher.Result<PersistentVolumeClaim> match(PersistentVolumeClaim actual, Windup cr, Context<Windup> context) {
         final var desiredPersistentVolumeClaimName = getPersistentVolumeClaimName(cr);
-        Matcher.Result<PersistentVolumeClaim> objectResult = Matcher.Result.nonComputed(actual
+        return Matcher.Result.nonComputed(actual
                 .getMetadata()
                 .getName()
                 .equals(desiredPersistentVolumeClaimName)
         );
-        return objectResult;
     }
 
     public static String getPersistentVolumeClaimName(Windup cr) {

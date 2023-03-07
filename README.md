@@ -5,7 +5,7 @@
 Start minikube
 
 ```shell
-minikube start
+minikube start --cpus=8 --memory=10g
 minikube addons enable ingress
 ```
 

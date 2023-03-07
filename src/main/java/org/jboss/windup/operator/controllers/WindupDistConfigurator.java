@@ -30,6 +30,7 @@ import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBSecret;
 import org.jboss.windup.operator.cdrs.v2alpha1.WebConsolePersistentVolumeClaim;
 import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
+import org.jboss.windup.operator.cdrs.v2alpha1.WindupSpec;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +56,7 @@ public class WindupDistConfigurator {
         configureDefaults();
         configureDatabase();
         configureDataDirectory();
+        configureSSO();
     }
 
     public List<EnvVar> getAllEnvVars() {
@@ -76,6 +78,7 @@ public class WindupDistConfigurator {
                 .mapOption("AUTO_DEPLOY_EXPLODED", spec -> "false")
                 .mapOption("GC_MAX_METASPACE_SIZE", spec -> "512")
                 .mapOption("MAX_POST_SIZE", spec -> "4294967296")
+                .mapOption("SSO_DISABLE_SSL_CERTIFICATE_VALIDATION", spec -> "true")
                 .mapOption("SSO_FORCE_LEGACY_SECURITY", spec -> "false")
                 .getEnvVars();
 
@@ -122,6 +125,17 @@ public class WindupDistConfigurator {
 
         allVolumeMounts.add(volumeMount1);
         allVolumeMounts.add(volumeMount2);
+    }
+
+    private void configureSSO() {
+        List<EnvVar> envVars = optionMapper(cr.getSpec().getSsoSpec())
+                .mapOption("SSO_AUTH_SERVER_URL", WindupSpec.SSOSpec::getServerUrl)
+                .mapOption("SSO_REALM", WindupSpec.SSOSpec::getRealm)
+                .mapOption("SSO_SSL_REQUIRED", WindupSpec.SSOSpec::getSslRequired)
+                .mapOption("SSO_CLIENT_ID", WindupSpec.SSOSpec::getClientId)
+                .getEnvVars();
+
+        allEnvVars.addAll(envVars);
     }
 
     private <T> OptionMapper<T> optionMapper(T optionSpec) {

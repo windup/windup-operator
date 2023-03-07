@@ -19,7 +19,6 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
-import io.fabric8.kubernetes.api.model.SecretKeySelector;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,7 +36,7 @@ public class WindupSpec {
     private int executorInstances = 1;
 
     @JsonPropertyDescription("Size of the PVC where the reports will be stored")
-    private String dataSize = "1G";
+    private String dataSize = "20G";
 
     @JsonPropertyDescription("Secret(s) that might be used when pulling an image from a private container image registry or repository.")
     private List<LocalObjectReference> imagePullSecrets;
@@ -50,9 +49,17 @@ public class WindupSpec {
     @JsonPropertyDescription("In this section you can configure hostname and related properties.")
     private HostnameSpec hostnameSpec;
 
-    @JsonProperty("oidc")
-    @JsonPropertyDescription("In this section you can configure Oidc settings.")
-    private OidcSpec oidcSpec;
+    @JsonProperty("sso")
+    @JsonPropertyDescription("In this section you can configure SSO settings.")
+    private SSOSpec ssoSpec;
+
+    @JsonProperty("webResourceLimits")
+    @JsonPropertyDescription("In this section you can configure resource limits settings for the Web Console.")
+    private ResourcesLimitSpec webResourceLimitSpec;
+
+    @JsonProperty("executorResourceLimits")
+    @JsonPropertyDescription("In this section you can configure resource limits settings for the Executor.")
+    private ResourcesLimitSpec executorResourceLimitSpec;
 
     @Data
     @Builder
@@ -61,6 +68,10 @@ public class WindupSpec {
     public static class DatabaseSpec {
         @JsonPropertyDescription("Size of the PVC to create.")
         private String size;
+
+        @JsonProperty("resourceLimits")
+        @JsonPropertyDescription("In this section you can configure resource limits settings.")
+        private ResourcesLimitSpec resourceLimitSpec;
     }
 
     @Data
@@ -76,18 +87,35 @@ public class WindupSpec {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OidcSpec {
-        @JsonPropertyDescription("Enable Oidc Auth.")
-        private boolean enabled;
-
-        @JsonPropertyDescription("Oidc server url.")
+    public static class SSOSpec {
+        @JsonPropertyDescription("Server url.")
         private String serverUrl;
 
-        @JsonPropertyDescription("Oidc client id.")
-        private String clientId;
+        @JsonPropertyDescription("Realm.")
+        private String realm;
 
-        @JsonPropertyDescription("Oidc client id.")
-        private SecretKeySelector credentialsSecret;
+        @JsonPropertyDescription("SSL required property. Valid values are: 'ALL', 'EXTERNAL', 'NONE'.")
+        private String sslRequired = "EXTERNAL";
+
+        @JsonPropertyDescription("Client id.")
+        private String clientId;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ResourcesLimitSpec {
+        @JsonPropertyDescription("Requested CPU.")
+        private String cpuRequest;
+
+        @JsonPropertyDescription("Limit CPU.")
+        private String cpuLimit;
+
+        @JsonPropertyDescription("Requested memory.")
+        private String memoryRequest;
+
+        @JsonPropertyDescription("Limit Memory.")
+        private String memoryLimit;
+    }
 }

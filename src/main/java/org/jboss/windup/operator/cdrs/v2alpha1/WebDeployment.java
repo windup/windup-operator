@@ -21,25 +21,33 @@ import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.ExecActionBuilder;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
+import io.fabric8.kubernetes.api.model.LifecycleBuilder;
+import io.fabric8.kubernetes.api.model.LifecycleHandlerBuilder;
 import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentStrategyBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
+import org.jboss.windup.operator.AppServerConfig;
 import org.jboss.windup.operator.Config;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.controllers.WindupDistConfigurator;
+import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +57,9 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, Windup>
         implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
+
+    @Inject
+    AppServerConfig appServerConfig;
 
     public WebDeployment() {
         super(Deployment.class);
@@ -117,7 +128,14 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
         List<Volume> volumes = distConfigurator.getAllVolumes();
         List<VolumeMount> volumeMounts = distConfigurator.getAllVolumeMounts();
 
+        WindupSpec.ResourcesLimitSpec resourcesLimitSpec = CRDUtils.getValueFromSubSpec(cr.getSpec(), WindupSpec::getWebResourceLimitSpec)
+                .orElse(null);
+
         return new DeploymentSpecBuilder()
+                .withStrategy(new DeploymentStrategyBuilder()
+                        .withType("Recreate")
+                        .build()
+                )
                 .withReplicas(1)
                 .withSelector(new LabelSelectorBuilder()
                         .withMatchLabels(selectorLabels)
@@ -132,7 +150,7 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
                         .endMetadata()
                         .withSpec(new PodSpecBuilder()
                                 .withRestartPolicy("Always")
-                                .withTerminationGracePeriodSeconds(30L)
+                                .withTerminationGracePeriodSeconds(70L)
                                 .withImagePullSecrets(cr.getSpec().getImagePullSecrets())
                                 .withContainers(new ContainerBuilder()
                                         .withName(Constants.WINDUP_WEB_NAME)
@@ -142,43 +160,66 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
                                         .withPorts(
                                                 new ContainerPortBuilder()
                                                         .withName("http")
-                                                        .withProtocol("TCP")
+                                                        .withProtocol(Constants.SERVICE_PROTOCOL)
                                                         .withContainerPort(8080)
                                                         .build(),
                                                 new ContainerPortBuilder()
                                                         .withName("jolokia")
-                                                        .withProtocol("TCP")
+                                                        .withProtocol(Constants.SERVICE_PROTOCOL)
                                                         .withContainerPort(8778)
                                                         .build(),
                                                 new ContainerPortBuilder()
                                                         .withName("ping")
-                                                        .withProtocol("TCP")
+                                                        .withProtocol(Constants.SERVICE_PROTOCOL)
                                                         .withContainerPort(8888)
                                                         .build()
                                         )
                                         .withReadinessProbe(new ProbeBuilder()
                                                 .withExec(new ExecActionBuilder()
-                                                        .withCommand("/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'")
+                                                        .withCommand(appServerConfig.getWebReadinessProbeCmd())
                                                         .build()
                                                 )
                                                 .withInitialDelaySeconds(120)
                                                 .withTimeoutSeconds(10)
-                                                .withPeriodSeconds(2)
+                                                .withPeriodSeconds(10)
+                                                .withSuccessThreshold(1)
                                                 .withFailureThreshold(3)
                                                 .build()
                                         )
                                         .withLivenessProbe(new ProbeBuilder()
                                                 .withExec(new ExecActionBuilder()
-                                                        .withCommand("/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'")
+                                                        .withCommand(appServerConfig.getWebLivenessProbeCmd())
                                                         .build()
                                                 )
                                                 .withInitialDelaySeconds(120)
                                                 .withTimeoutSeconds(10)
-                                                .withPeriodSeconds(2)
+                                                .withPeriodSeconds(10)
+                                                .withSuccessThreshold(1)
                                                 .withFailureThreshold(3)
                                                 .build()
                                         )
+                                        .withLifecycle(new LifecycleBuilder()
+                                                .withPreStop(new LifecycleHandlerBuilder()
+                                                        .withExec(new ExecActionBuilder()
+                                                                .withCommand("${JBOSS_HOME}/bin/jboss-cli.sh", "-c", ":shutdown(timeout=60)")
+                                                                .build()
+                                                        )
+                                                        .build()
+                                                )
+                                                .build()
+                                        )
                                         .withVolumeMounts(volumeMounts)
+                                        .withResources(new ResourceRequirementsBuilder()
+                                                .withRequests(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuRequest).orElse("0.5")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryRequest).orElse("0.5Gi"))
+                                                ))
+                                                .withLimits(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuLimit).orElse("4")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryLimit).orElse("4Gi"))
+                                                ))
+                                                .build()
+                                        )
                                         .build()
                                 )
                                 .withVolumes(volumes)

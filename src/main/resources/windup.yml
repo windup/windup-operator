@@ -3,4 +3,26 @@ apiVersion: "windup.jboss.org/v1"
 metadata:
   name: test
 spec:
-
+  dataSize: "2Gi"
+  webResourceLimits:
+    cpuRequest: "0.5"
+    cpuLimit: "3"
+    memoryRequest: "0.5Gi"
+    memoryLimit: "4Gi"
+  executorResourceLimits:
+    cpuRequest: "0.5"
+    cpuLimit: "3"
+    memoryRequest: "0.5Gi"
+    memoryLimit: "4Gi"
+  db:
+    size: "2Gi"
+    resourceLimits:
+      cpuRequest: "0.5"
+      cpuLimit: "1"
+      memoryRequest: "0.5Gi"
+      memoryLimit: "1Gi"
+#  sso:
+#    serverUrl: https://localhost:8080/auth
+#    realm: windup
+#    sslRequired: NONE
+#    clientId: windup-web

@@ -26,12 +26,15 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentStrategyBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
@@ -39,6 +42,7 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import org.jboss.windup.operator.Config;
 import org.jboss.windup.operator.Constants;
+import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Arrays;
@@ -114,7 +118,14 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
         String image = config.windup().dbImage();
         String imagePullPolicy = config.windup().imagePullPolicy();
 
+        WindupSpec.ResourcesLimitSpec resourcesLimitSpec = CRDUtils.getValueFromSubSpec(cr.getSpec().getDatabaseSpec(), WindupSpec.DatabaseSpec::getResourceLimitSpec)
+                .orElse(null);
+
         return new DeploymentSpecBuilder()
+                .withStrategy(new DeploymentStrategyBuilder()
+                        .withType("Recreate")
+                        .build()
+                )
                 .withReplicas(1)
                 .withSelector(new LabelSelectorBuilder()
                         .withMatchLabels(selectorLabels)
@@ -138,7 +149,7 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
                                         .withEnv(getEnvVars(cr, config))
                                         .withPorts(new ContainerPortBuilder()
                                                 .withName("tcp")
-                                                .withProtocol("TCP")
+                                                .withProtocol(Constants.SERVICE_PROTOCOL)
                                                 .withContainerPort(5432)
                                                 .build()
                                         )
@@ -169,6 +180,17 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
                                         .withVolumeMounts(new VolumeMountBuilder()
                                                 .withName("db-pvol")
                                                 .withMountPath("/var/lib/pgsql/data")
+                                                .build()
+                                        )
+                                        .withResources(new ResourceRequirementsBuilder()
+                                                .withRequests(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuRequest).orElse("0.5")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryRequest).orElse("0.5Gi"))
+                                                ))
+                                                .withLimits(Map.of(
+                                                        "cpu", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getCpuLimit).orElse("2")),
+                                                        "memory", new Quantity(CRDUtils.getValueFromSubSpec(resourcesLimitSpec, WindupSpec.ResourcesLimitSpec::getMemoryLimit).orElse("2Gi"))
+                                                ))
                                                 .build()
                                         )
                                         .build()

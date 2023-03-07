@@ -45,6 +45,7 @@ public class WebConsolePersistentVolumeClaim extends CRUDKubernetesDependentReso
         return newPersistentVolumeClaim(cr, context);
     }
 
+    @SuppressWarnings("unchecked")
     private PersistentVolumeClaim newPersistentVolumeClaim(Windup cr, Context<Windup> context) {
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
