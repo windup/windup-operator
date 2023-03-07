@@ -22,11 +22,13 @@ import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.jboss.windup.operator.Constants;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
+import java.util.Random;
 
+@ApplicationScoped
 public class DBSecret extends CRUDKubernetesDependentResource<Secret, Windup> implements Creator<Secret, Windup> {
 
     public DBSecret() {
@@ -49,19 +51,33 @@ public class DBSecret extends CRUDKubernetesDependentResource<Secret, Windup> im
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
+
+
         return new SecretBuilder()
                 .withNewMetadata()
                 .withName(getSecretName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
                 .endMetadata()
-                .addToStringData(Constants.DB_SECRET_USERNAME, RandomStringUtils.randomAlphanumeric(8))
-                .addToStringData(Constants.DB_SECRET_PASSWORD, RandomStringUtils.randomAlphanumeric(8))
+                .addToStringData(Constants.DB_SECRET_USERNAME, generateRandomString(10))
+                .addToStringData(Constants.DB_SECRET_PASSWORD, generateRandomString(10))
                 .addToStringData(Constants.DB_SECRET_DATABASE_NAME, "windup")
                 .build();
     }
 
     public static String getSecretName(Windup cr) {
         return cr.getMetadata().getName() + Constants.DB_SECRET_SUFFIX;
+    }
+
+    public static String generateRandomString(int targetStringLength) {
+        int leftLimit = 48; // numeral '0'
+        int rightLimit = 122; // letter 'z'
+
+        Random random = new Random();
+        return random.ints(leftLimit, rightLimit + 1)
+                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 }
