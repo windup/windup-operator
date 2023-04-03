@@ -33,8 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @QuarkusTest
 public class WindupReconcilerTest {
 
-    private static final Logger logger = Logger.getLogger(WindupReconciler.class);
-
     public static final String TEST_APP = "test-app";
 
     @Inject
@@ -109,8 +107,6 @@ public class WindupReconcilerTest {
                             .getPort();
                     assertThat(dbPort, is(5432));
 
-                    logger.info("DB tested");
-
 
                     // Web Deployment
                     final var webDeployment = client.apps()
@@ -147,8 +143,6 @@ public class WindupReconcilerTest {
                             .toList();
                     assertTrue(webServicePorts.contains(8080));
 
-                    logger.info("Web tested");
-
 
                     // Executor Deployment
                     final var executorDeployment = client.apps()
@@ -166,8 +160,6 @@ public class WindupReconcilerTest {
                     assertThat(executorContainer.get().getImage(), is("quay.io/windupeng/windup-web-openshift-messaging-executor:latest"));
 
                     assertEquals(1, executorDeployment.getStatus().getReadyReplicas());
-
-                    logger.info("Executor tested");
 
 
                     // Ingress
@@ -189,8 +181,6 @@ public class WindupReconcilerTest {
                     final var serviceBackend = path.getBackend().getService();
                     assertThat(serviceBackend.getName(), is(WebService.getServiceName(app)));
                     assertThat(serviceBackend.getPort().getNumber(), is(8080));
-
-                    logger.info("Ingress tested");
                 });
     }
 }
