@@ -49,13 +49,14 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.util.Map;
 
+import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 import static org.jboss.windup.operator.controllers.WindupReconciler.DEPLOYMENT_EVENT_SOURCE;
 import static org.jboss.windup.operator.controllers.WindupReconciler.PVC_EVENT_SOURCE;
 import static org.jboss.windup.operator.controllers.WindupReconciler.SERVICE_EVENT_SOURCE;
 
 @ControllerConfiguration(
-//        namespaces = WATCH_CURRENT_NAMESPACE,
-//        name = "windup",
+        namespaces = WATCH_CURRENT_NAMESPACE,
+        name = "windup",
         dependents = {
                 @Dependent(name = "db-pvc", type = DBPersistentVolumeClaim.class, useEventSourceWithName = PVC_EVENT_SOURCE),
                 @Dependent(name = "db-secret", type = DBSecret.class),

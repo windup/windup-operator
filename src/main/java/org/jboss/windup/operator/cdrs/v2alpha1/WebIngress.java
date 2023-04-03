@@ -63,7 +63,7 @@ public class WebIngress extends CRUDKubernetesDependentResource<Ingress, Windup>
 
         Ingress ingress = new IngressBuilder()
                 .withNewMetadata()
-                .withName(cr.getMetadata().getName() + Constants.INGRESS_SUFFIX)
+                .withName(getIngressName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .addToAnnotations("nginx.ingress.kubernetes.io/backend-protocol", "HTTP")
                 .addToAnnotations("route.openshift.io/termination", "passthrough")
@@ -72,7 +72,7 @@ public class WebIngress extends CRUDKubernetesDependentResource<Ingress, Windup>
                 .withNewSpec()
                 .withNewDefaultBackend()
                 .withNewService()
-                .withName(getIngressName(cr))
+                .withName(WebService.getServiceName(cr))
                 .withNewPort()
                 .withNumber(port)
                 .endPort()
@@ -148,7 +148,7 @@ public class WebIngress extends CRUDKubernetesDependentResource<Ingress, Windup>
 //        return ing.map(i -> protocol + "://" + (i.getHostname() != null ? i.getHostname() : i.getIp()));
 //    }
 
-    public String getIngressName(Windup cr) {
-        return cr.getMetadata().getName() + Constants.WEB_SERVICE_SUFFIX;
+    public static String getIngressName(Windup cr) {
+        return cr.getMetadata().getName() + Constants.INGRESS_SUFFIX;
     }
 }

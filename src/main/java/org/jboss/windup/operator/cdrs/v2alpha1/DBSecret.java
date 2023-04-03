@@ -51,8 +51,6 @@ public class DBSecret extends CRUDKubernetesDependentResource<Secret, Windup> im
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
-
-
         return new SecretBuilder()
                 .withNewMetadata()
                 .withName(getSecretName(cr))
