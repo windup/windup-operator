@@ -32,4 +32,4 @@ jobs:
           minikube addons enable ingress
       - name: Test
         run: |
-          mvn clean verify
+          mvn clean verify -P native
