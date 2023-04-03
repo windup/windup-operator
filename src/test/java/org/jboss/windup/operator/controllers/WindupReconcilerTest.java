@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.Operator;
 import io.quarkus.test.junit.QuarkusTest;
+import org.jboss.logging.Logger;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBService;
 import org.jboss.windup.operator.cdrs.v2alpha1.ExecutorDeployment;
@@ -31,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class WindupReconcilerTest {
+
+    private static final Logger logger = Logger.getLogger(WindupReconciler.class);
 
     public static final String TEST_APP = "test-app";
 
@@ -59,17 +62,18 @@ public class WindupReconcilerTest {
                 .withNamespace(client.getNamespace())
                 .build();
         app.setMetadata(metadata);
-        app.getSpec().setDatabaseSpec(WindupSpec.DatabaseSpec.builder()
-                .size("0.5Gi")
-                .resourceLimitSpec(WindupSpec.ResourcesLimitSpec.builder()
-                        .cpuRequest("0.1")
-                        .cpuLimit("0.5")
-                        .memoryRequest("0.1Gi")
-                        .memoryLimit("0.5Gi")
+        app.getSpec()
+                .setDatabaseSpec(WindupSpec.DatabaseSpec.builder()
+                        .size("0.5Gi")
+                        .resourceLimitSpec(WindupSpec.ResourcesLimitSpec.builder()
+                                .cpuRequest("0.1")
+                                .cpuLimit("0.5")
+                                .memoryRequest("0.1Gi")
+                                .memoryLimit("0.5Gi")
+                                .build()
+                        )
                         .build()
-                )
-                .build()
-        );
+                );
 
         client.resource(app).create();
 
@@ -104,6 +108,9 @@ public class WindupReconcilerTest {
                             .get(0)
                             .getPort();
                     assertThat(dbPort, is(5432));
+
+                    logger.info("DB tested");
+
 
                     // Web Deployment
                     final var webDeployment = client.apps()
@@ -140,6 +147,9 @@ public class WindupReconcilerTest {
                             .toList();
                     assertTrue(webServicePorts.contains(8080));
 
+                    logger.info("Web tested");
+
+
                     // Executor Deployment
                     final var executorDeployment = client.apps()
                             .deployments()
@@ -156,6 +166,9 @@ public class WindupReconcilerTest {
                     assertThat(executorContainer.get().getImage(), is("quay.io/windupeng/windup-web-openshift-messaging-executor:latest"));
 
                     assertEquals(1, executorDeployment.getStatus().getReadyReplicas());
+
+                    logger.info("Executor tested");
+
 
                     // Ingress
                     final var ingress = client.network().v1().ingresses()
@@ -176,6 +189,8 @@ public class WindupReconcilerTest {
                     final var serviceBackend = path.getBackend().getService();
                     assertThat(serviceBackend.getName(), is(WebService.getServiceName(app)));
                     assertThat(serviceBackend.getPort().getNumber(), is(8080));
+
+                    logger.info("Ingress tested");
                 });
     }
 }
