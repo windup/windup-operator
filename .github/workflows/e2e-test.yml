@@ -18,6 +18,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
+      - name: Test
+        run: |
+          mvn package -DskipTests -P native
       - name: Setup Minikube-Kubernetes
         # check version in https://github.com/manusa/actions-setup-minikube/releases
         uses: manusa/actions-setup-minikube@v2.7.2
@@ -32,4 +35,4 @@ jobs:
           minikube addons enable ingress
       - name: Test
         run: |
-          mvn clean verify -P native
+          mvn verify -P native
