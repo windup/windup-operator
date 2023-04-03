@@ -6,7 +6,6 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.Operator;
 import io.quarkus.test.junit.QuarkusTest;
-import org.jboss.logging.Logger;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBService;
 import org.jboss.windup.operator.cdrs.v2alpha1.ExecutorDeployment;
@@ -42,18 +41,18 @@ public class WindupReconcilerTest {
     Operator operator;
 
     @BeforeEach
-    void startOperator() {
+    public void startOperator() {
         operator.start();
     }
 
     @AfterEach
-    void stopOperator() {
+    public void stopOperator() {
         operator.stop();
     }
 
     @Test
     @Order(1)
-    void reconcileShouldWork() {
+    public void reconcileShouldWork() {
         final var app = new Windup();
         final var metadata = new ObjectMetaBuilder()
                 .withName(TEST_APP)
