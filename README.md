@@ -37,32 +37,32 @@ kubectl apply -f src/main/resources/windup.yml
 Create operator container:
 
 ```shell
-mvn clean package \
+mvn clean package -DskipTests \
 -Dquarkus.native.container-build=true \
 -Dquarkus.container-image.build=true \
 -Dquarkus.container-image.push=false \
 -Dquarkus.container-image.registry=quay.io \
--Dquarkus.container-image.group=projectopenubl \
--Dquarkus.container-image.name=searchpe-operator \
--Dquarkus.operator-sdk.bundle.package-name=searchpe-operator \
+-Dquarkus.container-image.group=$USER \
+-Dquarkus.container-image.name=windup-operator \
+-Dquarkus.operator-sdk.bundle.package-name=windup-operator \
 -Dquarkus.operator-sdk.bundle.channels=alpha \
 -Dquarkus.application.version=test \
 -P native
-podman push quay.io/$USER/searchpe-operator:nightly
+podman push quay.io/$USER/windup-operator:test
 ```
 
 Create bundle:
 
 ```shell
-BUNDLE_IMAGE=quay.io/$USER/searchpe-operator-bundle:test
-podman build -t $BUNDLE_IMAGE -f target/bundle/searchpe-operator/bundle.Dockerfile target/bundle/searchpe-operator
+BUNDLE_IMAGE=quay.io/$USER/windup-operator-bundle:test
+podman build -t $BUNDLE_IMAGE -f target/bundle/windup-operator/bundle.Dockerfile target/bundle/windup-operator
 podman push $BUNDLE_IMAGE
 ```
 
 Create catalog image:
 
 ```shell
-CATALOG_IMAGE=quay.io/$USER/searchpe-operator-catalog:nightly
+CATALOG_IMAGE=quay.io/$USER/windup-operator-catalog:nightly
 opm index add \
     --bundles $BUNDLE_IMAGE \
     --tag $CATALOG_IMAGE \
@@ -77,7 +77,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
-  name: searchpe-catalog-source
+  name: windup-catalog-source
   namespace: openshift-marketplace
 spec:
   sourceType: grpc
@@ -88,5 +88,5 @@ EOF
 Verify:
 
 ```shell
-kubectl get csv -n operators searchpe-operator
+kubectl get csv -n operators windup-operator
 ```

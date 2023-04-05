@@ -1,26 +1,24 @@
-/*
- * Copyright 2019 Project OpenUBL, Inc. and/or its affiliates
- * and other contributors as indicated by the @author tags.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jboss.windup.operator.utils;
+
+import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
+import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
 
 import java.util.Optional;
 import java.util.function.Function;
 
 public class CRDUtils {
 
+    public static OwnerReference getOwnerReference(Windup cr) {
+        return new OwnerReferenceBuilder()
+                .withApiVersion(cr.getApiVersion())
+                .withKind(cr.getKind())
+                .withName(cr.getMetadata().getName())
+                .withUid(cr.getMetadata().getUid())
+                .withController(true)
+                .build();
+    }
+    
     public static <T, R> Optional<R> getValueFromSubSpec(T subSpec, Function<T, R> valueSupplier) {
         if (subSpec != null) {
             return Optional.ofNullable(valueSupplier.apply(subSpec));

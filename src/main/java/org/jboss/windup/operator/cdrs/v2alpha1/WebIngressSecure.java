@@ -2,32 +2,28 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressTLS;
-import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLSBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Collections;
 
-@KubernetesDependent(resourceDiscriminator = WebIngressDiscriminator.class)
+@KubernetesDependent(resourceDiscriminator = WebIngressSecureDiscriminator.class)
 @ApplicationScoped
-public class WebIngress extends WebIngressBase {
+public class WebIngressSecure extends WebIngressBase {
 
     @Override
     @SuppressWarnings("unchecked")
     protected Ingress desired(Windup cr, Context<Windup> context) {
-        return newIngress(cr, context, getIngressName(cr), Map.of(
-                "console.alpha.openshift.io/overview-app-route", "true"
-        ));
+        return newIngress(cr, context, getIngressName(cr), Collections.emptyMap());
     }
 
     @Override
     public boolean isMet(Windup cr, Ingress ingress, Context<Windup> context) {
-        return context.getSecondaryResource(Ingress.class, new WebIngressDiscriminator())
+        return context.getSecondaryResource(Ingress.class, new WebIngressSecureDiscriminator())
                 .map(in -> {
                     final var status = in.getStatus();
                     if (status != null) {
@@ -57,14 +53,19 @@ public class WebIngress extends WebIngressBase {
 
     @Override
     protected IngressTLS getIngressTLS(Windup cr) {
-        return null;
+        String tlsSecretName = CRDUtils.getValueFromSubSpec(cr.getSpec().getHttpSpec(), WindupSpec.HttpSpec::getTlsSecret)
+                .orElse(null);
+
+        return new IngressTLSBuilder()
+                .withSecretName(tlsSecretName)
+                .build();
     }
 
     public static String getIngressName(Windup cr) {
-        return cr.getMetadata().getName() + Constants.INGRESS_SUFFIX;
+        return cr.getMetadata().getName() + Constants.INGRESS_SECURE_SUFFIX;
     }
 
     public static String getOpenshiftHostname(Windup cr, String namespace, String domain) {
-        return namespace + "-" + cr.getMetadata().getName() + "." + domain;
+        return "secure-" + namespace + "-" + cr.getMetadata().getName() + "." + domain;
     }
 }
