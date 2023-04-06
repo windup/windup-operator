@@ -138,6 +138,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Build container image
+        run: |
+          mvn package -DskipTests
       - name: Load and config images
         run: |
           docker load -i artifacts/windup-operator-container-image.tar
@@ -164,10 +172,18 @@ jobs:
           docker push localhost:5000/windup-operator:0.0.0
           docker push localhost:5000/windup-operator-bundle:0.0.0
           docker push localhost:5000/windup-operator-catalog:0.0.0
+          
+          # Pull images
+          docker pull quay.io/windupeng/windup-web-openshift:latest
+          docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
+          docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
       - name: Install operator
         run: |
           kubectl create ns mynamespace
-
+          
+          # CRD
+          kubectl apply -f target/kubernetes/windups.windup.jboss.org-v1.yml
+          
           # Create custom catalog         
           kubectl create -f scripts/windup-operator.yaml
           kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
