@@ -194,6 +194,10 @@ jobs:
         run: |
           kubectl -n mynamespace apply -f scripts/windup.yaml
           sleep 10;
+          
+          kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
+          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
+          kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
 
           kubectl wait pods --selector "app.kubernetes.io/name"="test-app" -n mynamespace --for condition=Ready --timeout=-1s
 
