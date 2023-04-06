@@ -1,0 +1,12 @@
+kind: "Windup"
+apiVersion: "windup.jboss.org/v1"
+metadata:
+  name: test-app
+spec:
+  db:
+    size: "0.5Gi"
+    resourceLimits:
+      cpuRequest: "0.1"
+      cpuLimit: "0.5"
+      memoryRequest: "0.1Gi"
+      memoryLimit: "0.5Gi"

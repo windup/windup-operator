@@ -15,6 +15,6 @@ public interface Config {
     @WithName("postgresql")
     String dbImage();
 
-    @WithName("image-pull-policy")
+    @WithName("pull-policy")
     String imagePullPolicy();
 }

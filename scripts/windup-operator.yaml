@@ -1,0 +1,28 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: windup-catalog-source
+  namespace: olm
+spec:
+  sourceType: grpc
+  image: localhost:5000/windup-operator-catalog:0.0.0
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: operatorgroup
+  namespace: mynamespace
+spec:
+  targetNamespaces:
+    - mynamespace
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: windup-subscription
+  namespace: mynamespace
+spec:
+  channel: alpha
+  name: windup-operator
+  source: windup-catalog-source
+  sourceNamespace: olm
