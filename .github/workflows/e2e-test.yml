@@ -100,8 +100,8 @@ jobs:
           -Dquarkus.kubernetes.image-pull-policy=if-not-present \
           -Dquarkus.kubernetes.env.vars.related-image-pull-policy=IfNotPresent
 
-          groovy scripts/enrichCSV.groovy operator/target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml 0.0.0
-          sed -i "/  annotations: ''/d" ./operator/target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
+          groovy scripts/enrichCSV.groovy target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml 0.0.0
+          sed -i "/  annotations: ''/d" ./target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
       - name: Init local Registry
         run: |
           docker run -d -p 5000:5000 --name registry registry:2
@@ -110,7 +110,7 @@ jobs:
         run: |
           # Bundle
           BUNDLE_IMAGE=localhost:5000/windup-operator-bundle:0.0.0
-          docker build -t $BUNDLE_IMAGE -f operator/target/bundle/windup-operator/bundle.Dockerfile operator/target/bundle/windup-operator
+          docker build -t $BUNDLE_IMAGE -f target/bundle/windup-operator/bundle.Dockerfile target/bundle/windup-operator
           docker push $BUNDLE_IMAGE
 
           # Catalog
