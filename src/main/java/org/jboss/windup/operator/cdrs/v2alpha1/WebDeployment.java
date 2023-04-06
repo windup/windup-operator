@@ -43,6 +43,9 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
         implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
 
     @Inject
+    Config config;
+
+    @Inject
     AppServerConfig appServerConfig;
 
     public WebDeployment() {
@@ -105,14 +108,12 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
 
     @SuppressWarnings("unchecked")
     private DeploymentSpec getDeploymentSpec(Windup cr, Context<Windup> context, WindupDistConfigurator distConfigurator) {
-        final var config = (Config) context.managedDependentResourceContext()
-                .getMandatory(Constants.CONTEXT_CONFIG_KEY, Config.class);
         final var contextLabels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
         Map<String, String> selectorLabels = Constants.WEB_SELECTOR_LABELS;
-        String image = config.windup().webImage();
-        String imagePullPolicy = config.windup().imagePullPolicy();
+        String image = config.webImage();
+        String imagePullPolicy = config.imagePullPolicy();
 
         List<EnvVar> envVars = distConfigurator.getAllEnvVars();
         List<Volume> volumes = distConfigurator.getAllVolumes();

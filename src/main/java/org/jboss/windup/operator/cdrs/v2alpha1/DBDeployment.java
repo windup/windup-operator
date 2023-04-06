@@ -24,12 +24,12 @@ import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.Config;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +40,9 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Windup>
         implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
+
+    @Inject
+    Config config;
 
     public DBDeployment() {
         super(Deployment.class);
@@ -98,14 +101,12 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
 
     @SuppressWarnings("unchecked")
     private DeploymentSpec getDeploymentSpec(Windup cr, Context<Windup> context) {
-        final var config = (Config) context.managedDependentResourceContext()
-                .getMandatory(Constants.CONTEXT_CONFIG_KEY, Config.class);
         final var contextLabels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
         Map<String, String> selectorLabels = Constants.DB_SELECTOR_LABELS;
-        String image = config.windup().dbImage();
-        String imagePullPolicy = config.windup().imagePullPolicy();
+        String image = config.dbImage();
+        String imagePullPolicy = config.imagePullPolicy();
 
         WindupSpec.ResourcesLimitSpec resourcesLimitSpec = CRDUtils.getValueFromSubSpec(cr.getSpec().getDatabaseSpec(), WindupSpec.DatabaseSpec::getResourceLimitSpec)
                 .orElse(null);
@@ -135,7 +136,7 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
                                         .withName(Constants.WINDUP_DB_NAME)
                                         .withImage(image)
                                         .withImagePullPolicy(imagePullPolicy)
-                                        .withEnv(getEnvVars(cr, config))
+                                        .withEnv(getEnvVars(cr))
                                         .withPorts(new ContainerPortBuilder()
                                                 .withName("tcp")
                                                 .withProtocol(Constants.SERVICE_PROTOCOL)
@@ -199,7 +200,7 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
                 .build();
     }
 
-    private List<EnvVar> getEnvVars(Windup cr, Config config) {
+    private List<EnvVar> getEnvVars(Windup cr) {
         return Arrays.asList(
                 new EnvVarBuilder()
                         .withName("POSTGRESQL_MAX_CONNECTIONS")

@@ -28,6 +28,7 @@ import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,9 @@ import java.util.stream.Stream;
 @KubernetesDependent(resourceDiscriminator = ExecutorDeploymentDiscriminator.class)
 @ApplicationScoped
 public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployment, Windup> implements Matcher<Deployment, Windup> {
+
+    @Inject
+    Config config;
 
     public ExecutorDeployment() {
         super(Deployment.class);
@@ -78,14 +82,12 @@ public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployme
 
     @SuppressWarnings("unchecked")
     private DeploymentSpec getDeploymentSpec(Windup cr, Context<Windup> context) {
-        final var config = (Config) context.managedDependentResourceContext()
-                .getMandatory(Constants.CONTEXT_CONFIG_KEY, Config.class);
         final var contextLabels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
         Map<String, String> selectorLabels = Constants.DB_SELECTOR_LABELS;
-        String image = config.windup().executorImage();
-        String imagePullPolicy = config.windup().imagePullPolicy();
+        String image = config.executorImage();
+        String imagePullPolicy = config.imagePullPolicy();
 
         WindupSpec.ResourcesLimitSpec resourcesLimitSpec = CRDUtils.getValueFromSubSpec(cr.getSpec(), WindupSpec::getExecutorResourceLimitSpec)
                 .orElse(null);

@@ -5,7 +5,7 @@ import io.quarkiverse.operatorsdk.bundle.runtime.SharedCSVMetadata;
 
 @CSVMetadata(
         annotations = @CSVMetadata.Annotations(
-                containerImage = "quay.io/windupeng/windup-operator:${RELEASE_VERSION}",
+                containerImage = "quay.io/windupeng/windup-operator-native:${RELEASE_VERSION}",
                 repository = "https://github.com/windup/windup-operator",
                 categories = "Modernization & Migration",
                 capabilities = "Basic Install",

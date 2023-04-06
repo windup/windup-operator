@@ -4,7 +4,6 @@ import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ContextInitializer;
@@ -17,7 +16,6 @@ import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
 import org.jboss.logging.Logger;
-import org.jboss.windup.operator.Config;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBPersistentVolumeClaim;
@@ -31,7 +29,6 @@ import org.jboss.windup.operator.cdrs.v2alpha1.WebIngressSecure;
 import org.jboss.windup.operator.cdrs.v2alpha1.WebService;
 import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
 
-import javax.inject.Inject;
 import java.time.Duration;
 import java.util.Map;
 
@@ -67,12 +64,6 @@ public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<
     public static final String SERVICE_EVENT_SOURCE = "ServiceEventSource";
     public static final String INGRESS_EVENT_SOURCE = "IngressEventSource";
 
-    @Inject
-    Config config;
-
-    @Inject
-    KubernetesClient k8sClient;
-
     @Override
     public void initContext(Windup cr, Context<Windup> context) {
         final var labels = Map.of(
@@ -82,7 +73,6 @@ public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<
                 "windup-operator/cluster", Constants.WINDUP_NAME
         );
         context.managedDependentResourceContext().put(Constants.CONTEXT_LABELS_KEY, labels);
-        context.managedDependentResourceContext().put(Constants.CONTEXT_CONFIG_KEY, config);
     }
 
     @SuppressWarnings("unchecked")

@@ -7,7 +7,6 @@ public class Constants {
     public static final String CRDS_VERSION = "v1";
 
     public static final String CONTEXT_LABELS_KEY = "labels";
-    public static final String CONTEXT_CONFIG_KEY = "config";
 
     //
     public static final String WINDUP_NAME = "windup";

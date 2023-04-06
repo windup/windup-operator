@@ -2,16 +2,13 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressTLS;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.Map;
-import java.util.Optional;
 
 @KubernetesDependent(resourceDiscriminator = WebIngressDiscriminator.class)
 @ApplicationScoped
