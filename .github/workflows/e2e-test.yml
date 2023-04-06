@@ -161,7 +161,7 @@ jobs:
       - name: Configure Minikube
         run: |
           # Install OLM
-          curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.22.0/install.sh | bash -s v0.22.0
+          # curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.22.0/install.sh | bash -s v0.22.0
 
           # Load images
           minikube image load localhost:5000/windup-operator:0.0.0
