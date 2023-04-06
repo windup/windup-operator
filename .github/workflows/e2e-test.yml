@@ -98,8 +98,7 @@ jobs:
           -Dquarkus.operator-sdk.bundle.channels=alpha \
           -Dquarkus.application.version=0.0.0 \
           -Dquarkus.kubernetes.image-pull-policy=if-not-present \
-          -Dquarkus.kubernetes.env.vars.related-image-pull-policy=IfNotPresent \
-          -pl operator
+          -Dquarkus.kubernetes.env.vars.related-image-pull-policy=IfNotPresent
 
           groovy scripts/enrichCSV.groovy operator/target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml 0.0.0
           sed -i "/  annotations: ''/d" ./operator/target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
