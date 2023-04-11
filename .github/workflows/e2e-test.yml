@@ -174,9 +174,9 @@ jobs:
           docker push localhost:5000/windup-operator-catalog:0.0.0
           
           # Pull images
-#          docker pull quay.io/windupeng/windup-web-openshift:latest
-#          docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
-#          docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
+          docker pull quay.io/windupeng/windup-web-openshift:latest
+          docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
+          docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
       - name: Install operator
         run: |
           kubectl create ns mynamespace
@@ -203,7 +203,9 @@ jobs:
           
           kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
           kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace          
-          sleep 30;          
+          sleep 30;
+          kubectl get all -n mynamespace
+          
           kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
 
           kubectl wait pods --selector "app.kubernetes.io/name"="test-app" -n mynamespace --for condition=Ready --timeout=-1s
