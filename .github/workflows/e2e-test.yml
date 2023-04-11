@@ -53,8 +53,8 @@ jobs:
           -Dquarkus.container-image.registry=localhost:5000 \
           -Dquarkus.container-image.group="" \
           -Dquarkus.container-image.name=windup-operator \
-          -Dquarkus.container-image.tag=0.0.0
-#          -P native
+          -Dquarkus.container-image.tag=0.0.0 \
+          -P native
       - name: Save container image
         run: docker save -o windup-operator-container-image.tar localhost:5000/windup-operator:0.0.0
       - name: Upload container image
