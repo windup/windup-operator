@@ -203,8 +203,9 @@ jobs:
           
           kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
           kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace          
-          sleep 30;
+          sleep 15;
           kubectl get all -n mynamespace
+          kubectl get events --all-namespaces
           
           kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
 
