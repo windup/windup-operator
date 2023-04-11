@@ -169,14 +169,14 @@ jobs:
           minikube image load localhost:5000/windup-operator-catalog:0.0.0
 
           # Push images to internal registry
-          minikube ssh docker push localhost:5000/windup-operator:0.0.0
-          minikube ssh docker push localhost:5000/windup-operator-bundle:0.0.0
-          minikube ssh docker push localhost:5000/windup-operator-catalog:0.0.0
+          docker push localhost:5000/windup-operator:0.0.0
+          docker push localhost:5000/windup-operator-bundle:0.0.0
+          docker push localhost:5000/windup-operator-catalog:0.0.0
           
           # Pull images
-          minikube ssh docker pull quay.io/windupeng/windup-web-openshift:latest
-          minikube ssh docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
-          minikube ssh docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
+#          docker pull quay.io/windupeng/windup-web-openshift:latest
+#          docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
+#          docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
       - name: Install operator
         run: |
           kubectl create ns mynamespace
