@@ -188,7 +188,7 @@ jobs:
           kubectl create -f scripts/windup-operator.yaml
 
           # Verify
-          sleep 120;
+          sleep 60;
           kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
           kubectl get csv -n olm
           
@@ -202,7 +202,8 @@ jobs:
           kubectl get all -n mynamespace
           
           kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
-          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
+          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace          
+          sleep 30;          
           kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
 
           kubectl wait pods --selector "app.kubernetes.io/name"="test-app" -n mynamespace --for condition=Ready --timeout=-1s
