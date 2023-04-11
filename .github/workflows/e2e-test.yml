@@ -188,25 +188,27 @@ jobs:
           kubectl create -f scripts/windup-operator.yaml
 
           # Verify
-          sleep 60;
+          sleep 10;
           kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
           kubectl get csv -n olm
           
-          kubectl get all -n mynamespace
+          operator_name=""
+          while [[ -z $operator_name ]]
+          do
+            operator_name=$(kubectl get deployment/windup-operator -n mynamespace -o jsonpath="{.metadata.name}");
+            echo "Waiting for operator to be created"
+            sleep 10;
+          done
+
           kubectl wait deployment/windup-operator --for condition=available --timeout=-1s -n mynamespace
       - name: Instantiate operator
         run: |
           kubectl -n mynamespace apply -f scripts/windup.yaml
           sleep 30;
           
-          kubectl get all -n mynamespace
-          
           kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
-          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace          
-          sleep 15;
-          kubectl get all -n mynamespace
-          kubectl get events --all-namespaces
-          
+          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
+          sleep 5;
           kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
 
           kubectl wait pods --selector "app.kubernetes.io/name"="test-app" -n mynamespace --for condition=Ready --timeout=-1s
