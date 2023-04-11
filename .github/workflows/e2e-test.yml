@@ -181,20 +181,19 @@ jobs:
         run: |
           kubectl create ns mynamespace
           
-          # CRD
+          # Create CRD
           kubectl apply -f target/kubernetes/windups.windup.jboss.org-v1.yml
           
           # Create custom catalog         
-          kubectl create -f scripts/windup-operator.yaml
-          sleep 5;
-          
+          kubectl create -f scripts/windup-operator.yaml          
+          sleep 15;
           kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
-          sleep 5;
 
           # Verify subscription
           kubectl get csv -n olm
           
           # Wait for operator to be ready
+          kubectl get all -n mynamespace
           kubectl wait deployment/windup-operator --for condition=available --timeout=-1s -n mynamespace
       - name: Instantiate operator
         run: |
