@@ -143,7 +143,7 @@ jobs:
           java-version: 17
           distribution: temurin
           cache: maven
-      - name: Build container image
+      - name: Maven package
         run: |
           mvn package -DskipTests
       - name: Load and config images
@@ -193,7 +193,7 @@ jobs:
       - name: Instantiate operator
         run: |
           kubectl -n mynamespace apply -f scripts/windup.yaml
-          sleep 10;
+          sleep 30;
           
           kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
           kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
