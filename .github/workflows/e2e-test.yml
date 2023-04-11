@@ -192,12 +192,10 @@ jobs:
           kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
           kubectl get csv -n olm
           
-          operator_name=""
-          while [[ -z $operator_name ]]
+          while ! kubectl get deployment/windup-operator -n mynamespace
           do
-            operator_name=$(kubectl get deployment/windup-operator -n mynamespace -o jsonpath="{.metadata.name}");
             echo "Waiting for operator to be created"
-            sleep 10;
+            sleep 5;
           done
 
           kubectl wait deployment/windup-operator --for condition=available --timeout=-1s -n mynamespace
