@@ -71,6 +71,20 @@ public class WindupReconcilerTest {
                         )
                         .build()
                 );
+        app.getSpec().setWebResourceLimitSpec(WindupSpec.ResourcesLimitSpec.builder()
+                .cpuRequest("0.1")
+                .cpuLimit("2")
+                .memoryRequest("0.1Gi")
+                .memoryLimit("2Gi")
+                .build()
+        );
+        app.getSpec().setExecutorResourceLimitSpec(WindupSpec.ResourcesLimitSpec.builder()
+                .cpuRequest("0.1")
+                .cpuLimit("2")
+                .memoryRequest("0.1Gi")
+                .memoryLimit("2Gi")
+                .build()
+        );
 
         client.resource(app).create();
 
