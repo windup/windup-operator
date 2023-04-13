@@ -16,7 +16,7 @@
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>2.16.5.Final</quarkus.platform.version>
+        <quarkus.platform.version>2.16.6.Final</quarkus.platform.version>
 
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
@@ -24,7 +24,7 @@
 
         <lombok.version>1.18.26</lombok.version>
 
-        <quarkus-sdk.version>5.1.3</quarkus-sdk.version>
+        <quarkus-sdk.version>5.1.4</quarkus-sdk.version>
         <skipITs>true</skipITs>
     </properties>
 
