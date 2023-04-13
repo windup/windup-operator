@@ -13,8 +13,8 @@ public class AppServerConfigProducer {
     @DefaultBean
     public AppServerConfig wildflyConfig() {
         return AppServerConfig.builder()
-                .webLivenessProbeCmd(new String[]{"/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"})
-                .webReadinessProbeCmd(new String[]{"/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"})
+                .webLivenessProbeCmd(new String[]{"/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands=ls | grep 'server-state=running'"})
+                .webReadinessProbeCmd(new String[]{"/bin/sh", "-c", "${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='/core-service=management:read-boot-errors()' | grep '\"result\" => \\[]' && ${JBOSS_HOME}/bin/jboss-cli.sh --connect --commands='ls deployment' | grep 'api.war'"})
                 .build();
     }
 
