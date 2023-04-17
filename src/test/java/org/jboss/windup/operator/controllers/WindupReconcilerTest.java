@@ -99,7 +99,7 @@ public class WindupReconcilerTest {
         // Delete prev instance if exists already
         if (client.resource(app).get() != null) {
             client.resource(app).delete();
-            Thread.sleep(5000);
+            Thread.sleep(10_000);
         }
 
         // Instantiate Windup
