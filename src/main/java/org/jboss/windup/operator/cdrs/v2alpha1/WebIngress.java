@@ -10,21 +10,31 @@ import org.jboss.windup.operator.utils.CRDUtils;
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 
-@KubernetesDependent(resourceDiscriminator = WebIngressDiscriminator.class)
+@KubernetesDependent(labelSelector = WebIngress.LABEL_SELECTOR)
 @ApplicationScoped
 public class WebIngress extends WebIngressBase {
+
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web";
 
     @Override
     @SuppressWarnings("unchecked")
     protected Ingress desired(Windup cr, Context<Windup> context) {
-        return newIngress(cr, context, getIngressName(cr), Map.of(
-                "console.alpha.openshift.io/overview-app-route", "true"
-        ));
+        return newIngress(
+                cr,
+                context,
+                getIngressName(cr),
+                Map.of(
+                        "component", "web"
+                ),
+                Map.of(
+                        "console.alpha.openshift.io/overview-app-route", "true"
+                )
+        );
     }
 
     @Override
     public boolean isMet(Windup cr, Ingress ingress, Context<Windup> context) {
-        return context.getSecondaryResource(Ingress.class, new WebIngressDiscriminator())
+        return context.getSecondaryResource(Ingress.class, "ingress")
                 .map(in -> {
                     final var status = in.getStatus();
                     if (status != null) {

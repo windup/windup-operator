@@ -13,9 +13,11 @@ import org.jboss.windup.operator.utils.CRDUtils;
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 
-@KubernetesDependent(resourceDiscriminator = DBServiceDiscriminator.class)
+@KubernetesDependent(labelSelector = DBService.LABEL_SELECTOR)
 @ApplicationScoped
 public class DBService extends CRUDKubernetesDependentResource<Service, Windup> {
+
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=db";
 
     public DBService() {
         super(Service.class);
@@ -36,6 +38,7 @@ public class DBService extends CRUDKubernetesDependentResource<Service, Windup> 
                 .withName(getServiceName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
+                .addToLabels("component", "db")
                 .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()
                 .withSpec(getServiceSpec(cr))

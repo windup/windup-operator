@@ -33,7 +33,7 @@ public abstract class WebIngressBase extends CRUDKubernetesDependentResource<Ing
     protected abstract IngressTLS getIngressTLS(Windup cr);
 
     @SuppressWarnings("unchecked")
-    protected Ingress newIngress(Windup cr, Context<Windup> context, String ingressName, Map<String, String> annotations) {
+    protected Ingress newIngress(Windup cr, Context<Windup> context, String ingressName, Map<String, String> additionalLabels, Map<String, String> additionalAnnotations) {
         final var labels = (Map<String, String>) context.managedDependentResourceContext()
                 .getMandatory(Constants.CONTEXT_LABELS_KEY, Map.class);
 
@@ -47,7 +47,7 @@ public abstract class WebIngressBase extends CRUDKubernetesDependentResource<Ing
                 .withNewMetadata()
                     .withName(ingressName)
                     .withNamespace(cr.getMetadata().getNamespace())
-                    .withAnnotations(annotations)
+                    .withAnnotations(additionalAnnotations)
                     .withLabels(labels)
                     .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()

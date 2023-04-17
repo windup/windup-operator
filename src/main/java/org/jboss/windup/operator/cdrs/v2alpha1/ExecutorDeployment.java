@@ -35,9 +35,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@KubernetesDependent(resourceDiscriminator = ExecutorDeploymentDiscriminator.class)
+@KubernetesDependent(labelSelector = ExecutorDeployment.LABEL_SELECTOR)
 @ApplicationScoped
 public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployment, Windup> implements Matcher<Deployment, Windup> {
+
+    public static final String LABEL_SELECTOR="app.kubernetes.io/managed-by=windup-operator,component=executor";
 
     @Inject
     Config config;
@@ -74,6 +76,7 @@ public class ExecutorDeployment extends CRUDKubernetesDependentResource<Deployme
                 .withName(getDeploymentName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(contextLabels)
+                .addToLabels("component", "executor")
                 .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()
                 .withSpec(getDeploymentSpec(cr, context))

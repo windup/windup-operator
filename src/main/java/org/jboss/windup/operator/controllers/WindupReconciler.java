@@ -42,16 +42,19 @@ import static org.jboss.windup.operator.controllers.WindupReconciler.SERVICE_EVE
         namespaces = WATCH_CURRENT_NAMESPACE,
         name = "windup",
         dependents = {
-                @Dependent(name = "db-pvc", type = DBPersistentVolumeClaim.class, useEventSourceWithName = PVC_EVENT_SOURCE),
+                @Dependent(name = "db-pvc", type = DBPersistentVolumeClaim.class),
                 @Dependent(name = "db-secret", type = DBSecret.class),
-                @Dependent(name = "db-deployment", type = DBDeployment.class, dependsOn = {"db-pvc", "db-secret"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE, readyPostcondition = DBDeployment.class),
-                @Dependent(name = "db-service", type = DBService.class, dependsOn = {"db-deployment"}, useEventSourceWithName = SERVICE_EVENT_SOURCE),
-                @Dependent(name = "web-pvc", type = WebConsolePersistentVolumeClaim.class, useEventSourceWithName = PVC_EVENT_SOURCE),
-                @Dependent(name = "web-deployment", type = WebDeployment.class, dependsOn = {"db-deployment", "db-service", "web-pvc"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE, readyPostcondition = WebDeployment.class),
-                @Dependent(name = "web-service", type = WebService.class, dependsOn = {"web-deployment"}, useEventSourceWithName = SERVICE_EVENT_SOURCE),
-                @Dependent(name = "executor-deployment", type = ExecutorDeployment.class, dependsOn = {"web-service"}, useEventSourceWithName = DEPLOYMENT_EVENT_SOURCE),
-                @Dependent(name = "ingress", type = WebIngress.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngress.class, useEventSourceWithName = INGRESS_EVENT_SOURCE),
-                @Dependent(name = "ingress-secure", type = WebIngressSecure.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngressSecure.class, useEventSourceWithName = INGRESS_EVENT_SOURCE)
+                @Dependent(name = "db-deployment", type = DBDeployment.class, dependsOn = {"db-pvc", "db-secret"}, readyPostcondition = DBDeployment.class),
+                @Dependent(name = "db-service", type = DBService.class, dependsOn = {"db-deployment"}),
+
+                @Dependent(name = "web-pvc", type = WebConsolePersistentVolumeClaim.class),
+                @Dependent(name = "web-deployment", type = WebDeployment.class, dependsOn = {"db-deployment", "db-service", "web-pvc"}, readyPostcondition = WebDeployment.class),
+                @Dependent(name = "web-service", type = WebService.class, dependsOn = {"web-deployment"}),
+
+                @Dependent(name = "executor-deployment", type = ExecutorDeployment.class, dependsOn = {"web-service"}),
+
+                @Dependent(name = "ingress", type = WebIngress.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngress.class),
+                @Dependent(name = "ingress-secure", type = WebIngressSecure.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngressSecure.class)
         }
 )
 public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<Windup>,

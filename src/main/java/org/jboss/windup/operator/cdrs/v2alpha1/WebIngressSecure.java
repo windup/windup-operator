@@ -10,20 +10,32 @@ import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Collections;
+import java.util.Map;
 
-@KubernetesDependent(resourceDiscriminator = WebIngressSecureDiscriminator.class)
+@KubernetesDependent(labelSelector = WebIngressSecure.LABEL_SELECTOR)
 @ApplicationScoped
 public class WebIngressSecure extends WebIngressBase {
+
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web,component-variant=secure";
 
     @Override
     @SuppressWarnings("unchecked")
     protected Ingress desired(Windup cr, Context<Windup> context) {
-        return newIngress(cr, context, getIngressName(cr), Collections.emptyMap());
+        return newIngress(
+                cr,
+                context,
+                getIngressName(cr),
+                Map.of(
+                        "component", "web",
+                        "component-variant", "secure"
+                ),
+                Collections.emptyMap()
+        );
     }
 
     @Override
     public boolean isMet(Windup cr, Ingress ingress, Context<Windup> context) {
-        return context.getSecondaryResource(Ingress.class, new WebIngressSecureDiscriminator())
+        return context.getSecondaryResource(Ingress.class, "ingress-secure")
                 .map(in -> {
                     final var status = in.getStatus();
                     if (status != null) {

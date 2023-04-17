@@ -10,16 +10,19 @@ import io.javaoperatorsdk.operator.processing.dependent.Creator;
 import io.javaoperatorsdk.operator.processing.dependent.Matcher;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
+import io.javaoperatorsdk.operator.processing.event.source.filter.OnAddFilter;
 import org.jboss.windup.operator.Constants;
 import org.jboss.windup.operator.utils.CRDUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 
-@KubernetesDependent(resourceDiscriminator = WebPersistentVolumeClaimDiscriminator.class)
+@KubernetesDependent(labelSelector = WebConsolePersistentVolumeClaim.LABEL_SELECTOR)
 @ApplicationScoped
 public class WebConsolePersistentVolumeClaim extends CRUDKubernetesDependentResource<PersistentVolumeClaim, Windup>
         implements Creator<PersistentVolumeClaim, Windup> {
+
+    public static final String LABEL_SELECTOR="app.kubernetes.io/managed-by=windup-operator,component=web";
 
     public WebConsolePersistentVolumeClaim() {
         super(PersistentVolumeClaim.class);
@@ -42,6 +45,7 @@ public class WebConsolePersistentVolumeClaim extends CRUDKubernetesDependentReso
                 .withName(getPersistentVolumeClaimName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
+                .addToLabels("component", "web")
                 .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()
                 .withSpec(new PersistentVolumeClaimSpecBuilder()

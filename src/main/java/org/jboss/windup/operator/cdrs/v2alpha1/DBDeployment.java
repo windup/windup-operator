@@ -36,10 +36,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@KubernetesDependent(resourceDiscriminator = DBDeploymentDiscriminator.class)
+@KubernetesDependent(labelSelector = DBDeployment.LABEL_SELECTOR)
 @ApplicationScoped
 public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Windup>
         implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
+
+    public static final String LABEL_SELECTOR="app.kubernetes.io/managed-by=windup-operator,component=db";
 
     @Inject
     Config config;
@@ -68,7 +70,7 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
 
     @Override
     public boolean isMet(Windup primary, Deployment secondary, Context<Windup> context) {
-        return context.getSecondaryResource(Deployment.class, new DBDeploymentDiscriminator())
+        return context.getSecondaryResource(Deployment.class, "db-deployment")
                 .map(deployment -> {
                     final var status = deployment.getStatus();
                     if (status != null) {
@@ -90,6 +92,7 @@ public class DBDeployment extends CRUDKubernetesDependentResource<Deployment, Wi
                 .withName(getDeploymentName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(contextLabels)
+                .addToLabels("component", "db")
                 .addToLabels(Map.of(
                         "app.openshift.io/runtime", "postgresql"
                 ))

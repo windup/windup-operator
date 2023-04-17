@@ -37,10 +37,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@KubernetesDependent(resourceDiscriminator = WebDeploymentDiscriminator.class)
+@KubernetesDependent(labelSelector = WebDeployment.LABEL_SELECTOR)
 @ApplicationScoped
 public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, Windup>
         implements Matcher<Deployment, Windup>, Condition<Deployment, Windup> {
+
+    public static final String LABEL_SELECTOR="app.kubernetes.io/managed-by=windup-operator,component=web";
 
     @Inject
     Config config;
@@ -73,7 +75,7 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
 
     @Override
     public boolean isMet(Windup primary, Deployment secondary, Context<Windup> context) {
-        return context.getSecondaryResource(Deployment.class, new WebDeploymentDiscriminator())
+        return context.getSecondaryResource(Deployment.class, "web-deployment")
                 .map(deployment -> {
                     final var status = deployment.getStatus();
                     if (status != null) {
@@ -95,6 +97,7 @@ public class WebDeployment extends CRUDKubernetesDependentResource<Deployment, W
                 .withName(getDeploymentName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(contextLabels)
+                .addToLabels("component", "web")
                 .withAnnotations(Map.of(
                         "app.openshift.io/connects-to", "[" +
                                 "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"" + DBDeployment.getDeploymentName(cr) + "\"}," +

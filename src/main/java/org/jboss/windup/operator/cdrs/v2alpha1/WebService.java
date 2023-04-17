@@ -13,9 +13,11 @@ import org.jboss.windup.operator.utils.CRDUtils;
 import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
 
-@KubernetesDependent(resourceDiscriminator = WebServiceDiscriminator.class)
+@KubernetesDependent(labelSelector = WebService.LABEL_SELECTOR)
 @ApplicationScoped
 public class WebService extends CRUDKubernetesDependentResource<Service, Windup> {
+
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web";
 
     public WebService() {
         super(Service.class);
@@ -36,6 +38,7 @@ public class WebService extends CRUDKubernetesDependentResource<Service, Windup>
                 .withName(getServiceName(cr))
                 .withNamespace(cr.getMetadata().getNamespace())
                 .withLabels(labels)
+                .addToLabels("component", "web")
                 .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()
                 .withSpec(getServiceSpec(cr))

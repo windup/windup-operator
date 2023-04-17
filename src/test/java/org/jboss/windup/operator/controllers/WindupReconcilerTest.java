@@ -52,7 +52,7 @@ public class WindupReconcilerTest {
 
     @Test
     @Order(1)
-    public void reconcileShouldWork() {
+    public void reconcileShouldWork() throws InterruptedException {
         final var app = new Windup();
         final var metadata = new ObjectMetaBuilder()
                 .withName(TEST_APP)
@@ -86,8 +86,16 @@ public class WindupReconcilerTest {
                 .build()
         );
 
-        client.resource(app).create();
+        // Delete prev instance if exists already
+        if (client.resource(app).get() != null) {
+            client.resource(app).delete();
+            Thread.sleep(3000);
+        }
 
+        // Instantiate Windup
+        client.resource(app).createOrReplace();
+
+        // Verify resources
         await()
                 .ignoreException(NullPointerException.class)
                 .atMost(20, TimeUnit.MINUTES)
