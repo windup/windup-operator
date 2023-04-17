@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.Operator;
 import io.quarkus.test.junit.QuarkusTest;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
 import org.jboss.windup.operator.cdrs.v2alpha1.DBService;
 import org.jboss.windup.operator.cdrs.v2alpha1.ExecutorDeployment;
@@ -33,6 +34,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class WindupReconcilerTest {
 
     public static final String TEST_APP = "test-app";
+
+    @ConfigProperty(name = "related.image.postgresql")
+    String dbImage;
+
+    @ConfigProperty(name = "related.image.windup.web")
+    String webImage;
+
+    @ConfigProperty(name = "related.image.windup.web.executor")
+    String executorImage;
 
     @Inject
     KubernetesClient client;
@@ -89,7 +99,7 @@ public class WindupReconcilerTest {
         // Delete prev instance if exists already
         if (client.resource(app).get() != null) {
             client.resource(app).delete();
-            Thread.sleep(3000);
+            Thread.sleep(5000);
         }
 
         // Instantiate Windup
@@ -113,7 +123,7 @@ public class WindupReconcilerTest {
                             .stream()
                             .findFirst();
                     assertThat(dbContainer.isPresent(), is(true));
-                    assertThat(dbContainer.get().getImage(), is("registry.access.redhat.com/rhscl/postgresql-10-rhel7:1"));
+                    assertThat(dbContainer.get().getImage(), is(dbImage));
 
                     assertEquals(1, dbDeployment.getStatus().getReadyReplicas());
 
@@ -142,7 +152,7 @@ public class WindupReconcilerTest {
                             .stream()
                             .findFirst();
                     assertThat(webContainer.isPresent(), is(true));
-                    assertThat(webContainer.get().getImage(), is("quay.io/windupeng/windup-web-openshift:latest"));
+                    assertThat(webContainer.get().getImage(), is(webImage));
                     List<Integer> webContainerPorts = webContainer.get().getPorts().stream()
                             .map(ContainerPort::getContainerPort)
                             .toList();
@@ -178,7 +188,7 @@ public class WindupReconcilerTest {
                             .stream()
                             .findFirst();
                     assertThat(executorContainer.isPresent(), is(true));
-                    assertThat(executorContainer.get().getImage(), is("quay.io/windupeng/windup-web-openshift-messaging-executor:latest"));
+                    assertThat(executorContainer.get().getImage(), is(executorImage));
 
                     assertEquals(1, executorDeployment.getStatus().getReadyReplicas());
 
