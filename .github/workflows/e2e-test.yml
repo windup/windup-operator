@@ -25,11 +25,8 @@ jobs:
           # check version in https://github.com/kubernetes/minikube/releases
           minikube version: v1.30.1
           kubernetes version: ${{ matrix.kubernetes_version }}
+          start args: --addons=ingress
           github token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Configure Minikube
-        run: |
-          # Minikube addons
-          minikube addons enable ingress
       - name: Test
         run: |
           mvn verify
