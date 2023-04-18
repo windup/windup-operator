@@ -60,7 +60,7 @@ podman push $BUNDLE_IMAGE
 Create catalog image:
 
 ```shell
-CATALOG_IMAGE=quay.io/$USER/windup-operator-catalog:nightly
+CATALOG_IMAGE=quay.io/$USER/windup-operator-catalog:test
 opm index add \
     --bundles $BUNDLE_IMAGE \
     --tag $CATALOG_IMAGE \
