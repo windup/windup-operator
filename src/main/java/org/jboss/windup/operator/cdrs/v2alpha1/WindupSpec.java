@@ -3,6 +3,7 @@ package org.jboss.windup.operator.cdrs.v2alpha1;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.SecretKeySelector;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,6 +49,10 @@ public class WindupSpec {
     @JsonProperty("executorResourceLimits")
     @JsonPropertyDescription("In this section you can configure resource limits settings for the Executor.")
     private ResourcesLimitSpec executorResourceLimitSpec;
+
+    @JsonProperty("jgroups")
+    @JsonPropertyDescription("In this section you can configure JGroups settings.")
+    private JGroupsSpec jgroupsSpec;
 
     @Data
     @Builder
@@ -114,5 +119,26 @@ public class WindupSpec {
 
         @JsonPropertyDescription("Limit Memory.")
         private String memoryLimit;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class JGroupsSpec {
+        @JsonPropertyDescription("The name of the secret containing the keystore file")
+        private String encryptSecret;
+
+        @JsonPropertyDescription("The name of the keystore file within the secret")
+        private String encryptKeystore;
+
+        @JsonPropertyDescription("The name associated with the server certificate.")
+        private String encryptName;
+
+        @JsonPropertyDescription("The reference to a secret holding the password for the keystore and certificate.")
+        private SecretKeySelector encryptPassword;
+
+        @JsonPropertyDescription("JGroups cluster password.")
+        private SecretKeySelector clusterPassword;
     }
 }

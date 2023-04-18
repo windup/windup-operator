@@ -41,6 +41,7 @@ public class WindupDistConfigurator {
         configureDatabase();
         configureDataDirectory();
         configureSSO();
+        configureJGroups();
     }
 
     public List<EnvVar> getAllEnvVars() {
@@ -57,6 +58,7 @@ public class WindupDistConfigurator {
 
     private void configureDefaults() {
         List<EnvVar> envVars = optionMapper(cr.getSpec())
+                // Mandatory additional ENV
                 .mapOption("IS_MASTER", spec -> "true")
                 .mapOption("MESSAGING_SERIALIZER", spec -> "http.post.serializer")
                 .mapOption("AUTO_DEPLOY_EXPLODED", spec -> "false")
@@ -64,6 +66,9 @@ public class WindupDistConfigurator {
                 .mapOption("MAX_POST_SIZE", spec -> "4294967296")
                 .mapOption("SSO_DISABLE_SSL_CERTIFICATE_VALIDATION", spec -> "true")
                 .mapOption("SSO_FORCE_LEGACY_SECURITY", spec -> "false")
+                // Optional additional ENV
+                .mapOption("OPENSHIFT_KUBE_PING_LABELS", spec -> "application=" + cr.getMetadata().getName())
+                .mapOption("OPENSHIFT_KUBE_PING_NAMESPACE", spec -> cr.getMetadata().getNamespace())
                 .getEnvVars();
 
         allEnvVars.addAll(envVars);
@@ -117,6 +122,19 @@ public class WindupDistConfigurator {
                 .mapOption("SSO_REALM", WindupSpec.SSOSpec::getRealm)
                 .mapOption("SSO_SSL_REQUIRED", WindupSpec.SSOSpec::getSslRequired)
                 .mapOption("SSO_CLIENT_ID", WindupSpec.SSOSpec::getClientId)
+                .getEnvVars();
+
+        allEnvVars.addAll(envVars);
+    }
+
+    private void configureJGroups() {
+        List<EnvVar> envVars = optionMapper(cr.getSpec().getJgroupsSpec())
+                .mapOption("JGROUPS_ENCRYPT_SECRET", WindupSpec.JGroupsSpec::getEncryptSecret)
+                .mapOption("JGROUPS_ENCRYPT_KEYSTORE_DIR", "/etc/jgroups-encrypt-secret-volume")
+                .mapOption("JGROUPS_ENCRYPT_KEYSTORE", WindupSpec.JGroupsSpec::getEncryptKeystore)
+                .mapOption("JGROUPS_ENCRYPT_NAME", WindupSpec.JGroupsSpec::getEncryptName)
+                .mapOption("JGROUPS_ENCRYPT_PASSWORD", WindupSpec.JGroupsSpec::getEncryptPassword)
+                .mapOption("JGROUPS_CLUSTER_PASSWORD", WindupSpec.JGroupsSpec::getClusterPassword)
                 .getEnvVars();
 
         allEnvVars.addAll(envVars);
