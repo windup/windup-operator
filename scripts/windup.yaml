@@ -13,9 +13,9 @@ spec:
       memoryLimit: "0.5Gi"
   webResourceLimits:
     cpuRequest: "0.1"
-    cpuLimit: "3"
+    cpuLimit: "2"
     memoryRequest: "0.1Gi"
-    memoryLimit: "3Gi"
+    memoryLimit: "2Gi"
   executorResourceLimits:
     cpuRequest: "0.1"
     cpuLimit: "2"
