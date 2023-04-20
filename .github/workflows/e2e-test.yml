@@ -200,37 +200,30 @@ jobs:
         run: |
           kubectl -n mynamespace apply -f scripts/windup.yaml
           
-          # Verify DB
-          while ! kubectl get deployment/test-app-postgresql-deployment -n mynamespace
-          do
-            echo "Waiting for DB to be created"
-            sleep 5;
-          done
+          # Function to verify deployments
+          verify_deployment() {
+            deployment_name=$1
+            timeout=$2
           
-          kubectl wait deployment/test-app-postgresql-deployment --for condition=available --timeout=-1s -n mynamespace
-          echo "DB Ready"
+            while ! kubectl get deployment/$deployment_name -n mynamespace
+            do
+              echo "Waiting for $deployment_name to be created"
+              sleep 5;
+            done
+            
+            kubectl wait deployment/$deployment_name --for condition=available --timeout=$timeout -n mynamespace
+            kubectl get deployment/$deployment_name -n mynamespace
+          }
+          
+          # Verify DB
+          verify_deployment test-app-postgresql-deployment -1s
           
           # Verify Web
-          while ! kubectl get deployment/test-app-windup-web-deployment -n mynamespace
-          do
-            echo "Waiting for Web to be created"
-            sleep 5;
-          done
-          
-          kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
-          echo "Web Ready"
+          verify_deployment test-app-windup-web-deployment -1s
           
           # Verify Executor
-          while ! kubectl get deployment/test-app-windup-executor-deployment -n mynamespace
-          do
-            echo "Waiting for executor to be created"
-            sleep 5;
-          done
+          verify_deployment test-app-windup-executor-deployment 120s
           
-          # We do not need to wait for the executor to be ready. Due to limited resources in GH, the executor might not start in some cases.
-          # kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
-          echo "Executor Ready"
-
           # Verify Ingress
           external_ip=""
           while [[ -z $external_ip ]]
