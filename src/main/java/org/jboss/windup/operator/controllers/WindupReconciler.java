@@ -5,38 +5,18 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
-import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.api.reconciler.ContextInitializer;
-import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
-import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
-import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
 import org.jboss.logging.Logger;
 import org.jboss.windup.operator.Constants;
-import org.jboss.windup.operator.cdrs.v2alpha1.DBDeployment;
-import org.jboss.windup.operator.cdrs.v2alpha1.DBPersistentVolumeClaim;
-import org.jboss.windup.operator.cdrs.v2alpha1.DBSecret;
-import org.jboss.windup.operator.cdrs.v2alpha1.DBService;
-import org.jboss.windup.operator.cdrs.v2alpha1.ExecutorDeployment;
-import org.jboss.windup.operator.cdrs.v2alpha1.WebConsolePersistentVolumeClaim;
-import org.jboss.windup.operator.cdrs.v2alpha1.WebDeployment;
-import org.jboss.windup.operator.cdrs.v2alpha1.WebIngress;
-import org.jboss.windup.operator.cdrs.v2alpha1.WebIngressSecure;
-import org.jboss.windup.operator.cdrs.v2alpha1.WebService;
-import org.jboss.windup.operator.cdrs.v2alpha1.Windup;
+import org.jboss.windup.operator.cdrs.v2alpha1.*;
 
 import java.time.Duration;
 import java.util.Map;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
-import static org.jboss.windup.operator.controllers.WindupReconciler.DEPLOYMENT_EVENT_SOURCE;
-import static org.jboss.windup.operator.controllers.WindupReconciler.INGRESS_EVENT_SOURCE;
-import static org.jboss.windup.operator.controllers.WindupReconciler.PVC_EVENT_SOURCE;
-import static org.jboss.windup.operator.controllers.WindupReconciler.SERVICE_EVENT_SOURCE;
 
 @ControllerConfiguration(
         namespaces = WATCH_CURRENT_NAMESPACE,
@@ -48,13 +28,13 @@ import static org.jboss.windup.operator.controllers.WindupReconciler.SERVICE_EVE
                 @Dependent(name = "db-service", type = DBService.class, dependsOn = {"db-deployment"}),
 
                 @Dependent(name = "web-pvc", type = WebConsolePersistentVolumeClaim.class),
-                @Dependent(name = "web-deployment", type = WebDeployment.class, dependsOn = {"db-deployment", "db-service", "web-pvc"}, readyPostcondition = WebDeployment.class),
-                @Dependent(name = "web-service", type = WebService.class, dependsOn = {"web-deployment"}),
+                @Dependent(name = "web-deployment", type = WebDeployment.class, dependsOn = {"db-service"}, readyPostcondition = WebDeployment.class),
+                @Dependent(name = "web-service", type = WebService.class, dependsOn = {"db-service"}),
 
                 @Dependent(name = "executor-deployment", type = ExecutorDeployment.class, dependsOn = {"web-service"}),
 
-                @Dependent(name = "ingress", type = WebIngress.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngress.class),
-                @Dependent(name = "ingress-secure", type = WebIngressSecure.class, dependsOn = {"executor-deployment"}, readyPostcondition = WebIngressSecure.class)
+                @Dependent(name = "ingress", type = WebIngress.class, dependsOn = {"db-service"}, readyPostcondition = WebIngress.class),
+                @Dependent(name = "ingress-secure", type = WebIngressSecure.class, dependsOn = {"db-service"}, readyPostcondition = WebIngressSecure.class)
         }
 )
 public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<Windup>,
