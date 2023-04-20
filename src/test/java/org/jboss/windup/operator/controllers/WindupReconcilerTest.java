@@ -122,10 +122,10 @@ public class WindupReconcilerTest {
                             .getContainers()
                             .stream()
                             .findFirst();
-                    assertThat(dbContainer.isPresent(), is(true));
-                    assertThat(dbContainer.get().getImage(), is(dbImage));
+                    assertThat("DB container not found", dbContainer.isPresent(), is(true));
+                    assertThat("DB container image not valid", dbContainer.get().getImage(), is(dbImage));
 
-                    assertEquals(1, dbDeployment.getStatus().getReadyReplicas());
+                    assertEquals(1, dbDeployment.getStatus().getReadyReplicas(), "Expected DB deployment number of replicas doesn't match");
 
                     // Database service
                     final var dbService = client.services()
@@ -136,7 +136,7 @@ public class WindupReconcilerTest {
                             .getPorts()
                             .get(0)
                             .getPort();
-                    assertThat(dbPort, is(5432));
+                    assertThat("DB service port not valid", dbPort, is(5432));
 
 
                     // Web Deployment
@@ -151,16 +151,16 @@ public class WindupReconcilerTest {
                             .getContainers()
                             .stream()
                             .findFirst();
-                    assertThat(webContainer.isPresent(), is(true));
-                    assertThat(webContainer.get().getImage(), is(webImage));
+                    assertThat("Web container not found", webContainer.isPresent(), is(true));
+                    assertThat("Web container image not valid", webContainer.get().getImage(), is(webImage));
                     List<Integer> webContainerPorts = webContainer.get().getPorts().stream()
                             .map(ContainerPort::getContainerPort)
                             .toList();
-                    assertTrue(webContainerPorts.contains(8080));
-                    assertTrue(webContainerPorts.contains(8888));
-                    assertTrue(webContainerPorts.contains(8778));
+                    assertTrue(webContainerPorts.contains(8080), "Web container port 8080 not found");
+                    assertTrue(webContainerPorts.contains(8888), "Web container port 8888 not found");
+                    assertTrue(webContainerPorts.contains(8778), "Web container port 8787 not found");
 
-                    assertEquals(1, webDeployment.getStatus().getReadyReplicas());
+                    assertEquals(1, webDeployment.getStatus().getReadyReplicas(), "Expected Web deployment number of replicas doesn't match");
 
                     // Web service
                     final var webService = client.services()
@@ -172,7 +172,7 @@ public class WindupReconcilerTest {
                             .stream()
                             .map(ServicePort::getPort)
                             .toList();
-                    assertTrue(webServicePorts.contains(8080));
+                    assertTrue(webServicePorts.contains(8080), "Web service port not valid");
 
 
                     // Executor Deployment
@@ -187,10 +187,10 @@ public class WindupReconcilerTest {
                             .getContainers()
                             .stream()
                             .findFirst();
-                    assertThat(executorContainer.isPresent(), is(true));
-                    assertThat(executorContainer.get().getImage(), is(executorImage));
+                    assertThat("Executor container not found", executorContainer.isPresent(), is(true));
+                    assertThat("Executor container image not valid", executorContainer.get().getImage(), is(executorImage));
 
-                    assertEquals(1, executorDeployment.getStatus().getReadyReplicas());
+                    assertEquals(1, executorDeployment.getStatus().getReadyReplicas(), "Expected Executor deployment number of replicas doesn't match");
 
 
                     // Ingress
@@ -206,8 +206,6 @@ public class WindupReconcilerTest {
                     assertThat(paths.size(), is(1));
 
                     final var path = paths.get(0);
-//                    assertThat(path.getPath(), is("/"));
-//                    assertThat(path.getPathType(), is("Prefix"));
 
                     final var serviceBackend = path.getBackend().getService();
                     assertThat(serviceBackend.getName(), is(WebService.getServiceName(app)));

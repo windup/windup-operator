@@ -58,7 +58,6 @@ public class WindupReconciler implements Reconciler<Windup>, ContextInitializer<
         context.managedDependentResourceContext().put(Constants.CONTEXT_LABELS_KEY, labels);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public UpdateControl<Windup> reconcile(Windup cr, Context context) {
         return context.managedDependentResourceContext()
