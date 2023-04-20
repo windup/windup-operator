@@ -222,7 +222,7 @@ jobs:
           verify_deployment test-app-windup-web-deployment -1s
           
           # Verify Executor
-          verify_deployment test-app-windup-executor-deployment 120s
+          verify_deployment test-app-windup-executor-deployment 5s
           
           # Verify Ingress
           external_ip=""
