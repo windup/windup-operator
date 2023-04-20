@@ -49,6 +49,12 @@ mvn clean package -DskipTests \
 podman push quay.io/$USER/windup-operator:test
 ```
 
+Enrich bundle with cluster permissions (util only if generating a catalog for OCP)
+
+```shell
+groovy scripts/enrichCSV.groovy target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
+```
+
 Create bundle:
 
 ```shell
@@ -62,9 +68,9 @@ Create catalog image:
 ```shell
 CATALOG_IMAGE=quay.io/$USER/windup-operator-catalog:test
 opm index add \
-    --bundles $BUNDLE_IMAGE \
-    --tag $CATALOG_IMAGE \
-    --build-tool podman
+  --bundles $BUNDLE_IMAGE \
+  --tag $CATALOG_IMAGE \
+  --build-tool podman
 podman push $CATALOG_IMAGE
 ```
 
