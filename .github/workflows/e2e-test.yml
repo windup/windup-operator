@@ -228,7 +228,7 @@ jobs:
           done
           
           # We do not need to wait for the executor to be ready. Due to limited resources in GH, the executor might not start in some cases.
-          # kubectl wait deployment/test-app-windup-web-deployment --for condition=available --timeout=-1s -n mynamespace
+          # kubectl wait deployment/test-app-windup-executor-deployment --for condition=available --timeout=-1s -n mynamespace
           echo "Executor Ready"
 
           # Verify Ingress
