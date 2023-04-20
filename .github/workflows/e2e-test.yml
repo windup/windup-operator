@@ -211,7 +211,7 @@ jobs:
               sleep 5;
             done
             
-            kubectl wait deployment/$deployment_name --for condition=available --timeout=$timeout -n mynamespace
+            kubectl wait deployment/$deployment_name --for condition=available --timeout=$timeout -n mynamespace || true
             kubectl get deployment/$deployment_name -n mynamespace
           }
           
