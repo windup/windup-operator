@@ -76,7 +76,7 @@ jobs:
           export OS=$(uname | awk '{print tolower($0)}')
 
           # Opm
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-registry/releases/download/v1.26.2
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-registry/releases/download/v1.26.5
           curl -LO ${OPERATOR_SDK_DL_URL}/${OS}-${ARCH}-opm
           chmod +x ${OS}-${ARCH}-opm && sudo mv ${OS}-${ARCH}-opm /usr/local/bin/opm
       - name: Setup other tools
@@ -97,8 +97,7 @@ jobs:
           -Dquarkus.kubernetes.image-pull-policy=if-not-present \
           -Dquarkus.kubernetes.env.vars.related-image-pull-policy=IfNotPresent
 
-          groovy scripts/enrichCSV.groovy target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml 0.0.0
-          sed -i "/  annotations: ''/d" ./target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
+          groovy scripts/enrichCSV.groovy target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
       - name: Init local Registry
         run: |
           docker run -d -p 5000:5000 --name registry registry:2
