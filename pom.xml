@@ -5,7 +5,7 @@
 
     <groupId>org.jboss.windup</groupId>
     <artifactId>windup-operator</artifactId>
-    <version>0.0.14-SNAPSHOT</version>
+    <version>0.0.17-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
