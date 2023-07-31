@@ -1,111 +1,236 @@
 name: Windup Operator E2E Tests
 
-on: [pull_request,push]
+on: [ pull_request,push ]
 
 jobs:
-   minikube:
-    name: K8S
+  test:
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
         # check versions in https://github.com/kubernetes/kubernetes/releases
-        kubernetes_version: [v1.19.16, v1.20.15, v1.21.14, v1.22.13, v1.23.10, v1.24.4]
+        kubernetes_version: [ v1.25.3 ]
       fail-fast: false
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
       - name: Setup Minikube-Kubernetes
         # check version in https://github.com/manusa/actions-setup-minikube/releases
         uses: manusa/actions-setup-minikube@v2.7.2
         with:
           # check version in https://github.com/kubernetes/minikube/releases
-          minikube version: v1.26.1
+          minikube version: v1.28.0
           kubernetes version: ${{ matrix.kubernetes_version }}
+          start args: --addons=ingress
           github token: ${{ secrets.GITHUB_TOKEN }}
-          start args: ' --force'
-
-      - name: Setup Java 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'adopt'
-          java-package: jdk
-          cache: 'maven'
-
-      - name: Build operator image and push it to the minikube docker host
+      - name: Test
         run: |
-          cd ${{github.workspace}} 
-          mvn clean package -Pnative -DskipTests \
-            -Dquarkus.native.container-build=true \
-            -Dquarkus.native.container-runtime=docker \
-            -Dquarkus.container-image.build=true  \
-            -Dquarkus.container-image.tag=test \
-            -Dquarkus.container-image.push=false 
-          minikube cache add quay.io/windupeng/windup-operator-native:test
+          mvn verify
 
-      - name: Deploy operator
+  operator-container:
+    name: Operator container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Build container image
         run: |
-          cd ${{github.workspace}} 
-          cd src/main/resources/k8s/def 
-          kubectl apply -f windup.namespace.yaml 
-          kubectl apply -f windup.serviceaccount.yaml 
-          kubectl apply -f windup.role.yaml 
-          kubectl apply -f windup.rolebinding.yaml 
-          kubectl apply -f windup.crd.yaml 
-          kubectl apply -f ../../../../test/resources/windup.deployment.yaml 
-          kubectl apply -f ../../../../test/resources/windup-test.yaml
-
-      - name: Sleep for 10 seconds to allow operator to start
-        uses: jakejarvis/wait-action@master
+          mvn -U -B package --file pom.xml -DskipTests \
+          -Dquarkus.native.container-build=true \
+          -Dquarkus.container-image.push=false \
+          -Dquarkus.container-image.build=true \
+          -Dquarkus.container-image.registry=localhost:5000 \
+          -Dquarkus.container-image.group="" \
+          -Dquarkus.container-image.name=windup-operator \
+          -Dquarkus.container-image.tag=0.0.0 \
+          -P native
+      - name: Save container image
+        run: docker save -o windup-operator-container-image.tar localhost:5000/windup-operator:0.0.0
+      - name: Upload container image
+        uses: actions/upload-artifact@v3
         with:
-          time: '10s'
+          name: artifacts
+          path: windup-operator-container-image.tar
 
-      - name: Operator Logs
-        run: kubectl logs --tail=-1 -l app=windup-operator -n windup
-
-      - name: Sleep for 30 seconds to allow objects to be created
-        uses: jakejarvis/wait-action@master
+  catalog-container:
+    name: Catalog container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
         with:
-          time: '30s'
-
-      - name: List k8s objects on windup namespace
-        id: listobjects
-        run: kubectl get all,ing,pvc -n windup -o name
-        shell: bash
-
-      - name: Get and store number of k8s objects on windup namespace
-        id: getobjects
-        run: echo "::set-output name=value::$(kubectl get all,ing,pvc -n windup -o name | wc -l)"
-        shell: bash
-
-      - name: Operator Test
-        uses: therussiankid92/gat@v1.5
-        with:
-          assertion: should.equal
-          expected: 19
-          actual: ${{steps.getobjects.outputs.value}}
-
-      - name: Scale up test
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Setup OLM CLIs
         run: |
-          cd ${{github.workspace}}
-          cd src/test/resources 
-          (echo "  executor_desired_replicas: 3" | cat windup-test.yaml -) | kubectl apply -f -
+          export ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(uname -m) ;; esac)
+          export OS=$(uname | awk '{print tolower($0)}')
 
-      - name: Sleep for 5 seconds to allow objects to be created
-        uses: jakejarvis/wait-action@master
+          # Opm
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-registry/releases/download/v1.26.5
+          curl -LO ${OPERATOR_SDK_DL_URL}/${OS}-${ARCH}-opm
+          chmod +x ${OS}-${ARCH}-opm && sudo mv ${OS}-${ARCH}-opm /usr/local/bin/opm
+      - name: Setup other tools
+        run: |
+          sudo apt-get install -y groovy
+      - name: Build container image
+        run: |
+          mvn -U -B package --file pom.xml -DskipTests \
+          -Dquarkus.native.container-build=false \
+          -Dquarkus.container-image.push=false \
+          -Dquarkus.container-image.build=false \
+          -Dquarkus.container-image.registry=localhost:5000 \
+          -Dquarkus.container-image.group="" \
+          -Dquarkus.container-image.name=windup-operator \
+          -Dquarkus.operator-sdk.bundle.package-name=windup-operator \
+          -Dquarkus.operator-sdk.bundle.channels=alpha \
+          -Dquarkus.application.version=0.0.0 \
+          -Dquarkus.kubernetes.image-pull-policy=if-not-present \
+          -Dquarkus.kubernetes.env.vars.related-image-pull-policy=IfNotPresent
+
+          groovy scripts/enrichCSV.groovy target/bundle/windup-operator/manifests/windup-operator.clusterserviceversion.yaml
+      - name: Init local Registry
+        run: |
+          docker run -d -p 5000:5000 --name registry registry:2
+          sleep 5
+      - name: Create bundle image
+        run: |
+          # Bundle
+          BUNDLE_IMAGE=localhost:5000/windup-operator-bundle:0.0.0
+          docker build -t $BUNDLE_IMAGE -f target/bundle/windup-operator/bundle.Dockerfile target/bundle/windup-operator
+          docker push $BUNDLE_IMAGE
+
+          # Catalog
+          CATALOG_IMAGE=localhost:5000/windup-operator-catalog:0.0.0
+          opm index add --bundles $BUNDLE_IMAGE --tag $CATALOG_IMAGE --use-http --build-tool docker
+
+          # Save container images
+          docker save -o windup-bundle-container-image.tar $BUNDLE_IMAGE
+          docker save -o windup-catalog-container-image.tar $CATALOG_IMAGE
+      - name: Upload container image
+        uses: actions/upload-artifact@v3
         with:
-          time: '5s'
+          name: artifacts
+          path: |
+            windup-bundle-container-image.tar
+            windup-catalog-container-image.tar
 
-      - name: List k8s pods for the executor
-        id: executorpods
-        run: echo "::set-output name=value::$(kubectl get pods -n windup -o name | grep executor | wc -l)"
-        shell: bash
-
-      - name: Check executor pods are the expected
-        uses: therussiankid92/gat@v1.5
+  e2e-tests:
+    needs: [ operator-container, catalog-container ]
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        kubernetes_version: [ v1.19.16, v1.20.15, v1.21.14, v1.22.13, v1.23.10, v1.24.4 ]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - uses: actions/setup-java@v3
         with:
-          assertion: should.equal
-          expected: 3
-          actual: ${{steps.executorpods.outputs.value}}
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Maven package
+        run: |
+          mvn package -DskipTests
+      - name: Load and config images
+        run: |
+          docker load -i artifacts/windup-operator-container-image.tar
+          docker load -i artifacts/windup-bundle-container-image.tar
+          docker load -i artifacts/windup-catalog-container-image.tar
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.7.2
+        with:
+          minikube version: v1.28.0
+          kubernetes version: ${{ matrix.kubernetes_version }}
+          start args: --insecure-registry "10.0.0.0/24" --addons=registry,ingress
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure Minikube
+        run: |
+          # Install OLM
+          curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.22.0/install.sh | bash -s v0.22.0
 
+          # Load images
+          minikube image load localhost:5000/windup-operator:0.0.0
+          minikube image load localhost:5000/windup-operator-bundle:0.0.0
+          minikube image load localhost:5000/windup-operator-catalog:0.0.0
+
+          # Push images to internal registry
+          docker push localhost:5000/windup-operator:0.0.0
+          docker push localhost:5000/windup-operator-bundle:0.0.0
+          docker push localhost:5000/windup-operator-catalog:0.0.0
+          
+          # Pull images
+          docker pull quay.io/windupeng/windup-web-openshift:latest
+          docker pull quay.io/windupeng/windup-web-openshift-messaging-executor:latest
+          docker pull registry.access.redhat.com/rhscl/postgresql-10-rhel7:1
+      - name: Install operator
+        run: |
+          kubectl create ns mynamespace
+          
+          # Create CRD
+          kubectl apply -f target/kubernetes/windups.windup.jboss.org-v1.yml
+          
+          # Create custom catalog
+          kubectl create -f scripts/windup-operator.yaml
+
+          # Verify
+          sleep 10;
+          kubectl get pods -n olm --selector=olm.catalogSource=windup-catalog-source
+          kubectl get csv -n olm
+          
+          while ! kubectl get deployment/windup-operator -n mynamespace
+          do
+            echo "Waiting for operator to be created"
+            sleep 5;
+          done
+
+          kubectl wait deployment/windup-operator --for condition=available --timeout=-1s -n mynamespace
+      - name: Instantiate operator
+        run: |
+          kubectl -n mynamespace apply -f scripts/windup.yaml
+          
+          # Function to verify deployments
+          verify_deployment() {
+            deployment_name=$1
+            timeout=$2
+          
+            while ! kubectl get deployment/$deployment_name -n mynamespace
+            do
+              echo "Waiting for $deployment_name to be created"
+              sleep 5;
+            done
+            
+            kubectl wait deployment/$deployment_name --for condition=available --timeout=$timeout -n mynamespace || true
+            kubectl get deployment/$deployment_name -n mynamespace
+          }
+          
+          # Verify DB
+          verify_deployment test-app-postgresql-deployment -1s
+          
+          # Verify Web
+          verify_deployment test-app-windup-web-deployment -1s
+          
+          # Verify Executor
+          verify_deployment test-app-windup-executor-deployment 1s
+          
+          # Verify Ingress
+          external_ip=""
+          while [[ -z $external_ip ]]
+          do
+            external_ip=$(kubectl get ingress test-app-windup-web-ingress --template="{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}" -n mynamespace);
+            echo "Waiting for end point...current=$external_ip"
+            sleep 10;
+          done
+
+          echo "Windup ready to be served at: $external_ip"
