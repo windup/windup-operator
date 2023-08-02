@@ -49,6 +49,7 @@ public abstract class WebIngressBase extends CRUDKubernetesDependentResource<Ing
                     .withNamespace(cr.getMetadata().getNamespace())
                     .withAnnotations(additionalAnnotations)
                     .withLabels(labels)
+                    .addToLabels(additionalLabels)
                     .withOwnerReferences(CRDUtils.getOwnerReference(cr))
                 .endMetadata()
                 .withNewSpec()
