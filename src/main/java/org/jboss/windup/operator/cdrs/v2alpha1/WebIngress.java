@@ -14,7 +14,7 @@ import java.util.Map;
 @ApplicationScoped
 public class WebIngress extends WebIngressBase {
 
-    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web";
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web,component-variant=http";
 
     @Override
     @SuppressWarnings("unchecked")
@@ -24,7 +24,8 @@ public class WebIngress extends WebIngressBase {
                 context,
                 getIngressName(cr),
                 Map.of(
-                        "component", "web"
+                        "component", "web",
+                        "component-variant", "http"
                 ),
                 Map.of(
                         "console.alpha.openshift.io/overview-app-route", "true"

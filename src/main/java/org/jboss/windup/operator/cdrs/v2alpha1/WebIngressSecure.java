@@ -16,7 +16,7 @@ import java.util.Map;
 @ApplicationScoped
 public class WebIngressSecure extends WebIngressBase {
 
-    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web,component-variant=secure";
+    public static final String LABEL_SELECTOR = "app.kubernetes.io/managed-by=windup-operator,component=web,component-variant=https";
 
     @Override
     @SuppressWarnings("unchecked")
@@ -27,7 +27,7 @@ public class WebIngressSecure extends WebIngressBase {
                 getIngressName(cr),
                 Map.of(
                         "component", "web",
-                        "component-variant", "secure"
+                        "component-variant", "https"
                 ),
                 Collections.emptyMap()
         );
