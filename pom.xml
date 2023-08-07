@@ -26,7 +26,41 @@
 
         <quarkus-sdk.version>4.0.8</quarkus-sdk.version>
         <skipITs>true</skipITs>
+
+        <windup.scm.connection>scm:git:https://github.com/windup/windup-operator.git</windup.scm.connection>
+        <windup.developer.connection>scm:git:git@github.com:windup/windup-operator.git</windup.developer.connection>
+        <windup.scm.url>http://github.com/windup/windup-operator</windup.scm.url>
     </properties>
+
+    <scm>
+        <tag>master</tag>
+        <connection>${windup.scm.connection}</connection>
+        <developerConnection>${windup.developer.connection}</developerConnection>
+        <url>${windup.scm.url}</url>
+    </scm>
+
+    <issueManagement>
+        <system>JBoss Jira</system>
+        <url>https://issues.redhat.com/browse/WINDUP</url>
+    </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>Windup Core Development</name>
+            <post>windup-dev@lists.jboss.org</post>
+            <archive>http://lists.jboss.org/pipermail/windup-dev/</archive>
+        </mailingList>
+    </mailingLists>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <dependencyManagement>
         <dependencies>
